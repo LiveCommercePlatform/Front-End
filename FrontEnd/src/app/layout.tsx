@@ -55,7 +55,7 @@ export default function RootLayout({
 
               <main
                 className={clsx("flex-1", {
-                  "items-center justify-center py-12": isAuthPage,
+                  "": isAuthPage,
                   "p-4 overflow-auto": !isAuthPage,
                 })}
               >

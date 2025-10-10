@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "react-hot-toast"
 import Link from "next/link"
 import { Eye, EyeOff } from "lucide-react"
-
+import { toPersianDigits } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,21 +19,77 @@ import {
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    verificationCode: "", // کد تایید ایمیل
+  })
 
-  const handleRegister = (e: React.FormEvent) => {
+  const [isCodeSent, setIsCodeSent] = useState(false) // آیا کد ارسال شده یا نه
+  const [timer, setTimer] = useState(60) // تایمر (ثانیه)
+  const [timerActive, setTimerActive] = useState(false) // وضعیت فعال بودن تایمر
+
+  // مدیریت تغییرات ورودی
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  // شبیه‌سازی ارسال کد تایید
+  const handleSendVerificationCode = () => {
+    setIsCodeSent(true)
+    setTimerActive(true) // شروع تایمر
+    toast.success("✅ کد تایید به ایمیل شما ارسال شد")
+
+    const intervalId = setInterval(() => {
+      setTimer((prevTimer) => {
+        if (prevTimer <= 1) {
+          clearInterval(intervalId)
+          setTimerActive(false)
+          setIsCodeSent(false)
+          return 60 
+        }
+        return prevTimer - 1
+      })
+    }, 1000)
+  }
+
+  // مدیریت ثبت‌نام
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    // شبیه‌سازی ثبت‌نام
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      // شبیه‌سازی ارسال درخواست ثبت‌نام
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (!res.ok) {
+        throw new Error("خطا در ثبت‌نام. لطفاً دوباره تلاش کنید.")
+      }
+
+      const data = await res.json()
       toast.success("✅ با موفقیت ثبت‌نام شدید")
-    }, 1500)
+    } catch (error) {
+      toast.error("❌ خطا در ثبت‌نام. لطفاً دوباره تلاش کنید.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background px-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md mx-auto">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold">ثبت‌نام</CardTitle>
         </CardHeader>
@@ -41,18 +97,60 @@ export default function RegisterPage() {
           <CardContent className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="name">نام</Label>
-              <Input id="name" type="text" required placeholder="نام کامل شما" />
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                placeholder="نام کامل شما"
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="email">ایمیل</Label>
-              <Input id="email" type="email" required placeholder="ایمیل شما" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                placeholder="ایمیل شما"
+              />
+            </div>
+            {/* کد تایید ایمیل */}
+            <div className="space-y-1">
+              <Label htmlFor="verificationCode">کد تایید ایمیل</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="verificationCode"
+                  name="verificationCode"
+                  type="text"
+                  value={formData.verificationCode}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="کد تایید"
+                  disabled={!isCodeSent} // فقط وقتی کد ارسال شد، وارد کردن فعال باشه
+                />
+                <Button
+                  type="button"
+                  onClick={handleSendVerificationCode}
+                  disabled={isCodeSent && timerActive}
+                >
+                  {isCodeSent ? (timerActive ? `${toPersianDigits(timer)} ثانیه` : "کد ارسال شد") : "ارسال کد"}
+                </Button>
+              </div>
             </div>
             <div className="space-y-1">
               <Label htmlFor="password">رمز عبور</Label>
               <div className="relative">
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleInputChange}
                   required
                   placeholder="رمز عبور"
                 />
