@@ -60,6 +60,9 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              <Link href="/forget_password" className="text-primary text-sm">
+                بازیابی رمزعبور
+              </Link>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2 pt-10">
