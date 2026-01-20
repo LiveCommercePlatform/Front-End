@@ -1,70 +1,21 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  FaDesktop,
-  FaCamera,
-  FaUsers,
-  FaChartBar,
-  FaVideo,
-  FaBook,
-} from "react-icons/fa";
+import { categories_data } from "@/constant/category-data";
 import { useRouter } from "next/navigation";
 
-const categories = [
-  {
-    title: "تحلیل کسب و کار",
-    description: "توضیحاتی درباره تحلیل کسب و کار و اهمیت آن.",
-    icon: <FaChartBar className="w-10 h-10 text-orange-500" />,
-    name: "business-analytics",  // تگ انگلیسی برای URL
-  },
-  {
-    title: "مدیریت و ارتباطات",
-    description: "توضیح کوتاهی از این دوره، برخی از مزایا.",
-    icon: <FaUsers className="w-10 h-10 text-teal-500" />,
-    name: "management-communication",  // تگ انگلیسی برای URL
-  },
-  {
-    title: "طراحی وب",
-    description: "توضیح کوتاهی از این دوره.",
-    icon: <FaDesktop className="w-10 h-10 text-blue-500" />,
-    name: "web-design",  // تگ انگلیسی برای URL
-  },
-  {
-    title: "گیت‌هاب",
-    description: "توضیح کوتاهی از این دوره.",
-    icon: <FaBook className="w-10 h-10 text-green-500" />,
-    name: "github",  // تگ انگلیسی برای URL
-  },
-  {
-    title: "ایجاد ویدیو",
-    description: "توضیح کوتاهی از این دوره.",
-    icon: <FaVideo className="w-10 h-10 text-yellow-500" />,
-    name: "video-creation",  // تگ انگلیسی برای URL
-  },
-  {
-    title: "عکاسی",
-    description: "توضیح کوتاهی از این دوره.",
-    icon: <FaCamera className="w-10 h-10 text-pink-500" />,
-    name: "photography",  // تگ انگلیسی برای URL
-  },
-];
-
-
 export default function CategoriesPage() {
-    const router = useRouter();
-
+  const router = useRouter();
   return (
-    <div className="min-h-screen bg-[#faf9f6] py-16 px-6">
+    <div className="min-h-screen py-6 px-5">
       <h1 className="text-4xl md:text-5xl font-bold text-center mb-14">
         دسته بندی محصولات
       </h1>
-
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-        {categories.map((category, index) => (
+      <div className="bg-card max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
+        {categories_data.map((category, index) => (
           <Card
             key={index}
-            className="bg-white shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden border border-gray-100"
+            className="shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden border border-gray-100"
           >
             <div className="flex justify-end px-6">
               <div className="bg-gradient-to-r from-blue-50 to-emerald-50 h-20 w-20 flex justify-center items-center rounded-2xl">
@@ -72,15 +23,16 @@ export default function CategoriesPage() {
               </div>
             </div>
             <CardContent className="text-start px-6">
-              <h2 className="text-lg font-bold text-gray-800 mb-3">
+              <h2 className="text-lg font-bold  mb-3">
                 {category.title}
               </h2>
-              <p className="text-sm text-gray-500 leading-relaxed mb-4">
+              <p className="text-sm leading-relaxed mb-4">
                 {category.description}
               </p>
               <div className="flex justify-end">
-                <button            onClick={() => router.push(`/categories/${category.name}`)}
- className="text-emerald-600 font-medium hover:underline transition">
+                <button
+                  onClick={() => router.push(`/categories/${category.name}`)}
+                  className="text-emerald-600 font-medium hover:underline transition">
                   → مشاهده
                 </button>
               </div>
