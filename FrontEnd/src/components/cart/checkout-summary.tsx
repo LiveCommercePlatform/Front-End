@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { toPersianDigits } from "@/lib/utils";
-import { CartItemType } from "./cart-item";
+import { CartItemType } from "@/types";
 import { Button } from "@/components/ui/button";
 
 type Props = {
