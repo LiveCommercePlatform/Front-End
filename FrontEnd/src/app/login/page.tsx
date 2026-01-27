@@ -40,11 +40,11 @@ export default function LoginPage() {
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="email">ایمیل</Label>
+              <Label className="mb-2" htmlFor="email">ایمیل</Label>
               <Input id="email" type="email" required placeholder="ایمیل شما" />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="password">رمز عبور</Label>
+              <Label className="mb-2" htmlFor="password">رمز عبور</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -60,6 +60,9 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              <Link href="/forget_password" className="text-primary text-sm">
+                بازیابی رمزعبور
+              </Link>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2 pt-10">
