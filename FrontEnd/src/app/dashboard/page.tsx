@@ -1,77 +1,103 @@
-"use client"
-import { useState } from 'react';
+"use client";
+
+import { useState } from "react";
+import ProductTab from "./ProductTab";
+import AnalyticsTab from "./AnalyticsTab";
+import UsersTab from "./UsersTab";
+import SettingsTab from "./SettingsTab";
 
 export default function Dashboard() {
-  const [selectedTab, setSelectedTab] = useState('home');
+  const [selectedTab, setSelectedTab] = useState("products");
   const userName = "محمد علی";
-  const profileImage = "https://randomuser.me/api/portraits/men/50.jpg"; 
+  const profileImage = "https://randomuser.me/api/portraits/men/50.jpg";
 
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="flex items-center space-x-4 mb-8">
+    <div className="min-h-screen p-3 md:p-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 md:gap-6 mb-6">
         <img
           src={profileImage}
           alt="Profile"
-          className="w-16 h-16 rounded-full border-4 border-emerald-500"
+          className="w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-primary"
         />
         <div>
-          <h2 className="text-2xl font-semibold text-gray-800">{userName}</h2>
-          <p className="text-sm text-gray-500">خوش آمدید به داشبورد</p>
+          <h2 className="text-base md:text-2xl font-semibold">{userName}</h2>
+          <p className="text-xs md:text-sm">خوش آمدید به داشبورد</p>
         </div>
       </div>
 
-      <div className="relative mb-8">
-        <div className="flex justify-around items-center bg-white py-2 px-4 rounded-full shadow-lg">
+      {/* Tabs */}
+      <div className="relative mb-6">
+        <div className="flex justify-around items-center bg-card py-1.5 md:py-2 px-2 md:px-4 rounded-full shadow-sm">
           <button
-            className={`px-6 py-2 text-lg font-semibold transition-all duration-300 ease-in-out ${selectedTab === 'home' ? 'text-emerald-600' : 'text-gray-600 hover:text-emerald-600'}`}
-            onClick={() => setSelectedTab('home')}
+            className={`px-3 py-1.5 md:px-6 md:py-2 text-xs md:text-lg font-semibold transition-all duration-300 ease-in-out ${
+              selectedTab === "products"
+                ? "text-primary"
+                : "text-muted hover:text-primary"
+            }`}
+            onClick={() => setSelectedTab("products")}
           >
-            صفحه اصلی
+            محصولات من
           </button>
+
           <button
-            className={`px-6 py-2 text-lg font-semibold transition-all duration-300 ease-in-out ${selectedTab === 'analytics' ? 'text-emerald-600' : 'text-gray-600 hover:text-emerald-600'}`}
-            onClick={() => setSelectedTab('analytics')}
+            className={`px-3 py-1.5 md:px-6 md:py-2 text-xs md:text-lg font-semibold transition-all duration-300 ease-in-out ${
+              selectedTab === "analytics"
+                ? "text-primary"
+                : "text-muted hover:text-primary"
+            }`}
+            onClick={() => setSelectedTab("analytics")}
           >
             تحلیل‌ها
           </button>
+
           <button
-            className={`px-6 py-2 text-lg font-semibold transition-all duration-300 ease-in-out ${selectedTab === 'users' ? 'text-emerald-600' : 'text-gray-600 hover:text-emerald-600'}`}
-            onClick={() => setSelectedTab('users')}
+            className={`px-3 py-1.5 md:px-6 md:py-2 text-xs md:text-lg font-semibold transition-all duration-300 ease-in-out ${
+              selectedTab === "users"
+                ? "text-primary"
+                : "text-muted hover:text-primary"
+            }`}
+            onClick={() => setSelectedTab("users")}
           >
             مدیریت کاربران
           </button>
+
           <button
-            className={`px-6 py-2 text-lg font-semibold transition-all duration-300 ease-in-out ${selectedTab === 'settings' ? 'text-emerald-600' : 'text-gray-600 hover:text-emerald-600'}`}
-            onClick={() => setSelectedTab('settings')}
+            className={`px-3 py-1.5 md:px-6 md:py-2 text-xs md:text-lg font-semibold transition-all duration-300 ease-in-out ${
+              selectedTab === "settings"
+                ? "text-primary"
+                : "text-muted hover:text-primary"
+            }`}
+            onClick={() => setSelectedTab("settings")}
           >
             تنظیمات
           </button>
         </div>
 
+        {/* Slider */}
         <div
-  className={`absolute bottom-0 h-1 bg-emerald-600 transition-all duration-300 ease-in-out`}
-  style={{
-    left:
-      selectedTab === 'home'
-        ? 'calc(86.25%)'
-        : selectedTab === 'analytics'
-        ? 'calc(62.5%)'
-        : selectedTab === 'users'
-        ? 'calc(37.5%)'
-        : 'calc(13.75%)',
-    width: '25%',
-    transform: 'translateX(-50%)',
-    borderRadius: '9999px',
-  }}
-></div>
-
+          className="absolute bottom-0 h-1 bg-primary transition-all duration-300 ease-in-out rounded-full"
+          style={{
+            left:
+              selectedTab === "products"
+                ? "calc(86.25%)"
+                : selectedTab === "analytics"
+                ? "calc(62.5%)"
+                : selectedTab === "users"
+                ? "calc(37.5%)"
+                : "calc(13.75%)",
+            width: "20%",
+            transform: "translateX(-50%)",
+          }}
+        />
       </div>
 
-      <div>
-        {selectedTab === 'home' && <div>صفحه اصلی</div>}
-        {selectedTab === 'analytics' && <div>تحلیل‌ها</div>}
-        {selectedTab === 'users' && <div>مدیریت کاربران</div>}
-        {selectedTab === 'settings' && <div>تنظیمات</div>}
+      {/* Content */}
+      <div className="mt-4 md:mt-6">
+        {selectedTab === "products" && <ProductTab />}
+        {selectedTab === "analytics" && <AnalyticsTab />}
+        {selectedTab === "users" && <UsersTab />}
+        {selectedTab === "settings" && <SettingsTab />}
       </div>
     </div>
   );

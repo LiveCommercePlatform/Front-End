@@ -39,33 +39,30 @@ export default function RootLayout({
             },
           }}
         />
-        
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem><CartProvider>
-          <div className="flex flex-col min-h-screen">
-            
-            {!isAuthPage && (
-              <div className="flex items-center justify-between px-4 border-b h-14">
-                <SidebarMobile />
-                <Navbar />
-              </div>
-            )}
 
-            <div className="flex flex-1">
-              {!isAuthPage && <Sidebar />}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <CartProvider>
+            <div className="flex flex-col min-h-screen">
+  {!isAuthPage && <Navbar />}
 
-              <main
-                className={clsx("flex-1", {
-                  "": isAuthPage,
-                  "p-4 overflow-auto": !isAuthPage,
-                })}
-              >
-                {children}
-              </main>
-            </div>
+  <div className="flex flex-1">
+    {!isAuthPage && <Sidebar />}
 
-            {!isAuthPage && <Footer {...footerData} />}
-          </div>
-        </CartProvider></ThemeProvider>
+    <main
+      className={clsx("flex-1", {
+        "": isAuthPage,
+        "p-4 pt-12 md:pt-14 md:pr-16 overflow-auto": !isAuthPage,
+      })}
+    >
+      {children}
+    </main>
+  </div>
+
+  {!isAuthPage && <Footer {...footerData} />}
+</div>
+
+          </CartProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

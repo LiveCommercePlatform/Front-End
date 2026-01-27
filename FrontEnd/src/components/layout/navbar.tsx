@@ -21,10 +21,9 @@ import { useCart } from "@/context/CartContext";
 
 export function Navbar() {
   const [search, setSearch] = useState("");
-  
-  // Get cartCount from context
+
   const { cart } = useCart();
-  const cartCount = cart.length; 
+  const cartCount = cart.length;
 
   const handleLogout = () => {
     toast.success("با موفقیت خارج شدید");
@@ -35,16 +34,18 @@ export function Navbar() {
   };
 
   return (
-    <header className="w-full h-14 border-b flex items-center px-4 justify-between bg-background">
-      <h1 className="text-xl font-bold">📦 سایت من</h1>
+    <header className="fixed top-0 left-0 right-0 z-50 h-12 md:h-14 border-b flex items-center px-3 md:px-4 justify-between bg-background">
+      <h1 className="text-[15px] md:text-md lg:text-lg font-bold">
+        📦 سایت من
+      </h1>
 
-      <div className="flex-1 mx-4 max-w-md">
+      <div className="flex-1 mx-2 md:mx-4 max-w-xs md:max-w-md">
         <div className="relative">
           <Input
             placeholder="جستجو..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pr-10 rounded-full"
+            className="pr-9 md:pr-10 rounded-full text-xs md:text-sm"
           />
           <Button
             onClick={handleSearch}
@@ -52,21 +53,20 @@ export function Navbar() {
             variant="ghost"
             className="absolute top-1/2 -translate-y-1/2 right-1 rounded-full"
           >
-            <Search className="h-4 w-4" />
+            <Search className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <ModeToggle />
-
+      <div className="flex items-center md:gap-2">
+        <ModeToggle className="w-4 md:w-9" />
         <Link href="/cart" className="relative">
           <Button variant="ghost" size="icon" className="rounded-full">
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-3 w-4 md:h-5 md:w-5" />
           </Button>
 
           {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] md:text-xs rounded-full px-1.5 py-0.5">
               {toPersianDigits(cartCount)}
             </span>
           )}
@@ -74,8 +74,8 @@ export function Navbar() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Avatar className="cursor-pointer">
-              <AvatarImage src="https://github.com/shadcn.png" />
+            <Avatar className="cursor-pointer w-6 h-6 md:w-9 md:h-9">
+              <AvatarImage src="https://randomuser.me/api/portraits/men/50.jpg" />
               <AvatarFallback>شما</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
