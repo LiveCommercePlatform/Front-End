@@ -1,64 +1,113 @@
-// components/ui/ProductCard.tsx
 "use client";
 
-import Image from "next/image";
-import { Heart, ShoppingBag } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { toPersianDigits } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import clsx from "clsx";
 
-interface ProductCardProps {
-  id:string;
+export type ProductCardStatus = "active" | "inactive";
+
+export type ProductCardProps = {
   title: string;
-  description?: string;
-  image: string;
-  bestseller?:Boolean;
-  price?: string;
-}
+  price: number;
+  status: ProductCardStatus;
+  cover?: string;
+  showEdit?: boolean;
+  showDelete?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  className?: string;
+};
 
 export default function ProductCard({
-  id,
   title,
-  description,
-  image,
-  bestseller,
-  price = "$180.00",
+  price,
+  status,
+  cover,
+  showEdit = true,
+  showDelete = true,
+  onEdit,
+  onDelete,
+  className,
 }: ProductCardProps) {
-  const router = useRouter();
   return (
-    <div className="w-full bg-card rounded-3xl shadow-md p-4 flex flex-col items-center hover:shadow-lg transition-shadow duration-200">
-      <div className="bg-gray-50 rounded-2xl w-full h-48 flex justify-center items-center mb-3">
-        <Image
-          src={image}
-          alt={title}
-          width={300}
-          height={200}
-          className="object-contain"
-        />
-      </div>
-      {/* تگ ها با استفاده از boolean  */}
-      <div className="w-full text-end ps-5" dir="rtl">
-        {bestseller ? <span className="bg-green-50 text-green-600 text-xs font-medium px-3 py-1 rounded-full mb-1">
-          Best Seller
-        </span> : <br/>}
-        {/* <span className="bg-red-50 text-red-600 text-xs font-medium px-3 py-1 rounded-full mb-1">
-          Best Seller
-        </span> */}
-      </div>
-
-      <div className="w-full text-start ps-5" dir="rtl">
-        <h2 className="text-card-foreground text-lg font-semibold ">{title}</h2>
-        {description!=null ? (
-          <p className="text-gray-400 text-sm mt-1">{description}</p>
-        ) : (<br/>)}
+    <div
+      className={clsx(
+        "rounded-xl border bg-card overflow-hidden flex flex-col transition hover:shadow-md",
+        className
+      )}
+    >
+      {/* Cover */}
+      <div className="h-32 bg-muted overflow-hidden">
+        {cover ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={cover}
+            alt={title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-sm opacity-60">
+            بدون تصویر
+          </div>
+        )}
       </div>
 
-      {/* Price and Button */}
-      <div className="flex justify-between items-center w-full mt-3">
-        <p className="text-green-600 font-bold text-lg">{price}</p>
-        <button className="cursor-pointer text-muted-foreground px-4 py-2 rounded-xl font-medium hover:bg-gray-200 hover:text-black flex items-center gap-2"
-          onClick={() => router.push(`/product/${id}`)}>
-          <ShoppingBag className="w-4 h-4" />
-          مشاهده و خرید
-        </button>
+      {/* Content */}
+      <div className="p-4 flex flex-col justify-between flex-1">
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <h4 className="font-semibold text-sm leading-snug line-clamp-2">
+              {title}
+            </h4>
+
+            <Badge
+              variant="secondary"
+              className={
+                status === "active"
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
+                  : ""
+              }
+            >
+              {status === "active" ? "فعال" : "غیرفعال"}
+            </Badge>
+          </div>
+
+          <p className="text-sm opacity-70">
+            قیمت: {toPersianDigits(price)} تومان
+          </p>
+        </div>
+
+        {(showEdit || showDelete) && (
+          <div className="flex items-center justify-between mt-4">
+            {showEdit ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-yellow-600"
+                onClick={onEdit}
+              >
+                <Pencil className="w-4 h-4" />
+                ویرایش
+              </Button>
+            ) : (
+              <span />
+            )}
+
+            {showDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-red-600"
+                onClick={onDelete}
+              >
+                <Trash2 className="w-4 h-4" />
+                حذف
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

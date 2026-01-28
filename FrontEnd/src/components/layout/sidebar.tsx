@@ -1,79 +1,123 @@
 "use client";
 
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import clsx from "clsx";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Home, LayoutDashboard, Users, Settings, Menu } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import clsx from "clsx";
+import { Button } from "@/components/ui/button";
+import {
+  Home,
+  Plus,
+  LayoutDashboard,
+  Users,
+  Package,
+  Settings,
+} from "lucide-react";
+import { useSidebar } from "@/context/SidebarContext";
 
 const sidebarItems = [
   { href: "/", icon: Home, label: "صفحه اصلی" },
   { href: "/dashboard", icon: LayoutDashboard, label: "داشبورد" },
+
+  // --- Domain ---
+  { href: "/products", icon: Package, label: "محصولات" },
+
+  // --- Action ---
+  { href: "/products/new", icon: Plus, label: "افزودن محصول" },
+
+  // --- Management ---
   { href: "/users", icon: Users, label: "کاربران" },
+
+  // --- System ---
   { href: "/settings", icon: Settings, label: "تنظیمات" },
 ];
 
-export function SidebarMobile() {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="w-6 h-6" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="p-0">
-        <SidebarContent />
-      </SheetContent>
-    </Sheet>
-  );
-}
-
 export function Sidebar() {
+  const { collapsed } = useSidebar();
+
   return (
-    <aside className="hidden md:flex fixed top-12 md:top-14 right-0 h-[calc(100vh-3rem)] md:h-[calc(100vh-3.5rem)] w-16 flex-col items-center border-start bg-muted">
-      <SidebarContent />
+    <aside
+      style={{ width: collapsed ? "4rem" : "14rem" }}
+      className="
+        hidden md:flex fixed top-12 md:top-14 right-0
+        h-[calc(100vh-3rem)] md:h-[calc(100vh-3.5rem)]
+        border-start bg-muted transition-all duration-300 px-2
+      "
+    >
+      <SidebarContent collapsed={collapsed} />
     </aside>
   );
 }
 
-function SidebarContent() {
+function SidebarButton({
+  isActive,
+  collapsed,
+  Icon,
+  label,
+}: {
+  isActive: boolean;
+  collapsed: boolean;
+  Icon: React.ElementType;
+  label: string;
+}) {
+  return (
+    <Button
+      variant={isActive ? "secondary" : "ghost"}
+      className={clsx(
+        "w-full flex items-center gap-3 justify-start px-3 h-10",
+        collapsed && "justify-center px-0",
+        isActive && "ring-2 ring-primary",
+      )}
+    >
+      <Icon className="w-5 h-5 shrink-0" />
+      {!collapsed && <span className="text-sm whitespace-nowrap">{label}</span>}
+    </Button>
+  );
+}
+
+function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
 
   return (
-    <TooltipProvider>
-      <div className="flex flex-col items-center gap-4 py-4 rtl">
+    <TooltipProvider delayDuration={100}>
+      <div className="flex flex-col gap-2 py-4 w-full">
         {sidebarItems.map((item) => {
           const Icon = item.icon;
-
-          // فعال بودن: اگر pathname دقیقاً برابر href باشه، یا با href شروع بشه (برای subpages)
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
 
           return (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>
+            <div key={item.href}>
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={item.href}>
+                      <SidebarButton
+                        Icon={Icon}
+                        label={item.label}
+                        isActive={isActive}
+                        collapsed
+                      />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">{item.label}</TooltipContent>
+                </Tooltip>
+              ) : (
                 <Link href={item.href}>
-                  <Button
-                    variant={isActive ? "secondary" : "ghost"}
-                    size="icon"
-                    className={clsx(
-                      "w-10 h-10",
-                      isActive && "ring-2 ring-primary"
-                    )}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </Button>
+                  <SidebarButton
+                    Icon={Icon}
+                    label={item.label}
+                    isActive={isActive}
+                    collapsed={false}
+                  />
                 </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">{item.label}</TooltipContent>
-            </Tooltip>
+              )}
+            </div>
           );
         })}
       </div>

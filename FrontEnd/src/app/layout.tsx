@@ -3,7 +3,8 @@
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
-import { Sidebar, SidebarMobile } from "@/components/layout/sidebar";
+import { Sidebar } from "@/components/layout/sidebar";
+import { useSidebar, SidebarProvider } from "@/context/SidebarContext";
 import { vazir } from "@/lib/fonts";
 import { Toaster } from "react-hot-toast";
 import { Footer } from "@/components/ui/footer";
@@ -17,9 +18,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/register";
-
   return (
     <html
       lang="fa"
@@ -42,28 +40,42 @@ export default function RootLayout({
 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <CartProvider>
-            <div className="flex flex-col min-h-screen">
-  {!isAuthPage && <Navbar />}
-
-  <div className="flex flex-1">
-    {!isAuthPage && <Sidebar />}
-
-    <main
-      className={clsx("flex-1", {
-        "": isAuthPage,
-        "p-4 pt-12 md:pt-14 md:pr-16 overflow-auto": !isAuthPage,
-      })}
-    >
-      {children}
-    </main>
-  </div>
-
-  {!isAuthPage && <Footer {...footerData} />}
-</div>
-
+            <SidebarProvider>
+              <LayoutContent>{children}</LayoutContent>
+            </SidebarProvider>
           </CartProvider>
         </ThemeProvider>
       </body>
     </html>
+  );
+}
+
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const { collapsed } = useSidebar();
+  const pathname = usePathname();
+  const isAuthPage = pathname === "/login" || pathname === "/register";
+
+  return (
+    <div
+      data-sidebar={collapsed ? "collapsed" : "expanded"}
+      className="flex flex-col min-h-screen"
+    >
+      {!isAuthPage && <Navbar />}
+
+      <div className="flex flex-1">
+        {!isAuthPage && <Sidebar />}
+
+        <main
+          className={clsx(
+            "flex-1 p-4 pt-12 md:pt-14 overflow-auto",
+            !isAuthPage && "md:pr-[var(--sidebar-width)]",
+          )}
+        >
+          {children}
+        </main>
+      </div>
+
+      {!isAuthPage && <Footer {...footerData} />}
+    </div>
   );
 }

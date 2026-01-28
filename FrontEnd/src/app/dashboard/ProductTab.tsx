@@ -1,19 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { toPersianDigits } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import ListToolbar from "@/components/ui/ListToolbar";
-
-type ProductStatus = "all" | "active" | "inactive";
-
-type Product = {
-  id: number;
-  title: string;
-  price: number;
-  status: ProductStatus;
-};
+import { Button } from "@/components/ui/button";
+import ProductCard from "@/components/ui/ProductCard";
+import { ProductStatus, Product } from "@/types/product";
 
 export default function ProductsTab() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ProductStatus>("all");
 
@@ -23,12 +18,14 @@ export default function ProductsTab() {
       title: "دوره آموزش Next.js",
       price: 1200000,
       status: "active",
+      cover: "https://picsum.photos/600/400?1",
     },
     {
       id: 2,
       title: "پکیج طراحی UI",
       price: 850000,
       status: "inactive",
+      cover: "https://picsum.photos/600/400?2",
     },
   ];
 
@@ -68,54 +65,29 @@ export default function ProductsTab() {
           },
         ]}
         actions={
-          <button className="px-4 py-2 rounded-lg border bg-primary">
+          <Button onClick={() => router.push("/new_product")}>
             افزودن محصول جدید
-          </button>
+          </Button>
         }
       />
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {filteredProducts.map((product) => (
-          <div
-            key={product.id}
-            className="rounded-xl shadow p-4 flex flex-col justify-between border"
-          >
-            <div>
-              <h4 className="font-semibold text-lg mb-2">
-                {product.title}
-              </h4>
-
-              <p className="text-sm opacity-70 mb-2">
-                قیمت: {toPersianDigits(product.price)} تومان
-              </p>
-
-              <span
-                className={`inline-block text-xs px-3 py-1 rounded-full ${
-                  product.status === "active"
-                    ? "bg-emerald-100 text-emerald-600"
-                    : "bg-gray-200 text-gray-600"
-                }`}
-              >
-                {product.status === "active" ? "فعال" : "غیرفعال"}
-              </span>
-            </div>
-
-            <div className="flex justify-between mt-4 text-sm">
-              <button className="text-yellow-600 hover:underline">
-                ویرایش
-              </button>
-              <button className="text-red-500 hover:underline">
-                حذف
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Empty state */}
-      {filteredProducts.length === 0 && (
-        <div className="text-center opacity-60">
+      {/* Products */}
+      {filteredProducts.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              title={product.title}
+              price={product.price}
+              status={product.status}
+              cover={product.cover}
+              onEdit={() => router.push(`/products/${product.id}/edit`)}
+              onDelete={() => console.log("delete", product.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border bg-muted/30 p-10 text-center text-sm opacity-70">
           هنوز محصولی ثبت نشده است
         </div>
       )}
