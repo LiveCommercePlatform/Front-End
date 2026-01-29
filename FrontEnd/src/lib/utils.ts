@@ -26,3 +26,12 @@ export function formatTimeAgo(date: Date | string) {
   const diffDays = Math.floor(diffHours / 24)
   return `${toPersianDigits(diffDays)} روز پیش`
 }
+
+export function slugifyEn(input: string) {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "") // فقط انگلیسی
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
