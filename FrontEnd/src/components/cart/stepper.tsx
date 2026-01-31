@@ -1,52 +1,76 @@
 "use client";
 
 import React from "react";
+import clsx from "clsx";
 
 type StepperProps = {
-  steps?: string[];
-  current?: number;
+  steps: string[];
+  current: number;
+  onChange?: (step: number) => void;
 };
 
-export function Stepper({
-  steps = ["سبد خرید", "آدرس", "پرداخت"],
-  current = 0,
-}: StepperProps) {
-  const getStepClass = (done: boolean, active: boolean) => {
-    if (done || active) {
-      return "bg-primary text-primary-foreground border-none shadow-btn";
-    } else {
-      return "bg-card text-foreground border border-border shadow-btn";
-    }
-  };
-
+export function Stepper({ steps, current, onChange }: StepperProps) {
   return (
-    <nav aria-label="progress" className="mb-6">
-      <ol className="flex items-center gap-6 w-full justify-center" dir="rtl">
+    <nav aria-label="progress" className="mb-8">
+      <ol
+        className="flex items-center justify-center w-full gap-6"
+        dir="rtl"
+      >
         {steps.map((label, i) => {
           const done = i < current;
           const active = i === current;
+          const clickable = onChange && i <= current + 1;
 
           return (
-            <li key={i} className="flex items-center gap-4 w-full">
+            <li
+              key={label}
+              className="flex items-center gap-4 w-full cursor-pointer select-none"
+              onClick={() => clickable && onChange?.(i)}
+            >
+              {/* Circle */}
               <div
-                className={
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm " +
-                  getStepClass(done, active)
-                }
+                className={clsx(
+                  "relative w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300",
+                  done || active
+                    ? "bg-primary text-primary-foreground scale-105"
+                    : "bg-card border border-border text-foreground",
+                  clickable && "hover:scale-110"
+                )}
               >
-                {done ? "✓" : i + 1}
+                {/* ripple animation */}
+                {active && (
+                  <span className="absolute inset-0 rounded-full animate-ping bg-primary/30" />
+                )}
+
+                <span className="relative z-10">
+                  {done ? "✓" : i + 1}
+                </span>
               </div>
+
+              {/* Label */}
               <span
-                className={`text-sm ${
+                className={clsx(
+                  "text-sm transition-colors duration-300",
                   active
                     ? "font-semibold text-primary"
-                    : "text-foreground dark:text-foreground"
-                }`}
+                    : done
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                )}
               >
                 {label}
               </span>
+
+              {/* Line */}
               {i < steps.length - 1 && (
-                <div className="flex-1 h-[2px] bg-[var(--border)] dark:bg-[var(--border)]"></div>
+                <div className="flex-1 h-[3px] bg-border rounded overflow-hidden">
+                  <div
+                    className={clsx(
+                      "h-full bg-primary transition-all duration-500",
+                      done ? "w-full" : "w-0"
+                    )}
+                  />
+                </div>
               )}
             </li>
           );

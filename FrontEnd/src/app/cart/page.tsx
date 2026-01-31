@@ -8,12 +8,13 @@ import { toPersianDigits } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import Lottie from "react-lottie-player";
-import animationData from "./empty-cart-animation.json"; 
+import animationData from "./empty-cart-animation.json";
 
 export default function CartPage() {
+  const [currentstep, setCurrentStep] = useState(0);
   const { cart, updateQty, removeFromCart } = useCart();
   const [selected, setSelected] = useState<Record<string | number, boolean>>(
-    {}
+    {},
   );
 
   const toggleSelect = (id: number | string) => {
@@ -52,7 +53,11 @@ export default function CartPage() {
 
   return (
     <main className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8" dir="rtl">
-      <Stepper current={0} steps={["سبد خرید", "آدرس", "پرداخت"]} />
+      <Stepper
+        steps={["سبد خرید", "آدرس", "پرداخت"]}
+        current={currentstep}
+        onChange={(step) => setCurrentStep(step)}
+      />
 
       <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
         <div className="md:col-span-2 space-y-4">
@@ -73,7 +78,7 @@ export default function CartPage() {
               />
               <span className="text-sm">
                 {toPersianDigits(
-                  Object.values(selected).filter(Boolean).length
+                  Object.values(selected).filter(Boolean).length,
                 )}
                 /{toPersianDigits(cart.length)} موارد انتخاب شده
               </span>
@@ -84,7 +89,7 @@ export default function CartPage() {
               disabled={Object.values(selected).every((v) => !v)}
               onClick={() => {
                 const toRemove = Object.keys(selected).filter(
-                  (k) => selected[k]
+                  (k) => selected[k],
                 );
                 toRemove.forEach((id) => removeFromCart(Number(id)));
                 setSelected({});
@@ -94,9 +99,9 @@ export default function CartPage() {
             </Button>
           </div>
 
-          {cart.map((it) => (
+          {cart.map((it, index) => (
             <CartItem
-              key={it.id}
+              key={index}
               item={it}
               onQtyChange={updateQty}
               onRemove={removeFromCart}

@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { Search, ShoppingCart, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Search,
+  ShoppingCart,
+  PanelRightOpen,
+  PanelRightClose,
+  LogOut,
+  Settings,
+} from "lucide-react";
 
 import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
@@ -20,20 +28,36 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toPersianDigits } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { useSidebar } from "@/context/SidebarContext";
+import { apiFetch } from "@/lib/api";
+import { tokenStore } from "@/lib/token";
+import { logoutRequest } from "@/lib/auth";
 
 export function Navbar() {
   const [search, setSearch] = useState("");
   const { cart } = useCart();
   const { collapsed, toggle } = useSidebar();
+  const router = useRouter();
 
   const handleSearch = () => {
     toast(`جستجو برای: ${search}`);
   };
 
+  const handleLogout = async () => {
+  try {
+    await logoutRequest();
+    toast.success("با موفقیت خارج شدید");
+  } catch {
+    toast.error("خطا در خروج ()");
+  } finally {
+    router.push("/login");
+    router.refresh();
+  }
+};
+
   return (
     <header className="fixed top-0 right-0 left-0 z-50 h-12 md:h-14 border-b bg-background">
       <div className="h-full flex items-center justify-between px-3 md:px-4">
-        {/* Right section (RTL) */}
+        {/* Right section */}
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={toggle}>
             {collapsed ? (
@@ -70,6 +94,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <ModeToggle />
 
+          {/* Cart */}
           <Link href="/cart" className="relative">
             <Button variant="ghost" size="icon">
               <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
@@ -81,6 +106,7 @@ export function Navbar() {
             )}
           </Link>
 
+          {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Avatar className="cursor-pointer w-7 h-7 md:w-9 md:h-9">
@@ -88,12 +114,32 @@ export function Navbar() {
                 <AvatarFallback>شما</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>پروفایل</DropdownMenuLabel>
+
+            <DropdownMenuContent
+              align="end"
+              sideOffset={8}
+              className="w-35 rounded-xl border bg-popover text-popover-foreground shadow-lg"
+            >
+              <DropdownMenuLabel className="text-right text-sm">
+                حساب کاربری
+              </DropdownMenuLabel>
+
               <DropdownMenuSeparator />
-              <DropdownMenuItem>تنظیمات</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.success("خارج شدید")}>
+
+              <DropdownMenuItem
+                className="cursor-pointer justify-end gap-2"
+                onClick={() => router.push("/profile/settings")}
+              >
+                تنظیمات   
+                <Settings className="w-4 h-4" />
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className="cursor-pointer justify-end gap-2 text-red-600 focus:text-red-600"
+                onClick={handleLogout}
+              >
                 خروج
+                <LogOut className="w-4 h-4" />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

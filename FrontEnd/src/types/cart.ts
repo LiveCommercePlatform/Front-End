@@ -1,9 +1,9 @@
 export type CartItemType = {
   id: number | string
-  name: string
+  title: string
   price: number
   qty: number
-  image: string
+  cover: string
   deliveryInfo?: string
 }
 

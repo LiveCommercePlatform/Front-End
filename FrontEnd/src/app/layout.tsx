@@ -53,7 +53,7 @@ export default function RootLayout({
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar();
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/forget_password";
 
   return (
     <div

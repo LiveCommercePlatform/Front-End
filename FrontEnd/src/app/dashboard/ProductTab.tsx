@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import ListToolbar from "@/components/ui/ListToolbar";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ui/ProductCard";
-import { ProductStatus, Product } from "@/types/product";
+import { ProductStatus, Product } from "@/types";
 
 export default function ProductsTab() {
   const router = useRouter();
@@ -14,14 +14,14 @@ export default function ProductsTab() {
 
   const products: Product[] = [
     {
-      id: 1,
+      id: "1",
       title: "دوره آموزش Next.js",
       price: 1200000,
       status: "active",
       cover: "https://picsum.photos/600/400?1",
     },
     {
-      id: 2,
+      id: "2",
       title: "پکیج طراحی UI",
       price: 850000,
       status: "inactive",
@@ -47,7 +47,6 @@ export default function ProductsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Toolbar */}
       <ListToolbar
         searchValue={search}
         onSearchChange={setSearch}
@@ -74,13 +73,15 @@ export default function ProductsTab() {
       {/* Products */}
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
+          {filteredProducts.map((product,key) => (
             <ProductCard
-              key={product.id}
+            key={key}
+              id={product.id}
               title={product.title}
               price={product.price}
               status={product.status}
               cover={product.cover}
+              showState={true}
               onEdit={() => router.push(`/products/${product.id}/edit`)}
               onDelete={() => console.log("delete", product.id)}
             />

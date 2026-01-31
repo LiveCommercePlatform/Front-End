@@ -5,17 +5,7 @@ import ProductCard from "@/components/ui/ProductCard";
 import ListToolbar from "@/components/ui/ListToolbar";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-type ProductStatus = "active" | "inactive";
-
-type Product = {
-  id: number;
-  title: string;
-  price: number;
-  status: ProductStatus;
-  cover?: string;
-  category?: string;
-};
+import { Product, ProductStatus } from "@/types";
 
 const PAGE_SIZE = 6;
 
@@ -25,47 +15,46 @@ export default function AllProductsPage() {
   const [page, setPage] = useState(1);
 
   const products: Product[] = [
-    {
-      id: 1,
-      title: "دوره آموزش Next.js",
-      price: 1200000,
-      status: "active",
-      cover: "https://picsum.photos/600/400?1",
-      category: "education",
-    },
-    {
-      id: 2,
-      title: "پکیج طراحی UI",
-      price: 850000,
-      status: "active",
-      cover: "https://picsum.photos/600/400?2",
-      category: "design",
-    },
-    {
-      id: 3,
-      title: "اپلیکیشن مدیریت پروژه",
-      price: 540000,
-      status: "active",
-      cover: "https://picsum.photos/600/400?3",
-      category: "software",
-    },
-    {
-      id: 4,
-      title: "دوره پیشرفته TypeScript",
-      price: 990000,
-      status: "active",
-      cover: "https://picsum.photos/600/400?4",
-      category: "education",
-    },
+    // {
+    //   id: "1",
+    //   title: "دوره آموزش Next.js",
+    //   price: 1200000,
+    //   status: "active",
+    //   cover: "https://picsum.photos/600/400?1",
+    //   category: "education",
+    // },
+    // {
+    //   id: "2",
+    //   title: "پکیج طراحی UI",
+    //   price: 850000,
+    //   status: "active",
+    //   cover: "https://picsum.photos/600/400?2",
+    //   category: "design",
+    // },
+    // {
+    //   id: "3",
+    //   title: "اپلیکیشن مدیریت پروژه",
+    //   price: 540000,
+    //   status: "active",
+    //   cover: "https://picsum.photos/600/400?3",
+    //   category: "software",
+    // },
+    // {
+    //   id: "5",
+    //   title: "دوره پیشرفته TypeScript",
+    //   price: 990000,
+    //   status: "active",
+    //   cover: "https://picsum.photos/600/400?4",
+    //   category: "education",
+    // },
   ];
-
 
   const filtered = useMemo(() => {
     let result = products.filter((p) => p.status === "active");
 
     if (search) {
       result = result.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase())
+        p.title.toLowerCase().includes(search.toLowerCase()),
       );
     }
 
@@ -116,21 +105,38 @@ export default function AllProductsPage() {
       {/* Products */}
       {paginatedProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedProducts.map((product) => (
+          {paginatedProducts.map((product, key) => (
             <ProductCard
-              key={product.id}
+              key={key}
+              id={product.id}
               title={product.title}
               price={product.price}
               status={product.status}
               cover={product.cover}
+              showAddToCart={true}
               showEdit={false}
               showDelete={false}
             />
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border bg-muted/30 p-12 text-center text-sm opacity-70">
-          محصولی با این فیلتر پیدا نشد
+        <div className="min-h-[60vh] w-full flex items-center justify-center px-4">
+          <div className="max-w-md w-full rounded-2xl border bg-card p-10 text-center shadow-sm">
+            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <span className="text-2xl">📦</span>
+            </div>
+
+            <h3 className="text-lg font-semibold mb-2">محصولی موجود نیست</h3>
+
+            <p className="text-sm text-muted-foreground mb-6">
+              در حال حاضر هیچ محصولی برای نمایش وجود ندارد. لطفاً بعداً دوباره
+              بررسی کنید.
+            </p>
+
+            <button className="inline-flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted transition">
+              بازگشت
+            </button>
+          </div>
         </div>
       )}
 
