@@ -5,10 +5,10 @@ import ProductCard from "@/components/ui/ProductCard";
 import ListToolbar from "@/components/ui/ListToolbar";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Product, ProductStatus } from "@/types";
+import { Product } from "@/types";
+import { categoryOptions } from "@/constant/category-data";
 
 const PAGE_SIZE = 6;
-
 export default function AllProductsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
@@ -92,12 +92,7 @@ export default function AllProductsPage() {
               setCategory(v);
               setPage(1);
             },
-            options: [
-              { label: "همه دسته‌ها", value: "all" },
-              { label: "آموزشی", value: "education" },
-              { label: "طراحی", value: "design" },
-              { label: "نرم‌افزار", value: "software" },
-            ],
+            options: categoryOptions,
           },
         ]}
       />

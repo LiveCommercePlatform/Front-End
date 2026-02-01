@@ -1,3 +1,5 @@
+"use client";
+
 const ACCESS = "access_token";
 const REFRESH = "refresh_token";
 const USER_ID = "user_id";

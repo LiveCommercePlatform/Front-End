@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import ListToolbar from "@/components/ui/ListToolbar";
+import UserCard from "@/components/ui/UserCard";
+import Pagination from "@/components/ui/Pagination";
 
 type UserStatus = "all" | "active" | "inactive";
 
@@ -9,39 +11,50 @@ type User = {
   id: number;
   name: string;
   email: string;
-  status: UserStatus;
+  status: "active" | "inactive";
+  role: "admin" | "user";
 };
+
+const PAGE_SIZE = 6;
+
+/* ===== Fake Users (mock) ===== */
+const USERS: User[] = Array.from({ length: 50 }, (_, i) => ({
+  id: i + 1,
+  name: `کاربر ${i + 1}`,
+  email: `user${i + 1}@test.com`,
+  status: i % 3 === 0 ? "inactive" : "active",
+  role: i % 5 === 0 ? "admin" : "user",
+}));
 
 export default function UsersTab() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<UserStatus>("all");
+  const [page, setPage] = useState(1);
 
-  const users: User[] = [
-    {
-      id: 1,
-      name: "علی رضایی",
-      email: "ali@test.com",
-      status: "active",
-    },
-  ];
-
+  /* ===== Filter users ===== */
   const filteredUsers = useMemo(() => {
-    let result = [...users];
+    return USERS.filter((u) => {
+      const matchSearch =
+        !search ||
+        u.name.includes(search) ||
+        u.email.toLowerCase().includes(search.toLowerCase());
 
-    if (search) {
-      result = result.filter(
-        (u) =>
-          u.name.includes(search) ||
-          u.email.toLowerCase().includes(search.toLowerCase())
-      );
-    }
+      const matchStatus = status === "all" || u.status === status;
 
-    if (status !== "all") {
-      result = result.filter((u) => u.status === status);
-    }
+      return matchSearch && matchStatus;
+    });
+  }, [search, status]);
 
-    return result;
-  }, [users, search, status]);
+  /* ===== Reset page on filter/search ===== */
+  useEffect(() => {
+    setPage(1);
+  }, [search, status]);
+
+  /* ===== Paginated users ===== */
+  const paginatedUsers = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredUsers.slice(start, start + PAGE_SIZE);
+  }, [filteredUsers, page]);
 
   return (
     <div className="space-y-6">
@@ -64,52 +77,34 @@ export default function UsersTab() {
         ]}
       />
 
-      {/* Users Table */}
-      <div className="rounded-xl border overflow-hidden">
-        <table className="w-full text-right text-sm">
-          <thead className="border-b">
-            <tr>
-              <th className="px-4 py-3 font-medium">نام</th>
-              <th className="px-4 py-3 font-medium">ایمیل</th>
-              <th className="px-4 py-3 font-medium">وضعیت</th>
-              <th className="px-4 py-3 font-medium">عملیات</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr
-                key={user.id}
-                className="border-b last:border-b-0 hover:bg-muted/40 transition-colors"
-              >
-                <td className="px-4 py-3 font-medium">{user.name}</td>
-
-                <td className="px-4 py-3 opacity-80">{user.email}</td>
-
-                <td className="px-4 py-3">
-                  <span
-                    className={`font-medium ${
-                      user.status === "active"
-                        ? "text-green-600"
-                        : "text-red-500"
-                    }`}
-                  >
-                    {user.status === "active" ? "فعال" : "غیرفعال"}
-                  </span>
-                </td>
-
-                <td className="px-4 py-3">
-                  <button className="text-sm hover:underline">مشاهده</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredUsers.length === 0 && (
-          <div className="p-4 text-center opacity-60">کاربری یافت نشد</div>
+      {/* Users */}
+      <div className="space-y-2">
+        {paginatedUsers.length > 0 ? (
+          paginatedUsers.map((user) => (
+            <UserCard
+              key={user.id}
+              name={user.name}
+              email={user.email}
+              role={user.role}
+              status={user.status === "active" ? "active" : "banned"}
+              onView={() => console.log("view", user.id)}
+              onBan={() => console.log("ban", user.id)}
+              onDelete={() => console.log("delete", user.id)}
+            />
+          ))
+        ) : (
+          <div className="rounded-lg border p-6 text-center opacity-60">
+            کاربری یافت نشد
+          </div>
         )}
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        page={page}
+        totalItems={filteredUsers.length}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

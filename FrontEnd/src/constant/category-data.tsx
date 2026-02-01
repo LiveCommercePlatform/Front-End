@@ -46,3 +46,11 @@ export const categories_data = [
     name: "photography", // تگ انگلیسی برای URL
   },
 ];
+
+export const categoryOptions = [
+  { label: "همه دسته‌ها", value: "all" },
+  ...categories_data.map((cat) => ({
+    label: cat.title,   // فارسی برای UI
+    value: cat.name,    // انگلیسی برای URL / API
+  })),
+];

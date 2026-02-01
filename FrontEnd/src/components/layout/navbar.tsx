@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import {
@@ -11,6 +11,7 @@ import {
   PanelRightClose,
   LogOut,
   Settings,
+  LogIn,
 } from "lucide-react";
 
 import { ModeToggle } from "@/components/mode-toggle";
@@ -28,7 +29,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toPersianDigits } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { useSidebar } from "@/context/SidebarContext";
-import { apiFetch } from "@/lib/api";
 import { tokenStore } from "@/lib/token";
 import { logoutRequest } from "@/lib/auth";
 
@@ -37,22 +37,30 @@ export function Navbar() {
   const { cart } = useCart();
   const { collapsed, toggle } = useSidebar();
   const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+    setIsLoggedIn(!!tokenStore.getAccess());
+  }, []);
+
+  if (!mounted) return null;
   const handleSearch = () => {
     toast(`جستجو برای: ${search}`);
   };
 
   const handleLogout = async () => {
-  try {
-    await logoutRequest();
-    toast.success("با موفقیت خارج شدید");
-  } catch {
-    toast.error("خطا در خروج ()");
-  } finally {
-    router.push("/login");
-    router.refresh();
-  }
-};
+    try {
+      await logoutRequest();
+
+      toast.success("با موفقیت خارج شدید");
+      router.push("/login");
+      router.refresh();
+    } catch (err) {
+      toast.error("خطا در خروج");
+    }
+  };
 
   return (
     <header className="fixed top-0 right-0 left-0 z-50 h-12 md:h-14 border-b bg-background">
@@ -95,16 +103,20 @@ export function Navbar() {
           <ModeToggle />
 
           {/* Cart */}
-          <Link href="/cart" className="relative">
-            <Button variant="ghost" size="icon">
-              <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
-            </Button>
-            {cart.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] md:text-xs rounded-full px-1.5">
-                {toPersianDigits(cart.length)}
-              </span>
-            )}
-          </Link>
+
+          {isLoggedIn && (
+            <Link href="/cart" className="relative">
+              <Button variant="ghost" size="icon">
+                <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
+              </Button>
+
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] md:text-xs rounded-full px-1.5">
+                  {toPersianDigits(cart.length)}
+                </span>
+              )}
+            </Link>
+          )}
 
           {/* User menu */}
           <DropdownMenu>
@@ -118,9 +130,19 @@ export function Navbar() {
             <DropdownMenuContent
               align="end"
               sideOffset={8}
-              className="w-35 rounded-xl border bg-popover text-popover-foreground shadow-lg"
+              className="
+      w-40
+      rounded-xl
+      border
+      bg-white dark:bg-zinc-900
+      text-foreground
+      shadow-xl
+      mx-4
+    "
             >
-              <DropdownMenuLabel className="text-right text-sm">
+              <DropdownMenuLabel onClick={
+                ()=>router.push("/dashboard")
+                } className="text-right text-sm opacity-80">
                 حساب کاربری
               </DropdownMenuLabel>
 
@@ -130,16 +152,31 @@ export function Navbar() {
                 className="cursor-pointer justify-end gap-2"
                 onClick={() => router.push("/profile/settings")}
               >
-                تنظیمات   
+                تنظیمات
                 <Settings className="w-4 h-4" />
               </DropdownMenuItem>
 
               <DropdownMenuItem
-                className="cursor-pointer justify-end gap-2 text-red-600 focus:text-red-600"
-                onClick={handleLogout}
+                onClick={
+                  isLoggedIn ? handleLogout : () => router.push("/login")
+                }
+                className={`cursor-pointer justify-end gap-2 ${
+                  isLoggedIn
+                    ? "text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/30"
+                    : "text-blue-600 focus:text-blue-600 focus:bg-blue-50 dark:focus:bg-blue-900/30"
+                }`}
               >
-                خروج
-                <LogOut className="w-4 h-4" />
+                {isLoggedIn ? (
+                  <>
+                    خروج
+                    <LogOut className="w-4 h-4" />
+                  </>
+                ) : (
+                  <>
+                    ورود
+                    <LogIn className="w-4 h-4" />
+                  </>
+                )}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

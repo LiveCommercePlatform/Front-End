@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { ImagePlus, X, RotateCcw, Eye, FileText } from "lucide-react";
+import { ImagePlus, X, Eye, FileText } from "lucide-react";
 import {
   Form,
   FormField,
@@ -57,8 +57,7 @@ const schema = z
     title: z.string().min(3),
     slug: z.string().min(1),
     description: z.string().optional(),
-    price: z.coerce.number().min(0),
-    compareAtPrice: z.coerce.number().optional(),
+    price: z.number().min(0, "قیمت نامعتبر است"),
     category: z.string(),
     tags: z.array(z.string()),
     publishMode: z.enum(["now", "scheduled"]),
@@ -81,7 +80,6 @@ type FormValues = z.infer<typeof schema>;
 
 export default function CreateProductPage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
@@ -110,15 +108,6 @@ export default function CreateProductPage() {
       form.setValue("slug", suggestedSlug);
     }
   }, [suggestedSlug]);
-
-  const setCover = (file: File) => {
-    if (!file.type.startsWith("image/")) return toast.error("فایل تصویر نیست");
-    if (file.size > 5 * 1024 * 1024) return toast.error("حداکثر ۵MB");
-
-    if (coverPreview) URL.revokeObjectURL(coverPreview);
-    setCoverPreview(URL.createObjectURL(file));
-    form.setValue("cover", file);
-  };
 
   const toggleTag = (tag: string) => {
     form.setValue(
@@ -157,7 +146,6 @@ export default function CreateProductPage() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
 
     const file = e.dataTransfer.files?.[0];
     if (file) handleCoverFile(file);
@@ -225,18 +213,15 @@ export default function CreateProductPage() {
               <div
                 onDragEnter={(e) => {
                   e.preventDefault();
-                  setIsDragging(true);
                 }}
                 onDragOver={(e) => {
                   e.preventDefault();
-                  setIsDragging(true);
                 }}
-                onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 className={[
                   "rounded-xl border border-dashed transition",
                   "p-4 md:p-6 flex flex-col md:flex-row gap-4 items-center",
-                  isDragging ? "bg-muted/60 border-primary" : "bg-transparent",
+                  "bg-transparent",
                 ].join(" ")}
               >
                 {/* Preview */}
@@ -303,10 +288,6 @@ export default function CreateProductPage() {
                       <ImagePlus className="w-4 h-4" />
                       انتخاب فایل
                     </Button>
-
-                    {isDragging && (
-                      <Badge variant="secondary">فایل را رها کنید</Badge>
-                    )}
                   </div>
 
                   <input
@@ -483,19 +464,6 @@ export default function CreateProductPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>قیمت</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="compareAtPrice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>قیمت قبل</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>

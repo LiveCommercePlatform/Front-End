@@ -51,7 +51,6 @@ const ListToolbar: React.FC<ListToolbarProps> = ({
   return (
     <div
       className={clsx(
-        // ✅ فقط این border primary شده
         "rounded-2xl border border-primary/50 bg-card/95 backdrop-blur shadow-sm",
         "p-4",
         className

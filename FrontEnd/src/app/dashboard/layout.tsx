@@ -1,0 +1,94 @@
+"use client";
+
+import { usePathname, useRouter } from "next/navigation";
+import Guard from "@/components/auth/Guard";
+import { DashboardProvider, useDashboard } from "@/context/DashboardContext";
+
+const tabs = [
+  { key: "products", label: "محصولات من" },
+  { key: "analytics", label: "تحلیل‌ها" },
+  { key: "users", label: "مدیریت کاربران" },
+  { key: "settings", label: "پروفایل کاربری" },
+];
+
+function DashboardShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const currentTab = pathname.split("/").at(-1);
+
+  const { profile, loading } = useDashboard();
+
+  const DEFAULT_AVATAR =
+    "https://commons.wikimedia.org/wiki/File:Unknown_person.jpg";
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        در حال بارگذاری...
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        پروفایل یافت نشد
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen p-3 md:p-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 md:gap-6 mb-6">
+        <img
+          src={`${DEFAULT_AVATAR}${encodeURIComponent(profile.name)}`}
+          alt="Profile"
+          className="w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-primary"
+        />
+        <div>
+          <h2 className="text-base md:text-2xl font-semibold">
+            {profile.name}
+          </h2>
+          <p className="text-xs md:text-sm">خوش آمدید به داشبورد</p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="relative mb-6">
+        <div className="flex justify-around items-center bg-card py-2 px-4 rounded-full shadow-sm">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => router.push(`/dashboard/${tab.key}`)}
+              className={`px-3 py-2 text-xs md:text-lg font-semibold transition-all ${
+                currentTab === tab.key
+                  ? "text-primary"
+                  : "text-muted hover:text-primary"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      {children}
+    </div>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Guard requireAuth>
+      <DashboardProvider>
+        <DashboardShell>{children}</DashboardShell>
+      </DashboardProvider>
+    </Guard>
+  );
+}

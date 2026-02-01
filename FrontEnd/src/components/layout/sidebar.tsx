@@ -19,6 +19,8 @@ import {
   Settings,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
+import { useEffect, useState } from "react";
+import { tokenStore } from "@/lib/token";
 
 const sidebarItems = [
   { href: "/", icon: Home, label: "صفحه اصلی" },
@@ -39,7 +41,15 @@ const sidebarItems = [
 
 export function Sidebar() {
   const { collapsed } = useSidebar();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+    setIsLoggedIn(!!tokenStore.getAccess());
+  }, []);
+
+  if (!mounted) return null;
   return (
     <aside
       style={{ width: collapsed ? "4rem" : "14rem" }}

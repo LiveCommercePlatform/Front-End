@@ -1,7 +1,7 @@
 import { tokenStore } from "./token";
 import { refreshAccessToken } from "./auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 let isRefreshing = false;
 let queue: Array<() => void> = [];
@@ -9,7 +9,7 @@ let queue: Array<() => void> = [];
 export async function apiFetch(url: string, options: RequestInit = {}) {
   const token = tokenStore.getAccess();
 
-  const res = await fetch(`http://localhost:8080${url}`, {
+  const res = await fetch(`${API_BASE}${url}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
