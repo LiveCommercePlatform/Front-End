@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
-import { toPersianDigits } from "@/lib/utils";
+import { formatPriceFa } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import {
 import { getErrorMessage } from "@/lib/getErrorMessage";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { tokenStore } from "@/lib/token";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -86,26 +87,25 @@ export default function RegisterPage() {
   const handleSendVerificationCode = async () => {
     if (!validateInputs()) return;
     try {
-      const res = await apiFetch(`/auth/signup`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-          }),
-        },
-      );
+      const res = await apiFetch(`/auth/signup`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(getErrorMessage(data?.error));
       }
-      setTempTokens({
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
+      tokenStore.setAuth({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        user_id: data.user_id,
+        role: data.role,
       });
-      toast.success("کد تایید ارسال شد!");
       setIsCodeSent(true);
       startTimer();
     } catch (err: any) {
@@ -115,46 +115,35 @@ export default function RegisterPage() {
 
   // ثبت‌نام نهایی
   const handleRegister = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!formData.verificationCode) {
-    toast.error("❌ کد تایید را وارد کنید!");
-    return;
-  }
-  setLoading(true);
-  try {
-    const res = await apiFetch(`/auth/verify`,
-      {
+    e.preventDefault();
+    if (!formData.verificationCode) {
+      toast.error("❌ کد تایید را وارد کنید!");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await apiFetch(`/auth/verify`, {
         method: "POST",
-       body: JSON.stringify({
+        body: JSON.stringify({
           email: formData.email,
           code: formData.verificationCode,
         }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(getErrorMessage(data?.error));
       }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(getErrorMessage(data?.error));
+    
+      toast.success("✅ ثبت‌نام با موفقیت انجام شد!");
+      router.push("/");
+    } catch (err: any) {
+      toast.error(err.message || "❌ کد تایید نادرست است!");
+    } finally {
+      setLoading(false);
     }
-    if (!tempTokens?.accessToken || !tempTokens?.refreshToken) {
-      throw new Error(
-        "مشکلی در فرآیند احراز هویت رخ داده است. لطفاً دوباره ثبت‌نام کنید!"
-      );
-    }
-
-    // ✅ ذخیره نهایی توکن‌ها
-    localStorage.setItem("access_token", tempTokens.accessToken);
-    localStorage.setItem("refresh_token", tempTokens.refreshToken);
-    toast.success("✅ ثبت‌نام با موفقیت انجام شد!");
-    router.push("/dashboard");
-  } catch (err: any) {
-    toast.error(err.message || "❌ کد تایید نادرست است!");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background px-4">
@@ -234,7 +223,7 @@ export default function RegisterPage() {
                   onClick={handleSendVerificationCode}
                   disabled={timerActive}
                 >
-                  {timerActive ? `${toPersianDigits(timer)} ثانیه` : "ارسال کد"}
+                  {timerActive ? `${formatPriceFa(timer)} ثانیه` : "ارسال کد"}
                 </Button>
               </div>
             </div>

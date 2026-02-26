@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { toPersianDigits, formatTimeAgo } from "@/lib/utils"
+import { formatPriceFa, formatTimeAgo } from "@/lib/utils"
 
 const videos = [
   { id: 1, title: "اولین پرش با اسکیت", views: 125908, createdAt: "2025-09-18T12:00:00Z", thumbnail: "/thumb1.jpg" },
@@ -24,7 +24,7 @@ export function RelatedVideos() {
               <div>
                 <p className="text-sm font-medium leading-tight">{video.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  {toPersianDigits(video.views.toLocaleString())} بازدید •{" "}
+                  {formatPriceFa(video.views.toLocaleString())} بازدید •{" "}
                   {formatTimeAgo(video.createdAt)}
                 </p>
               </div>

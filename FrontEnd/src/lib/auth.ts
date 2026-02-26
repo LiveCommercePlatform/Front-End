@@ -6,7 +6,6 @@ export async function refreshAccessToken() {
   const refreshToken = tokenStore.getRefresh();
 
   if (!refreshToken) {
-    console.log("qw");
     throw new Error("No refresh data");
   }
 
@@ -36,6 +35,7 @@ export async function refreshAccessToken() {
 
 export async function logoutRequest() {
   const refreshToken = tokenStore.getRefresh();
+  const access_token = tokenStore.getAccess();
 
   if (!refreshToken) {
     tokenStore.clear();
@@ -46,6 +46,7 @@ export async function logoutRequest() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+        Authorization: `Bearer ${access_token}`,
     },
     body: JSON.stringify({
       refresh_token: refreshToken,

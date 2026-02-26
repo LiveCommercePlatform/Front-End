@@ -62,6 +62,9 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        if(data.message = "Invalid credentials")
+        throw new Error("کاربر مورد نظر یافت نشد!");
+      else
         throw new Error(getErrorMessage(data.message) || "خطا در ورود");
       }
 

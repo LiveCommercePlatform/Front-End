@@ -4,18 +4,44 @@
 /* Custom Theme Variables Mapping */
 @custom-variant dark (&:is(.dark *));
 
+/* =========================================================
+   Tailwind v4 theme tokens (Mapped to our CSS variables)
+   IMPORTANT: Since we use HEX, we map directly (no hsl()).
+========================================================= */
 @theme inline {
+  --font-sans: var(--font-vazir);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-vazir);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground); */
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  
+
+  --radius: var(--radius);
+
+  /* Breakpoints (optional if you really need them here) */
   --breakpoint-*: initial;
   --breakpoint-xs: 450px;
   --breakpoint-sm: 575px;
@@ -24,13 +50,15 @@
   --breakpoint-xl: 1200px;
   --breakpoint-2xl: 1400px;
 
+  /* Extra palette (optional) */
   --color-current: currentColor;
   --color-transparent: transparent;
   --color-white: #ffffff;
   --color-black: #121723;
   --color-dark: #1d2430;
-  /* --color-primary: #4a6cf7; */
+
   --color-yellow: #fbb040;
+  --color-red: #fb4040;
   --color-bg-color-dark: #171c28;
 
   --color-body-color: #788293;
@@ -53,6 +81,7 @@
   --color-gray-dark: #1e232e;
   --color-gray-light: #f0f2f9;
 
+  /* Shadows */
   --shadow-sign-up: 0px 5px 10px rgba(4, 10, 34, 0.2);
   --shadow-one: 0px 2px 3px rgba(7, 7, 77, 0.05);
   --shadow-two: 0px 5px 10px rgba(6, 8, 15, 0.1);
@@ -67,10 +96,11 @@
   --shadow-btn-light: 0px 1px 2px rgba(0, 0, 0, 0.1);
 
   --drop-shadow-three: 0px 5px 15px rgba(6, 8, 15, 0.05);
-  /* بقیه هم می‌تونه بیاد، الان مهم‌ترینا رو آوردیم */
 }
 
-/* Light Mode Colors (استخوانی + فیروزه‌ای) */
+/* =========================================================
+   Light Mode (Bone + Teal)
+========================================================= */
 :root {
   --font-vazir: Vazir, sans-serif;
   --radius: 0.625rem;
@@ -81,14 +111,31 @@
   --card: #ffffff;
   --card-foreground: #121212;
 
+  --popover: #ffffff;
+  --popover-foreground: #121212;
+
   --primary: #00bfa6;
   --primary-foreground: #ffffff;
+
+  --secondary: #f1f0eb;
+  --secondary-foreground: #141414;
+
+  --muted: #f1f0eb;
+  --muted-foreground: #6b7280;
+
+  --accent: #d7f6f1;
+  --accent-foreground: #0f172a;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
   --border: #e0e0e0;
   --input: #e5e5e5;
   --ring: #00bfa6;
-  --toast-bg: var(--color-white);
-  --toast-text: var(--color-dark);
+
+  --toast-bg: #ffffff;
+  --toast-text: #1d2430;
+
   --sidebar-width: 4rem;
 }
 
@@ -96,7 +143,9 @@
   --sidebar-width: 14rem;
 }
 
-/* Dark Mode Colors (سیاه + فیروزه‌ای) */
+/* =========================================================
+   Dark Mode (Black + Teal)
+========================================================= */
 .dark {
   --background: #121212;
   --foreground: #f8f7f3;
@@ -104,17 +153,35 @@
   --card: #1e1e1e;
   --card-foreground: #f8f7f3;
 
+  --popover: #1e1e1e;
+  --popover-foreground: #f8f7f3;
+
   --primary: #00bfa6;
   --primary-foreground: #121212;
+
+  --secondary: #232323;
+  --secondary-foreground: #f8f7f3;
+
+  --muted: #121212;
+  --muted-foreground: #a3a3a3;
+
+  --accent: #123a34;
+  --accent-foreground: #f8f7f3;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
   --border: #333333;
   --input: #444444;
   --ring: #00bfa6;
-  --toast-bg: var(--color-gray-dark);
-  --toast-text: var(--color-white);
+
+  --toast-bg: #1e232e;
+  --toast-text: #ffffff;
 }
 
-/* Base Tailwind Layers */
+/* =========================================================
+   Base Tailwind Layers
+========================================================= */
 @layer base {
   html {
     direction: rtl;
@@ -129,4 +196,46 @@
     font-family: var(--font-vazir);
     @apply bg-background text-foreground;
   }
+}
+
+/* =========================================================
+   React Multi Date Picker Theme (HEX-friendly)
+   (No hsl(var()) since our vars are HEX)
+========================================================= */
+.rmdp-custom {
+  --rmdp-primary: var(--primary);
+  --rmdp-hover: rgba(0, 191, 166, 0.15);
+  --rmdp-bg: var(--background);
+  --rmdp-text: var(--foreground);
+}
+
+.rmdp-custom .rmdp-calendar {
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.rmdp-custom .rmdp-day.rmdp-selected span {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.rmdp-custom .rmdp-day:not(.rmdp-disabled):hover span {
+  background-color: rgba(0, 191, 166, 0.15);
+}
+
+.rmdp-custom .rmdp-header {
+  color: var(--foreground);
+}
+
+.rmdp-custom .rmdp-time-picker {
+  background-color: var(--background);
+  border-top: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+/* (اختیاری) رنگ عددهای تایم‌پیکر/ساعت */
+.rmdp-custom .rmdp-time-picker * {
+  color: var(--foreground);
 }

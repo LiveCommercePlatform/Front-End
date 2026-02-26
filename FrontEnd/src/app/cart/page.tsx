@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Stepper } from "@/components/cart/stepper";
 import { CartItem } from "@/components/cart/cart-item";
 import { CheckoutSummary } from "@/components/cart/checkout-summary";
-import { toPersianDigits } from "@/lib/utils";
+import { formatPriceFa } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import Lottie from "react-lottie-player";
@@ -77,10 +77,10 @@ export default function CartPage() {
                 }}
               />
               <span className="text-sm">
-                {toPersianDigits(
+                {formatPriceFa(
                   Object.values(selected).filter(Boolean).length,
                 )}
-                /{toPersianDigits(cart.length)} موارد انتخاب شده
+                /{formatPriceFa(cart.length)} موارد انتخاب شده
               </span>
             </div>
 

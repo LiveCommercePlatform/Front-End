@@ -64,7 +64,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               className={`px-3 py-2 text-xs md:text-lg font-semibold transition-all ${
                 currentTab === tab.key
                   ? "text-primary"
-                  : "text-muted hover:text-primary"
+                  : "text-forground hover:text-primary"
               }`}
             >
               {tab.label}

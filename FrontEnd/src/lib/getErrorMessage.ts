@@ -6,6 +6,8 @@ const errorMap: Record<string, string> = {
   "Invalid verification code": "کد تایید اشتباه است!",
   "User not found": "کاربری با این مشخصات یافت نشد!",
   "Incorrect current password":"پسورد فعلی نادرست وارد شده!",
+  "Invalid credentials": "کاربر مورد نظر یافت نشد.",
+  "profile_not_completed": "اطلاعات شخصی را در داشبورد تکمیل کنید."
 }
 
 export function getErrorMessage(

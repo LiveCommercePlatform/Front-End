@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { BackgroundGradient } from "@/components/ui/background-gradient"
-import { toPersianDigits } from "@/lib/utils"
+import { formatPriceFa } from "@/lib/utils"
 
 type CartCardProps = {
   name: string
@@ -35,14 +35,14 @@ export function CartCard({ name, price, qty, image }: CartCardProps) {
           <div className="flex-1">
             <p className="font-medium">{name}</p>
             <p className="text-sm text-muted-foreground">
-              {toPersianDigits(qty)} × {toPersianDigits(price.toLocaleString())}{" "}
+              {formatPriceFa(qty)} × {formatPriceFa(price.toLocaleString())}{" "}
               تومان
             </p>
           </div>
 
           {/* قیمت کل */}
           <p className="font-bold">
-            {toPersianDigits((price * qty).toLocaleString())} تومان
+            {formatPriceFa((price * qty).toLocaleString())} تومان
           </p>
         </div>
       </BackgroundGradient>

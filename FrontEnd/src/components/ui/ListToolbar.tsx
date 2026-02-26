@@ -23,16 +23,31 @@ export type ToolbarFilter<T extends string | number> = {
   value: T;
   options: SelectOption<T>[];
   onChange: (value: T) => void;
+  placeholder?: string;
+};
+
+export type ToolbarInput = {
+  key: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: React.HTMLInputTypeAttribute;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  className?: string;
 };
 
 type ListToolbarProps = {
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
+
   filters?: ToolbarFilter<any>[];
+  inputs?: ToolbarInput[]; // ✅ جدید
+
   sortOptions?: SelectOption<any>[];
   sortValue?: any;
   onSortChange?: (value: any) => void;
+
   actions?: React.ReactNode;
   className?: string;
 };
@@ -42,6 +57,7 @@ const ListToolbar: React.FC<ListToolbarProps> = ({
   onSearchChange,
   searchPlaceholder = "جستجو...",
   filters = [],
+  inputs = [], // ✅ جدید
   sortOptions = [],
   sortValue,
   onSortChange,
@@ -53,7 +69,7 @@ const ListToolbar: React.FC<ListToolbarProps> = ({
       className={clsx(
         "rounded-2xl border border-primary/50 bg-card/95 backdrop-blur shadow-sm",
         "p-4",
-        className
+        className,
       )}
     >
       <div className="flex flex-col gap-4">
@@ -73,7 +89,7 @@ const ListToolbar: React.FC<ListToolbarProps> = ({
               </div>
             )}
 
-            {/* Filters */}
+            {/* Filters (Select) */}
             {filters.map((filter) => (
               <Select
                 key={filter.key}
@@ -81,16 +97,36 @@ const ListToolbar: React.FC<ListToolbarProps> = ({
                 onValueChange={(v) => filter.onChange(v as any)}
               >
                 <SelectTrigger className="w-full sm:w-44 text-sm bg-background focus:ring-0">
-                  <SelectValue />
+                  <SelectValue placeholder={filter.placeholder ?? "انتخاب"} />
                 </SelectTrigger>
                 <SelectContent className="bg-card border shadow-lg">
                   {filter.options.map((opt) => (
-                    <SelectItem key={opt.value} value={String(opt.value)}>
+                    <SelectItem
+                      className="justify-end"
+                      key={String(opt.value)}
+                      value={String(opt.value)}
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            ))}
+
+            {/* Inputs (min/max/...) ✅ */}
+            {inputs.map((inp) => (
+              <Input
+                key={inp.key}
+                value={inp.value}
+                onChange={(e) => inp.onChange(e.target.value)}
+                placeholder={inp.placeholder}
+                type={inp.type ?? "text"}
+                inputMode={inp.inputMode}
+                className={clsx(
+                  "w-full sm:w-44 text-sm bg-background focus-visible:ring-0",
+                  inp.className,
+                )}
+              />
             ))}
 
             {/* Sort */}
@@ -104,7 +140,11 @@ const ListToolbar: React.FC<ListToolbarProps> = ({
                 </SelectTrigger>
                 <SelectContent className="bg-card border shadow-lg">
                   {sortOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={String(opt.value)}>
+                    <SelectItem
+                      className="justify-end"
+                      key={String(opt.value)}
+                      value={String(opt.value)}
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}

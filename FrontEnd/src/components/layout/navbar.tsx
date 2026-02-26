@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toPersianDigits } from "@/lib/utils";
+import { formatPriceFa } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { tokenStore } from "@/lib/token";
@@ -112,7 +112,7 @@ export function Navbar() {
 
               {cart.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] md:text-xs rounded-full px-1.5">
-                  {toPersianDigits(cart.length)}
+                  {formatPriceFa(cart.length)}
                 </span>
               )}
             </Link>

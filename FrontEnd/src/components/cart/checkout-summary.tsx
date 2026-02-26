@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { toPersianDigits } from "@/lib/utils";
+import { formatPriceFa } from "@/lib/utils";
 import { CartItemType } from "@/types";
 import { Button } from "@/components/ui/button";
 
@@ -90,12 +90,12 @@ export function CheckoutSummary({ items, onPlaceOrder }: Props) {
       <div className="border rounded-lg bg-background p-4 shadow-sm space-y-2">
         <div className="flex justify-between text-sm sm:text-base md:text-lg">
           <span>مبلغ سفارش</span>
-          <span>{toPersianDigits(subTotal.toLocaleString())} تومان</span>
+          <span>{formatPriceFa(subTotal.toLocaleString())} تومان</span>
         </div>
         <div className="flex justify-between text-sm sm:text-base md:text-lg">
           <span>تخفیف کوپن</span>
           <span className="text-green-600">
-            - {toPersianDigits(discount.toLocaleString())} تومان
+            - {formatPriceFa(discount.toLocaleString())} تومان
           </span>
         </div>
         <div className="flex justify-between text-sm sm:text-base md:text-lg">
@@ -103,18 +103,18 @@ export function CheckoutSummary({ items, onPlaceOrder }: Props) {
           <span className="text-green-600">
             {shipping === 0
               ? "رایگان"
-              : toPersianDigits(shipping.toLocaleString())}
+              : formatPriceFa(shipping.toLocaleString())}
           </span>
         </div>
         {giftWrap && (
           <div className="flex justify-between text-sm sm:text-base md:text-lg">
             <span>بسته‌بندی هدیه</span>
-            <span>{toPersianDigits((20000).toLocaleString())} تومان</span>
+            <span>{formatPriceFa((20000).toLocaleString())} تومان</span>
           </div>
         )}
         <div className="border-t pt-3 mt-2 flex justify-between font-bold text-base sm:text-lg md:text-xl">
           <span>مبلغ قابل پرداخت</span>
-          <span>{toPersianDigits(total.toLocaleString())} تومان</span>
+          <span>{formatPriceFa(total.toLocaleString())} تومان</span>
         </div>
 
         <div className="mt-4">

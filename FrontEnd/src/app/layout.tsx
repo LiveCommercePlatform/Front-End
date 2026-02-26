@@ -67,7 +67,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
         <main
           className={clsx(
-            "flex-1 p-4 pt-12 md:pt-14 overflow-auto",
+            "flex-1 pt-12 md:pt-14 overflow-auto",
             !isAuthPage && "md:pr-[var(--sidebar-width)]",
           )}
         >

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Share2, Eye, Users, ShoppingCart } from "lucide-react";
 import { useState } from "react";
-import { toPersianDigits } from "@/lib/utils";
+import { formatPriceFa } from "@/lib/utils";
 export function VideoInfo() {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -88,7 +88,7 @@ export function VideoInfo() {
               className={`w-5 h-5 ${liked ? "fill-red-500 text-red-500" : ""}`}
             />
             <span className="text-sm font-medium">
-              {toPersianDigits(likes)}
+              {formatPriceFa(likes)}
             </span>
           </div>
 
@@ -106,11 +106,11 @@ export function VideoInfo() {
         <div className="flex gap-6 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Eye className="w-4 h-4" />
-            {toPersianDigits((125908).toLocaleString())} بازدید
+            {formatPriceFa((125908).toLocaleString())} بازدید
           </span>
           <span className="flex items-center gap-1">
             <Users className="w-4 h-4" />
-            {toPersianDigits((1938394).toLocaleString())} نفر آنلاین
+            {formatPriceFa((1938394).toLocaleString())} نفر آنلاین
           </span>
         </div>
 
@@ -129,7 +129,7 @@ export function VideoInfo() {
                 مناسب برای افراد مبتدی و حرفه‌ای
               </p>
               <p className="text-lg font-bold text-primary mt-1">
-                {toPersianDigits((12560000).toLocaleString())} تومان
+                {formatPriceFa((12560000).toLocaleString())} تومان
               </p>
             </div>
             <Button className="flex items-center gap-2">

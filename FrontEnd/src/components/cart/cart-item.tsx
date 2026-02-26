@@ -2,7 +2,7 @@
 
 import React from "react"
 import Image from "next/image"
-import { toPersianDigits } from "@/lib/utils"
+import { formatPriceFa } from "@/lib/utils"
 import { Props } from "@/types";
 
 export function CartItem({ item, onQtyChange, onRemove, selected = false, onToggleSelect }: Props) {
@@ -30,7 +30,7 @@ export function CartItem({ item, onQtyChange, onRemove, selected = false, onTogg
           </p>
         )}
         <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1">
-          قیمت واحد: {toPersianDigits(item.price.toLocaleString())} تومان
+          قیمت واحد: {formatPriceFa(item.price.toLocaleString())} تومان
         </p>
       </div>
 
@@ -53,7 +53,7 @@ export function CartItem({ item, onQtyChange, onRemove, selected = false, onTogg
           −
         </button>
         <div className="min-w-[36px] text-center text-sm sm:text-base md:text-lg">
-          {toPersianDigits(item.qty)}
+          {formatPriceFa(item.qty)}
         </div>
         <button
           onClick={() => onQtyChange(item.id, item.qty + 1)}
@@ -65,7 +65,7 @@ export function CartItem({ item, onQtyChange, onRemove, selected = false, onTogg
 
       <div className="mt-2 sm:mt-0 text-left sm:text-right">
         <div className="font-bold text-sm sm:text-base md:text-lg">
-          {toPersianDigits((item.qty * item.price).toLocaleString())} تومان
+          {formatPriceFa((item.qty * item.price).toLocaleString())} تومان
         </div>
       </div>
     </div>

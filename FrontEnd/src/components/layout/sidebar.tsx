@@ -33,10 +33,10 @@ const sidebarItems = [
   { href: "/products/new", icon: Plus, label: "افزودن محصول" },
 
   // --- Management ---
-  { href: "/users", icon: Users, label: "کاربران" },
+  { href: "/seller", icon: Users, label: "فروشندگان" },
 
   // --- System ---
-  { href: "/settings", icon: Settings, label: "تنظیمات" },
+  { href: "/dashboard/settings", icon: Settings, label: "تنظیمات" },
 ];
 
 export function Sidebar() {
@@ -99,7 +99,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         {sidebarItems.map((item) => {
           const Icon = item.icon;
           const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+            pathname === item.href 
 
           return (
             <div key={item.href}>

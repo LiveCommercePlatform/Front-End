@@ -18,14 +18,22 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
     },
   });
 
+  // ✅ اگر 401 نبود مستقیم برگردون
   if (res.status !== 401) return res;
 
-  // جلوگیری از لوپ
-  if (url.includes("/auth/verify") || url.includes("/auth/refresh")) {
-    return res;
+  // ✅ این endpoint ها نباید refresh بشن
+  const skipRefreshEndpoints = [
+    "/auth/login",
+    "/auth/register",
+    "/auth/verify",
+    "/auth/refresh",
+  ];
+
+  if (skipRefreshEndpoints.some((endpoint) => url.includes(endpoint))) {
+    return res; // مستقیم ارور رو بده
   }
 
-  // اگر یکی دیگه داره refresh می‌زنه
+  // اگر یکی دیگه در حال refresh است
   if (isRefreshing) {
     return new Promise<Response>((resolve) => {
       queue.push(() => resolve(apiFetch(url, options)));

@@ -1,82 +1,61 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ProductCard from "@/components/ui/ProductCard";
 import ListToolbar from "@/components/ui/ListToolbar";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Product } from "@/types";
 import { categoryOptions } from "@/constant/category-data";
+import Pagination from "@/components/ui/Pagination";
+import { getProducts } from "@/components/products/api";
+import { faToEnDigits, formatPriceFa } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const PAGE_SIZE = 6;
 export default function AllProductsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
+  const [minPrice, setMinPrice] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<string>("");
+  const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const products: Product[] = [
-    // {
-    //   id: "1",
-    //   title: "دوره آموزش Next.js",
-    //   price: 1200000,
-    //   status: "active",
-    //   cover: "https://picsum.photos/600/400?1",
-    //   category: "education",
-    // },
-    // {
-    //   id: "2",
-    //   title: "پکیج طراحی UI",
-    //   price: 850000,
-    //   status: "active",
-    //   cover: "https://picsum.photos/600/400?2",
-    //   category: "design",
-    // },
-    // {
-    //   id: "3",
-    //   title: "اپلیکیشن مدیریت پروژه",
-    //   price: 540000,
-    //   status: "active",
-    //   cover: "https://picsum.photos/600/400?3",
-    //   category: "software",
-    // },
-    // {
-    //   id: "5",
-    //   title: "دوره پیشرفته TypeScript",
-    //   price: 990000,
-    //   status: "active",
-    //   cover: "https://picsum.photos/600/400?4",
-    //   category: "education",
-    // },
-  ];
+  async function getProduct() {
+    const params: any = {
+      page,
+      limit: PAGE_SIZE,
+      q: search || undefined,
+    };
 
-  const filtered = useMemo(() => {
-    let result = products.filter((p) => p.status === "active");
-
-    if (search) {
-      result = result.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase()),
-      );
+    if (minPrice?.trim()) {
+      params.min_price = Number(minPrice);
     }
 
-    if (category !== "all") {
-      result = result.filter((p) => p.category === category);
+    if (maxPrice?.trim()) {
+      params.max_price = Number(maxPrice);
     }
+    try {
+      const json = await getProducts(params);
+      const cleaned = (json.data ?? []).map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        price: p.price,
+        categoryName: p.category_name_fa,
+        status: p.stock > 0 ? "active" : "inactive",
+      }));
+      setTotalItems(json.pagination.total);
+      setProducts(cleaned);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
-    return result;
-  }, [products, search, category]);
-
-  /* ---------------- pagination ---------------- */
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-
-  const paginatedProducts = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
+  useEffect(() => {
+    getProduct();
+  }, [page, search, minPrice, maxPrice]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-      {/* Toolbar */}
+    <div className="max-w-7xl mx-auto p-8 space-y-6">
       <ListToolbar
         searchValue={search}
         onSearchChange={(v) => {
@@ -93,21 +72,63 @@ export default function AllProductsPage() {
               setPage(1);
             },
             options: categoryOptions,
+            placeholder: "دسته‌بندی",
           },
         ]}
+        inputs={[
+          {
+            key: "min_price",
+            value: minPrice ? formatPriceFa(Number(minPrice)) : "",
+            onChange: (v: string) => {
+              const en = faToEnDigits(v);
+              const raw = en.replace(/[^\d]/g, "");
+              setMinPrice(raw);
+              setPage(1);
+            },
+            placeholder: "حداقل قیمت",
+            type: "text",
+            inputMode: "numeric",
+          },
+          {
+            key: "max_price",
+            value: maxPrice ? formatPriceFa(Number(maxPrice)) : "",
+            onChange: (v: string) => {
+              const en = faToEnDigits(v);
+              const raw = en.replace(/[^\d]/g, "");
+              setMaxPrice(raw);
+              setPage(1);
+            },
+            placeholder: "حداکثر قیمت",
+            type: "text",
+            inputMode: "numeric",
+          },
+        ]}
+        actions={<Button
+      variant="outline"
+      size="sm"
+      onClick={() => {
+        setSearch("");
+        setMinPrice("");
+        setMaxPrice("");
+        setCategory("all");
+        setPage(1);
+      }}
+    >
+      حذف فیلترها
+    </Button>}
       />
 
       {/* Products */}
-      {paginatedProducts.length > 0 ? (
+      {products.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedProducts.map((product, key) => (
+          {products.map((product, key) => (
             <ProductCard
               key={key}
               id={product.id}
               title={product.title}
               price={product.price}
               status={product.status}
-              cover={product.cover}
+              cover={"https://picsum.photos/600/400?2"}
               showAddToCart={true}
               showEdit={false}
               showDelete={false}
@@ -136,33 +157,12 @@ export default function AllProductsPage() {
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            <ChevronRight className="w-4 h-4" />
-            قبلی
-          </Button>
-
-          <div className="text-sm opacity-70">
-            صفحه {page} از {totalPages}
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            بعدی
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalItems={totalItems}
+        pageSize={PAGE_SIZE}
+        onPageChange={(newPage) => setPage(newPage)}
+      />
     </div>
   );
 }
