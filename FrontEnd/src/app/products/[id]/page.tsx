@@ -19,7 +19,6 @@ import {
   Plus,
 } from "lucide-react";
 import { formatPriceFa } from "@/lib/utils";
-import { DeleteProduct, getProductsByID } from "@/components/products/api";
 import { tokenStore } from "@/lib/token";
 import {
   AlertDialog,
@@ -32,17 +31,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { StatBoxProps , ProductDetails } from "@/types";
+import { StatBoxProps, ProductDetails } from "@/types";
 import { useCart } from "@/context/CartContext";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, isProfileComplete } from "@/lib/api";
 import ProfileCompleteModal from "@/components/ui/ProfileCompleteModal";
-
-
+import { useProducts } from "@/context/ProductContext";
 
 export default function ProductDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const id = Array.isArray(params.id) ? params.id[0] : (params.id as string);
+  const { getProductByIdCached, getMyEngagementCached, deleteProduct } =
+    useProducts();
   const { cart, addToCart, updateQty, removeFromCart } = useCart();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [pendingAdd, setPendingAdd] = useState(false);
@@ -51,8 +51,9 @@ export default function ProductDetailsPage() {
     return item?.qty ?? 0;
   }, [cart, id]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading_, setLoading] = useState(true);
   const [product, setProduct] = useState<ProductDetails | null>(null);
+
   const doAddToCart = () => {
     if (!product) return;
     addToCart({
@@ -69,22 +70,8 @@ export default function ProductDetailsPage() {
     if (count - 1 <= 0) removeFromCart(id);
     else updateQty(id, count - 1);
   };
-  const isProfileComplete = async () => {
-    const access = tokenStore.getAccess?.();
-    if (!access) return { ok: false, reason: "not_logged_in" as const };
 
-    const res = await apiFetch("/profile/completed", { method: "GET" });
-    const data = await res.json();
-
-    if (!res.ok) {
-      return { ok: false, reason: "api_error" as const, message: data?.error };
-    }
-
-    return {
-      ok: data.completed,
-      reason: data.completed ? "complete" : ("incomplete" as const),
-    };
-  };
+  useEffect(() => {}, []);
 
   const handleAddToCart = async () => {
     try {
@@ -104,13 +91,19 @@ export default function ProductDetailsPage() {
       toast.error(e?.message || "خطا در بررسی پروفایل");
     }
   };
+  async function getProductsByID(id: string) {
+    const res = await apiFetch(`/products/${id}`);
+    if (!res.ok) throw new Error("خطا در یافت محصولات");
+    return res.json();
+  }
   useEffect(() => {
     if (!id) return;
     (async () => {
       try {
         setLoading(true);
-        const data = await getProductsByID(id);
-        setProduct(data);
+        const product_ = await getProductByIdCached(id);
+        const engagement = await getMyEngagementCached(id);
+        setProduct({ ...product_, ...engagement });
       } catch (e: any) {
         toast.error(e?.message || "خطا در دریافت محصول");
       } finally {
@@ -124,7 +117,7 @@ export default function ProductDetailsPage() {
     return product.cover_image;
   }, [product]);
 
-  if (loading) {
+  if (loading_) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
         <p className="text-sm opacity-70">در حال بارگذاری...</p>
@@ -140,7 +133,6 @@ export default function ProductDetailsPage() {
     );
   }
 
-//   const isInStock = product.stock > 0;
   const isOwner = product.owner?.id == tokenStore.getUserId();
 
   return (
@@ -150,9 +142,8 @@ export default function ProductDetailsPage() {
         <div className="text-right">
           <h1 className="text-lg md:text-2xl font-semibold">{product.title}</h1>
           <div className="text-xs opacity-60">
-                {product.owner?.name ? `مالک: ${product.owner.name}` : ""}
-              </div>
-          
+            {product.owner?.name ? `مالک: ${product.owner.name}` : ""}
+          </div>
         </div>
 
         <Button
@@ -200,21 +191,23 @@ export default function ProductDetailsPage() {
               </div>
             </div>
 
-
             <Separator />
 
             {/* Description */}
             <div className="text-right my-3">
               <div className="text-sm font-medium mb-1">توضیحات</div>
               <p className="text-sm opacity-70 leading-relaxed mr-4">
-                {product.description?.trim() ? product.description : "توضیحی برای این محصول ثبت نشده است."}</p>
+                {product.description?.trim()
+                  ? product.description
+                  : "توضیحی برای این محصول ثبت نشده است."}
+              </p>
             </div>
             <div className="text-right">
               <div className="text-sm font-medium mb-1">دسته بندی</div>
               <p className="text-sm opacity-80 leading-relaxed text-left">
                 {product.category?.name_fa
-              ? ` ${product.category.name_fa}`
-              : "بدون دسته‌بندی"}
+                  ? ` ${product.category.name_fa}`
+                  : "بدون دسته‌بندی"}
               </p>
             </div>
 
@@ -232,8 +225,6 @@ export default function ProductDetailsPage() {
               )}
             </div>
             <div className="flex items-center justify-end pt-2">
-              
-
               {isOwner && (
                 <div className="flex gap-2">
                   <Button
@@ -266,7 +257,10 @@ export default function ProductDetailsPage() {
 
                         <AlertDialogAction
                           className="bg-red-600 hover:bg-red-700"
-                          onClick={() => {DeleteProduct(id); router.back()}}
+                          onClick={() => {
+                            deleteProduct(id);
+                            router.back();
+                          }}
                         >
                           حذف شود
                         </AlertDialogAction>
@@ -276,7 +270,7 @@ export default function ProductDetailsPage() {
                 </div>
               )}
 
-              {!isOwner && product.stock>0 && (
+              {!isOwner && product.stock > 0 && (
                 <div className="flex gap-2">
                   {count === 0 ? (
                     <Button
@@ -337,7 +331,7 @@ export default function ProductDetailsPage() {
                 statKey={`${product.id}/like`}
                 label="پسند"
                 value={product.like_count ?? 0}
-                initiallyActive={true} // اگر از بک داری
+                initiallyActive={product.liked} // اگر از بک داری
                 icon={(active) => (
                   <Heart
                     className={[
@@ -353,7 +347,7 @@ export default function ProductDetailsPage() {
                 statKey={`${product.id}/dislike`}
                 label="دیس لایک"
                 value={product.like_count ?? 0}
-                initiallyActive={true}
+                initiallyActive={product.disliked}
                 icon={(active) => (
                   <ThumbsDown
                     className={[
@@ -377,7 +371,6 @@ export default function ProductDetailsPage() {
                 icon={(active) => <Star className={"w-5 h-5 transition"} />}
               />
             </div>
-            
           </CardContent>
         </Card>
       </div>
@@ -416,27 +409,20 @@ function StatBox({
     if (disabled || loading) return;
     setLoading(true);
     const newActive = !active;
-    setActive(newActive);
-    setCount((c) => (newActive ? Number(c) + 1 : Math.max(0, Number(c) - 1)));
-    setLoading(false);
-
-    // try {
-    //   const res = await apiFetch(`/products/${statKey}`, {
-    //     method: "POST", // یا PUT / DELETE بسته به بک
-    //   });
-
-    //   if (!res.ok) {
-    //     throw new Error("خطا در ثبت عملیات");
-    //   }
-    // } catch (err: any) {
-    //   // 🔁 Rollback اگر بک fail کرد
-    //   setActive(active);
-    //   setCount((c) => (active ? c + 1 : Math.max(0, c - 1)));
-
-    //   toast.error(err?.message || "خطا رخ داد");
-    // } finally {
-    //   setLoading(false);
-    // }
+    try {
+      const res = await apiFetch(`/products/${statKey}`, {
+        method: newActive ? "POST" : "DELETE",
+      });
+      setActive(newActive);
+      setCount((c) => (newActive ? Number(c) + 1 : Math.max(0, Number(c) - 1)));
+      if (!res.ok) {
+        throw new Error("خطا در ثبت عملیات");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "خطا رخ داد");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

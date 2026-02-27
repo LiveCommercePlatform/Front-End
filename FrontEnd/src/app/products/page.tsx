@@ -6,12 +6,14 @@ import ListToolbar from "@/components/ui/ListToolbar";
 import { Product } from "@/types";
 import { categoryOptions } from "@/constant/category-data";
 import Pagination from "@/components/ui/Pagination";
-import { getProducts } from "@/components/products/api";
 import { faToEnDigits, formatPriceFa } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useProducts } from "@/context/ProductContext";
 
 const PAGE_SIZE = 6;
 export default function AllProductsPage() {
+  const { items, pagination, loading, setParams, fetchProducts } =
+    useProducts();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [minPrice, setMinPrice] = useState<string>("");
@@ -20,39 +22,30 @@ export default function AllProductsPage() {
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
-  async function getProduct() {
-    const params: any = {
+  useEffect(() => {
+    fetchProducts({
       page,
       limit: PAGE_SIZE,
       q: search || undefined,
-    };
-
-    if (minPrice?.trim()) {
-      params.min_price = Number(minPrice);
-    }
-
-    if (maxPrice?.trim()) {
-      params.max_price = Number(maxPrice);
-    }
-    try {
-      const json = await getProducts(params);
-      const cleaned = (json.data ?? []).map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        price: p.price,
-        categoryName: p.category_name_fa,
-        status: p.stock > 0 ? "active" : "inactive",
-      }));
-      setTotalItems(json.pagination.total);
-      setProducts(cleaned);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+      min_price: minPrice?.trim() ? Number(minPrice) : undefined,
+      max_price: maxPrice?.trim() ? Number(maxPrice) : undefined,
+    });
+  }, [page, search, minPrice, maxPrice]);
 
   useEffect(() => {
-    getProduct();
-  }, [page, search, minPrice, maxPrice]);
+    const cleaned: Product[] = items.map((p: any) => ({
+      id: String(p.id),
+      title: String(p.title),
+      price: Number(p.price),
+      category: String(p.category_name_fa),
+      cover: p.cover_image ?? "",
+      status: p.stock > 0 ? "active" : "inactive",
+    }));
+
+    setProducts(cleaned);
+    setProducts(cleaned);
+    setTotalItems(pagination?.total ?? 0);
+  }, [items, pagination]);
 
   return (
     <div className="max-w-7xl mx-auto p-8 space-y-6">
@@ -103,19 +96,21 @@ export default function AllProductsPage() {
             inputMode: "numeric",
           },
         ]}
-        actions={<Button
-      variant="outline"
-      size="sm"
-      onClick={() => {
-        setSearch("");
-        setMinPrice("");
-        setMaxPrice("");
-        setCategory("all");
-        setPage(1);
-      }}
-    >
-      حذف فیلترها
-    </Button>}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSearch("");
+              setMinPrice("");
+              setMaxPrice("");
+              setCategory("all");
+              setPage(1);
+            }}
+          >
+            حذف فیلترها
+          </Button>
+        }
       />
 
       {/* Products */}
@@ -156,7 +151,6 @@ export default function AllProductsPage() {
         </div>
       )}
 
-      {/* Pagination */}
       <Pagination
         page={page}
         totalItems={totalItems}

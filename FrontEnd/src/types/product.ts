@@ -1,11 +1,16 @@
 export type ProductStatus = "all" | "active" | "inactive";
 
+export type Engagement = {
+  liked: boolean;
+  disliked : boolean;
+};
+
 export type Product = {
   id: string;
   title: string;
   price: number;
   status: "active" | "inactive";
-  cover: string; // 👈 آدرس عکس
+  cover?: string;
   category?:string;
 };
 
@@ -38,10 +43,13 @@ export type ProductDetails = {
   dislike_count?: number;
   rating_avg?: number;
   rating_count?: number;
+  category_id: number;
   category?: { id: number; name_fa: string; parent_id?: number };
   tags?: { id: number; name: string }[];
   created_at?: string;
   updated_at?: string;
+  liked? : boolean;
+  disliked? : boolean;
 };
 export type StatBoxProps = {
   statKey: string; // مثلا: "like"

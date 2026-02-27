@@ -57,3 +57,19 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
     isRefreshing = false;
   }
 }
+export const isProfileComplete = async () => {
+    const access = tokenStore.getAccess?.();
+    if (!access) return { ok: false, reason: "not_logged_in" as const };
+
+    const res = await apiFetch("/profile/completed", { method: "GET" });
+    const data = await res.json();
+
+    if (!res.ok) {
+      return { ok: false, reason: "api_error" as const, message: data?.error };
+    }
+
+    return {
+      ok: data.completed,
+      reason: data.completed ? "complete" : ("incomplete" as const),
+    };
+  };

@@ -11,7 +11,7 @@ import { Pencil, Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
 import clsx from "clsx";
 import { ProductCardProps } from "@/types";
 import { useCart } from "@/context/CartContext";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, isProfileComplete } from "@/lib/api";
 import { tokenStore } from "@/lib/token";
 import ProfileCompleteModal from "./ProfileCompleteModal";
 import {
@@ -25,7 +25,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { DeleteProduct } from "../products/api";
+import { useProducts } from "@/context/ProductContext";
 
 export default function ProductCard({
   id,
@@ -42,7 +42,7 @@ export default function ProductCard({
 }: ProductCardProps) {
   const router = useRouter();
   const { cart, addToCart, updateQty, removeFromCart } = useCart();
-
+  const { deleteProduct } = useProducts();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [pendingAdd, setPendingAdd] = useState(false);
 
@@ -62,23 +62,6 @@ export default function ProductCard({
   const decrease = () => {
     if (count - 1 <= 0) removeFromCart(id);
     else updateQty(id, count - 1);
-  };
-
-  const isProfileComplete = async () => {
-    const access = tokenStore.getAccess?.();
-    if (!access) return { ok: false, reason: "not_logged_in" as const };
-
-    const res = await apiFetch("/profile/completed", { method: "GET" });
-    const data = await res.json();
-
-    if (!res.ok) {
-      return { ok: false, reason: "api_error" as const, message: data?.error };
-    }
-
-    return {
-      ok: !!data.completed,
-      reason: data.completed ? "complete" : ("incomplete" as const),
-    };
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -247,7 +230,7 @@ export default function ProductCard({
                       <AlertDialogAction
                         onClick={(e) => {
                           e.stopPropagation();
-                          DeleteProduct(id);
+                          deleteProduct(id);
                         }}
                         className="bg-red-600 hover:bg-red-700"
                       >

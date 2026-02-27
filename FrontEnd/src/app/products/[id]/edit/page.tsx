@@ -6,15 +6,15 @@ import toast from "react-hot-toast";
 
 import ProductForm, { ProductFormValues } from "@/components/products/ProductForm";
 import { apiFetch } from "@/lib/api";
-import { getProductsByID } from "@/components/products/api";
 import { getErrorMessage } from "@/lib/getErrorMessage";
+import { useProducts } from "@/context/ProductContext";
 
 export default function EditProductPage() {
   const params = useParams();
   const router = useRouter();
-
   const ID = Array.isArray(params.id) ? params.id[0] : (params.id as string | undefined);
-
+const { getProductByIdCached } =
+    useProducts();
   const [initialData, setInitialData] = useState<Partial<ProductFormValues> | null>(null);
   const [parentID, setParentID] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -25,9 +25,8 @@ export default function EditProductPage() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-
-        const res = await getProductsByID(ID);
-        setParentID(res.category.parent_id)
+        const res = await getProductByIdCached(ID);
+        setParentID(res.category?.parent_id ?? 0)
         setInitialData({
           title: res.title ?? "",
           description: res.description ?? "",

@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ListToolbar from "@/components/ui/ListToolbar";
@@ -7,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ui/ProductCard";
 import { ProductStatus, Product } from "@/types";
 import Pagination from "@/components/ui/Pagination";
-import { getProducts } from "@/components/products/api";
-import { stat } from "fs";
+import { tokenStore } from "@/lib/token";
+import { useProducts } from "@/context/ProductContext";
 
 const PAGE_SIZE = 9;
-
 export default function ProductsTab() {
+  const { items, pagination, deleteProduct, setParams, fetchProducts } =
+    useProducts();
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ProductStatus>("all");
@@ -21,40 +21,32 @@ export default function ProductsTab() {
   const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
-    getProduct();
-  }, [page, search, status]);
-
-  async function getProduct() {
-    const params: any = {
+    fetchProducts({
       page,
       limit: PAGE_SIZE,
       q: search || undefined,
-    };
-    if (status == "active") {
-      params.in_stock = true;
-    }
-    if (status == "inactive") {
-      params.in_stock = false;
-    }
-    try {
-      const json = await getProducts(params);
-      const cleaned = (json.data ?? []).map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        price: p.price,
-        categoryName: p.category_name_fa,
-        status: p.stock > 0 ? "active" : "inactive",
-      }));
-      setTotalItems(json.pagination.total);
-      setProducts(cleaned);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+      owner_id: tokenStore.getUserId() ?? "",
+      in_stock:
+        status == "active" ? true : status == "inactive" ? false : undefined,
+    });
+  }, [page, search, status]);
+
+  useEffect(() => {
+    const cleaned: Product[] = items.map((p: any) => ({
+      id: String(p.id),
+      title: String(p.title),
+      price: Number(p.price),
+      category: String(p.category_name_fa),
+      cover: p.cover_image ?? "",
+      status: p.stock > 0 ? "active" : "inactive",
+    }));
+    setProducts(cleaned);
+    setProducts(cleaned);
+    setTotalItems(pagination?.total ?? 0);
+  }, [items, pagination]);
 
   return (
     <div className="space-y-6">
-      {/* Toolbar */}
       <ListToolbar
         searchValue={search}
         onSearchChange={setSearch}
@@ -81,7 +73,9 @@ export default function ProductsTab() {
                 setStatus("all");
                 setPage(1);
               }}
-            >حذف فیلترها</Button>
+            >
+              حذف فیلترها
+            </Button>
             <Button
               variant="default"
               size="sm"
@@ -92,7 +86,6 @@ export default function ProductsTab() {
           </>
         }
       />
-
       {products.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
@@ -101,7 +94,7 @@ export default function ProductsTab() {
               {...product}
               showState
               onEdit={() => router.push(`/products/${product.id}/edit`)}
-              onDelete={() => console.log("delete", product.id)}
+              onDelete={() => deleteProduct(product.id)}
             />
           ))}
         </div>
@@ -115,7 +108,7 @@ export default function ProductsTab() {
         page={page}
         totalItems={totalItems}
         pageSize={PAGE_SIZE}
-        onPageChange={(newPage) => setPage(newPage)} // تغییر صفحه
+        onPageChange={(newPage) => setPage(newPage)}
       />
     </div>
   );
