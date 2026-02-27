@@ -36,6 +36,7 @@ import { useCart } from "@/context/CartContext";
 import { apiFetch, isProfileComplete } from "@/lib/api";
 import ProfileCompleteModal from "@/components/ui/ProfileCompleteModal";
 import { useProducts } from "@/context/ProductContext";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function ProductDetailsPage() {
   const params = useParams();
@@ -53,7 +54,24 @@ export default function ProductDetailsPage() {
 
   const [loading_, setLoading] = useState(true);
   const [product, setProduct] = useState<ProductDetails | null>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
 
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const res = await apiFetch(`/products/${id}/comments`, {
+          method: "GET",
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        setComments(json.data ?? json ?? []);
+      } catch {}
+    };
+
+    if (id) fetchComments();
+  }, [id]);
   const doAddToCart = () => {
     if (!product) return;
     addToCart({
@@ -91,10 +109,35 @@ export default function ProductDetailsPage() {
       toast.error(e?.message || "خطا در بررسی پروفایل");
     }
   };
-  async function getProductsByID(id: string) {
-    const res = await apiFetch(`/products/${id}`);
-    if (!res.ok) throw new Error("خطا در یافت محصولات");
-    return res.json();
+  async function handleCommentSubmit() {
+    try {
+      const access = tokenStore.getAccess?.();
+      if (!access) {
+        toast("برای ثبت کامنت، اول وارد شوید.");
+        router.push("/login");
+        return;
+      }
+
+      setCommentLoading(true);
+
+      const res = await apiFetch(`/products/${id}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ content: commentText }),
+      });
+
+      if (!res.ok) throw new Error("خطا در ثبت کامنت");
+
+      const created = await res.json();
+
+     setComments((prev: any[]) => [created, ...prev]);
+
+      setCommentText("");
+      toast.success("کامنت ثبت شد");
+    } catch (e: any) {
+      toast.error(e?.message || "خطا");
+    } finally {
+      setCommentLoading(false);
+    }
   }
   useEffect(() => {
     if (!id) return;
@@ -318,6 +361,69 @@ export default function ProductDetailsPage() {
           {/* <CardHeader className="text-right font-medium">جزئیات</CardHeader> */}
           <CardContent className="space-y-4">
             {/* Stats */}
+            {/* Comments */}
+            <Card className="border rounded-xl">
+              <CardHeader className="text-right font-medium">
+                کامنت‌ها
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {/* List */}
+                <div className="max-h-72 overflow-auto space-y-3 pr-1">
+                  {comments?.length ? (
+                    comments.map((c: any) => (
+                      <div
+                        key={c.id}
+                        className="rounded-xl border p-3 flex flex-col gap-2"
+                      >
+                          <div className="text-xs opacity-60 text-left">
+                            {new Date(c.created_at).toLocaleDateString("fa-IR")}
+                          </div>
+                        <p className="text-sm opacity-80 leading-relaxed text-right">
+                          {c.content}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-xl border bg-muted/30 p-6 text-center text-sm opacity-60">
+                      هنوز کامنتی ثبت نشده
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="text-right text-sm font-medium">
+                    ثبت کامنت جدید
+                  </div>
+
+                  <Textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    rows={3}
+                    placeholder="نظر خودتون رو بنویسید..."
+                    className="text-right"
+                  />
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs opacity-60">
+                      {commentText.trim().length}/500
+                    </span>
+
+                    <Button
+                      className="gap-2"
+                      disabled={commentLoading || !commentText.trim()}
+                      onClick={
+                        handleCommentSubmit
+                      }
+                    >
+                      ارسال کامنت
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <StatBox
                 statKey="view_count"
@@ -346,14 +452,14 @@ export default function ProductDetailsPage() {
               <StatBox
                 statKey={`${product.id}/dislike`}
                 label="دیس لایک"
-                value={product.like_count ?? 0}
+                value={product.dislike_count ?? 0}
                 initiallyActive={product.disliked}
                 icon={(active) => (
                   <ThumbsDown
                     className={[
                       "w-5 h-5 transition",
                       active
-                        ? "fill-blue-500 text-blue"
+                        ? "fill-blue-500 text-blue-500"
                         : "text-muted-foreground",
                     ].join(" ")}
                   />

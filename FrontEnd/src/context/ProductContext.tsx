@@ -1,9 +1,17 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import { apiFetch } from "@/lib/api";
-import {ProductDetails ,Product , Engagement} from "@/types";
+import type { ProductDetails, Product, Engagement } from "@/types";
+
 /* ================= Types ================= */
 
 export type GetProductsParams = {
@@ -12,7 +20,7 @@ export type GetProductsParams = {
   category_id?: number;
   min_price?: number;
   max_price?: number;
-  tags?: string[];
+  tags?: string[]; // => comma separated
   in_stock?: boolean;
   sort?: string;
   page?: number;
@@ -31,8 +39,14 @@ export type ProductsResponse<T = any> = {
   pagination?: PaginationMeta;
 };
 
+export type ProductComment = {
+  id?: string | number;
+  content: string;
+  user_name?: string;
+  created_at?: string;
+};
 
-type ProductWithEngagement = ProductDetails & { engagement?: Engagement };
+export type ProductWithEngagement = ProductDetails & { engagement?: Engagement };
 
 type ProductsState = {
   items: Product[];
@@ -42,8 +56,11 @@ type ProductsState = {
   params: GetProductsParams;
 };
 
+type InvalidateKey = "list" | "product" | "engagement" | "comments";
+
 type ProductsContextValue = ProductsState & {
   setParams: (next: Partial<GetProductsParams>) => void;
+
   fetchProducts: (p?: GetProductsParams) => Promise<void>;
   refresh: () => Promise<void>;
 
@@ -51,8 +68,13 @@ type ProductsContextValue = ProductsState & {
   getMyEngagementCached: (id: string) => Promise<Engagement>;
   getProductWithEngagementCached: (id: string) => Promise<ProductWithEngagement>;
 
+  fetchComments: (productId: string) => Promise<void>;
+  getCommentsCached: (productId: string) => ProductComment[];
+  commentsLoadingById: Record<string, boolean>;
+
   deleteProduct: (id: string) => Promise<boolean>;
-  invalidate: (key?: string) => void;
+
+  invalidate: (scope?: InvalidateKey, key?: string) => void;
 };
 
 /* ================= Helpers ================= */
@@ -61,6 +83,7 @@ function buildSearchParams(params?: GetProductsParams) {
   const sp = new URLSearchParams();
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value === undefined || value === null) return;
+
     if (Array.isArray(value)) sp.append(key, value.join(","));
     else sp.append(key, String(value));
   });
@@ -68,16 +91,14 @@ function buildSearchParams(params?: GetProductsParams) {
 }
 
 function stableKey(params?: GetProductsParams) {
-  // کلید پایدار برای کش: مرتب‌سازی keyها
   const obj = params ?? {};
   const entries = Object.entries(obj).filter(([, v]) => v !== undefined && v !== null);
 
-  // تبدیل آرایه‌ها به string
-  const normalized = entries.map(([k, v]) => [k, Array.isArray(v) ? v.join(",") : String(v)] as const);
+  const normalized = entries.map(
+    ([k, v]) => [k, Array.isArray(v) ? v.join(",") : String(v)] as const,
+  );
 
-  // sort برای پایدار بودن
   normalized.sort(([a], [b]) => a.localeCompare(b));
-
   return normalized.map(([k, v]) => `${k}=${v}`).join("&");
 }
 
@@ -104,30 +125,66 @@ export function ProductsProvider({
     },
   });
 
-  // کش ساده: paramsKey -> response
+  // Abort controllers
+  const listAbortRef = useRef<AbortController | null>(null);
+
+  // caches
   const listCacheRef = useRef<Map<string, ProductsResponse<Product>>>(new Map());
-
-  // کش جزئیات محصول: id -> productDetails
   const productCacheRef = useRef<Map<string, ProductDetails>>(new Map());
-
-  // کش engagement: id -> engagement
   const engagementCacheRef = useRef<Map<string, Engagement>>(new Map());
+  const commentsCacheRef = useRef<Map<string, ProductComment[]>>(new Map());
 
-  const invalidate = useCallback((key?: string) => {
-    if (!key) {
+  // comments loading per product
+  const [commentsLoadingById, setCommentsLoadingById] = useState<Record<string, boolean>>({});
+
+  const invalidate = useCallback((scope?: InvalidateKey, key?: string) => {
+    if (!scope) {
       listCacheRef.current.clear();
       productCacheRef.current.clear();
       engagementCacheRef.current.clear();
+      commentsCacheRef.current.clear();
       return;
     }
-    listCacheRef.current.delete(key);
+
+    if (scope === "list") {
+      if (!key) listCacheRef.current.clear();
+      else listCacheRef.current.delete(key);
+      return;
+    }
+
+    if (scope === "product") {
+      if (!key) productCacheRef.current.clear();
+      else productCacheRef.current.delete(key);
+      return;
+    }
+
+    if (scope === "engagement") {
+      if (!key) engagementCacheRef.current.clear();
+      else engagementCacheRef.current.delete(key);
+      return;
+    }
+
+    if (scope === "comments") {
+      if (!key) commentsCacheRef.current.clear();
+      else commentsCacheRef.current.delete(key);
+    }
+  }, []);
+
+  const setParams = useCallback((next: Partial<GetProductsParams>) => {
+    setState((s) => ({
+      ...s,
+      params: { ...s.params, ...next },
+    }));
+
+    // اگر خواستی با هر تغییر پارامتر خودکار فچ بزنه، اینو فعال کن:
+    // void fetchProducts({ ...state.params, ...next });
   }, []);
 
   const fetchProducts = useCallback(async (p?: GetProductsParams) => {
     const params = p ?? state.params;
     const key = stableKey(params);
 
-    // اگر توی کش هست
+    // cache hit
     const cached = listCacheRef.current.get(key);
     if (cached) {
       setState((s) => ({
@@ -141,11 +198,20 @@ export function ProductsProvider({
       return;
     }
 
+    // abort previous list request
+    if (listAbortRef.current) listAbortRef.current.abort();
+    const controller = new AbortController();
+    listAbortRef.current = controller;
+
     setState((s) => ({ ...s, loading: true, error: null, params }));
 
     try {
       const qs = buildSearchParams(params);
-      const res = await apiFetch(`/products?${qs}`, { method: "GET" });
+      const res = await apiFetch(`/products?${qs}`, {
+        method: "GET",
+        signal: controller.signal,
+      });
+
       if (!res.ok) throw new Error("خطا در دریافت محصولات");
 
       const json: ProductsResponse<Product> = await res.json();
@@ -160,6 +226,9 @@ export function ProductsProvider({
         params,
       }));
     } catch (e: any) {
+      // اگر abort شد، خطا نشون نده
+      if (e?.name === "AbortError") return;
+
       setState((s) => ({
         ...s,
         loading: false,
@@ -175,16 +244,6 @@ export function ProductsProvider({
     await fetchProducts(state.params);
   }, [fetchProducts, state.params]);
 
-  const setParams = useCallback((next: Partial<GetProductsParams>) => {
-    setState((s) => ({
-      ...s,
-      params: {
-        ...s.params,
-        ...next,
-      },
-    }));
-  }, []);
-
   const getProductByIdCached = useCallback(async (id: string) => {
     const cached = productCacheRef.current.get(id);
     if (cached) return cached;
@@ -193,7 +252,6 @@ export function ProductsProvider({
     if (!res.ok) throw new Error("خطا در یافتن محصول");
     const json = await res.json();
 
-    // بعضی بک‌ها {data: {...}} میدن، بعضی مستقیم آبجکت
     const data = json?.data ?? json;
     productCacheRef.current.set(id, data);
     return data;
@@ -212,40 +270,68 @@ export function ProductsProvider({
     return data;
   }, []);
 
-  const getProductWithEngagementCached = useCallback(async (id: string) => {
-    const [product, engagement] = await Promise.all([
-      getProductByIdCached(id),
-      getMyEngagementCached(id),
-    ]);
+  const getProductWithEngagementCached = useCallback(
+    async (id: string) => {
+      const [product, engagement] = await Promise.all([
+        getProductByIdCached(id),
+        getMyEngagementCached(id),
+      ]);
+      return { ...product, engagement };
+    },
+    [getProductByIdCached, getMyEngagementCached],
+  );
 
-    return {
-      ...product,
-      engagement,
-    };
-  }, [getProductByIdCached, getMyEngagementCached]);
+  const getCommentsCached = useCallback((productId: string) => {
+    return commentsCacheRef.current.get(productId) ?? [];
+  }, []);
 
-  const deleteProduct = useCallback(async (id: string) => {
+  const fetchComments = useCallback(async (productId: string) => {
+    if (!productId) return;
+
+    // cache hit
+    if (commentsCacheRef.current.has(productId)) return;
+
+    setCommentsLoadingById((s) => ({ ...s, [productId]: true }));
     try {
-      const res = await apiFetch(`/products/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error || "خطا در حذف محصول");
-      }
+      const res = await apiFetch(`/products/${productId}/comment`, { method: "GET" });
+      if (!res.ok) throw new Error("خطا در دریافت کامنت‌ها");
 
-      toast.success("محصول با موفقیت حذف شد");
+      const json = await res.json();
+      const list = Array.isArray(json) ? json : (json.data ?? []);
 
-      // از کش‌ها حذف کن
-      productCacheRef.current.delete(id);
-      engagementCacheRef.current.delete(id);
-      // لیست‌ها ممکنه شامل این محصول باشن؛ ساده‌ترین: refresh
-      await refresh();
-
-      return true;
+      commentsCacheRef.current.set(productId, list);
     } catch (e: any) {
-      toast.error(e?.message ?? "خطا");
-      return false;
+      toast.error(e?.message ?? "خطا در دریافت کامنت‌ها");
+    } finally {
+      setCommentsLoadingById((s) => ({ ...s, [productId]: false }));
     }
-  }, [refresh]);
+  }, []);
+
+  const deleteProduct = useCallback(
+    async (id: string) => {
+      try {
+        const res = await apiFetch(`/products/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error(data?.error || "خطا در حذف محصول");
+        }
+
+        toast.success("محصول با موفقیت حذف شد");
+
+        // invalidate caches related
+        productCacheRef.current.delete(id);
+        engagementCacheRef.current.delete(id);
+        commentsCacheRef.current.delete(id);
+
+        await refresh();
+        return true;
+      } catch (e: any) {
+        toast.error(e?.message ?? "خطا");
+        return false;
+      }
+    },
+    [refresh],
+  );
 
   const value: ProductsContextValue = useMemo(
     () => ({
@@ -256,6 +342,9 @@ export function ProductsProvider({
       getProductByIdCached,
       getMyEngagementCached,
       getProductWithEngagementCached,
+      fetchComments,
+      getCommentsCached,
+      commentsLoadingById,
       deleteProduct,
       invalidate,
     }),
@@ -267,6 +356,9 @@ export function ProductsProvider({
       getProductByIdCached,
       getMyEngagementCached,
       getProductWithEngagementCached,
+      fetchComments,
+      getCommentsCached,
+      commentsLoadingById,
       deleteProduct,
       invalidate,
     ],
