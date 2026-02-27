@@ -12,6 +12,7 @@ import { footerData } from "@/constant/footer-data";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { CartProvider } from "@/context/CartContext";
+import { ProductsProvider } from "@/context/ProductContext";
 
 export default function RootLayout({
   children,
@@ -41,7 +42,9 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <CartProvider>
             <SidebarProvider>
-              <LayoutContent>{children}</LayoutContent>
+              <ProductsProvider>
+                <LayoutContent>{children}</LayoutContent>
+              </ProductsProvider>
             </SidebarProvider>
           </CartProvider>
         </ThemeProvider>
@@ -53,7 +56,10 @@ export default function RootLayout({
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar();
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/forget_password";
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forget_password";
 
   return (
     <div
