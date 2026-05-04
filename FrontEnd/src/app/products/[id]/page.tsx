@@ -17,6 +17,7 @@ import {
   ShoppingCart,
   Minus,
   Plus,
+  Pencil,
 } from "lucide-react";
 import { formatPriceFa } from "@/lib/utils";
 import { tokenStore } from "@/lib/token";
@@ -37,6 +38,7 @@ import { apiFetch, isProfileComplete } from "@/lib/api";
 import ProfileCompleteModal from "@/components/ui/ProfileCompleteModal";
 import { useProducts } from "@/context/ProductContext";
 import { Textarea } from "@/components/ui/textarea";
+import DeleteDialog from "@/components/ui/DeleteDialog";
 
 export default function ProductDetailsPage() {
   const params = useParams();
@@ -129,7 +131,7 @@ export default function ProductDetailsPage() {
 
       const created = await res.json();
 
-     setComments((prev: any[]) => [created, ...prev]);
+      setComments((prev: any[]) => [created, ...prev]);
 
       setCommentText("");
       toast.success("کامنت ثبت شد");
@@ -264,52 +266,39 @@ export default function ProductDetailsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm opacity-60 text-left">بدون تگ</p>
+                <></>
               )}
             </div>
             <div className="flex items-center justify-end pt-2">
               {isOwner && (
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
+                    size="sm"
+                    variant="ghost"
+                    className="gap-2 text-yellow-600"
                     onClick={() => router.push(`/products/${product.id}/edit`)}
                   >
+                    <Pencil className="w-4 h-4" />
                     ویرایش
                   </Button>
 
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="gap-2">
-                        <Trash2 className="w-4 h-4" />
-                        حذف محصول
+                  <DeleteDialog
+                    title="حذف محصول"
+                    description=" آیا از حذف این محصول مطمئن هستید؟ این عملیات غیرقابل بازگشت است."
+                    onConfirm={() => {
+                      deleteProduct(id);
+                      router.back();
+                    }}
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-2 text-red-600"
+                      >
+                        حذف
                       </Button>
-                    </AlertDialogTrigger>
-
-                    <AlertDialogContent dir="rtl">
-                      <AlertDialogHeader className="text-right">
-                        <AlertDialogTitle>حذف محصول</AlertDialogTitle>
-
-                        <AlertDialogDescription>
-                          آیا از حذف این محصول مطمئن هستید؟ این عملیات غیرقابل
-                          بازگشت است.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-
-                      <AlertDialogFooter className="flex-row-reverse">
-                        <AlertDialogCancel>انصراف</AlertDialogCancel>
-
-                        <AlertDialogAction
-                          className="bg-red-600 hover:bg-red-700"
-                          onClick={() => {
-                            deleteProduct(id);
-                            router.back();
-                          }}
-                        >
-                          حذف شود
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                    }
+                  />
                 </div>
               )}
 
@@ -376,9 +365,9 @@ export default function ProductDetailsPage() {
                         key={c.id}
                         className="rounded-xl border p-3 flex flex-col gap-2"
                       >
-                          <div className="text-xs opacity-60 text-left">
-                            {new Date(c.created_at).toLocaleDateString("fa-IR")}
-                          </div>
+                        <div className="text-xs opacity-60 text-left">
+                          {new Date(c.created_at).toLocaleDateString("fa-IR")}
+                        </div>
                         <p className="text-sm opacity-80 leading-relaxed text-right">
                           {c.content}
                         </p>
@@ -414,9 +403,7 @@ export default function ProductDetailsPage() {
                     <Button
                       className="gap-2"
                       disabled={commentLoading || !commentText.trim()}
-                      onClick={
-                        handleCommentSubmit
-                      }
+                      onClick={handleCommentSubmit}
                     >
                       ارسال کامنت
                     </Button>
