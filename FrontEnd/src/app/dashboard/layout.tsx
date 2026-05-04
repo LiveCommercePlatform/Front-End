@@ -3,10 +3,12 @@
 import { usePathname, useRouter } from "next/navigation";
 import Guard from "@/components/auth/Guard";
 import { DashboardProvider, useDashboard } from "@/context/DashboardContext";
+import { useEffect } from "react";
+import Loading from "@/components/ui/Loading";
 
 const tabs = [
   { key: "products", label: "محصولات من" },
-  { key: "analytics", label: "تحلیل‌ها" },
+  { key: "lives", label: "استریم‌ها" },
   { key: "users", label: "مدیریت کاربران" },
   { key: "settings", label: "پروفایل کاربری" },
 ];
@@ -23,9 +25,10 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        در حال بارگذاری...
-      </div>
+      // <div className="min-h-screen flex items-center justify-center">
+      //   در حال بارگذاری...
+      // </div>
+      <Loading/>
     );
   }
 
@@ -73,7 +76,6 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Tab content */}
       {children}
     </div>
   );
@@ -86,9 +88,9 @@ export default function DashboardLayout({
 }) {
   return (
     <Guard requireAuth>
-      <DashboardProvider>
+      {/* <DashboardProvider> */}
         <DashboardShell>{children}</DashboardShell>
-      </DashboardProvider>
+      {/* </DashboardProvider> */}
     </Guard>
   );
 }

@@ -13,18 +13,9 @@ import { ProductCardProps } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { apiFetch, isProfileComplete } from "@/lib/api";
 import { tokenStore } from "@/lib/token";
+import DeleteDialog from "@/components/ui/DeleteDialog";
+
 import ProfileCompleteModal from "./ProfileCompleteModal";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
 import { useProducts } from "@/context/ProductContext";
 
 export default function ProductCard({
@@ -99,13 +90,17 @@ export default function ProductCard({
         }}
         className={clsx(
           "cursor-pointer rounded-xl border bg-card overflow-hidden flex flex-col transition hover:shadow-md",
-          className
+          className,
         )}
       >
         {/* Cover */}
         <div className="h-32 bg-muted overflow-hidden">
           {cover ? (
-            <img src={cover} alt={title} className="w-full h-full object-cover" />
+            <img
+              src={cover}
+              alt={title}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-sm opacity-60">
               بدون تصویر
@@ -123,7 +118,9 @@ export default function ProductCard({
               {showState && (
                 <Badge
                   variant="secondary"
-                  className={status === "active" ? "bg-emerald-100 text-emerald-700" : ""}
+                  className={
+                    status === "active" ? "bg-emerald-100 text-emerald-700" : ""
+                  }
                 >
                   {status === "active" ? "فعال" : "غیرفعال"}
                 </Badge>
@@ -164,7 +161,9 @@ export default function ProductCard({
                         <Plus className="w-4 h-4" />
                       </Button>
 
-                      <span className="text-sm font-semibold w-6 text-center">{count}</span>
+                      <span className="text-sm font-semibold w-6 text-center">
+                        {count}
+                      </span>
 
                       <Button
                         size="sm"
@@ -204,41 +203,28 @@ export default function ProductCard({
               )}
 
               {showDelete && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1 text-red-600"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      حذف
-                    </Button>
-                  </AlertDialogTrigger>
-
-                  <AlertDialogContent className="text-right">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>حذف محصول</AlertDialogTitle>
-                      <AlertDialogDescription className="text-right">
-                        آیا از حذف این محصول مطمئن هستید؟ این عملیات غیرقابل بازگشت است.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>انصراف</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteProduct(id);
-                        }}
-                        className="bg-red-600 hover:bg-red-700"
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <DeleteDialog
+                    title="حذف محصول"
+                    description=" آیا از حذف این محصول مطمئن هستید؟ این عملیات غیرقابل بازگشت است."
+                    onConfirm={() => {
+                      deleteProduct(id);
+                    }}
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-2 text-red-600"
                       >
-                        حذف قطعی
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                        حذف
+                      </Button>
+                    }
+                  />
+                </div>
               )}
             </div>
           )}

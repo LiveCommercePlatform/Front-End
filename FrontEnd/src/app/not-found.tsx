@@ -1,9 +1,9 @@
 // src/app/not-found.tsx
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Ghost } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Ghost } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -12,12 +12,13 @@ export default function NotFound() {
         <Ghost className="w-10 h-10 text-muted-foreground" />
       </div>
 
-      <h1 className="text-5xl font-extrabold tracking-tight text-foreground">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
         404 - صفحه پیدا نشد
       </h1>
 
-      <p className="text-muted-foreground text-lg max-w-md">
-        متأسفیم، صفحه‌ای که دنبالش بودید پیدا نشد. ممکنه حذف شده باشه یا آدرس اشتباهی وارد کرده باشید.
+      <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-md">
+        متأسفیم، صفحه‌ای که دنبالش بودید پیدا نشد. ممکنه حذف شده باشه یا آدرس
+        اشتباهی وارد کرده باشید.
       </p>
 
       <Link href="/">
@@ -26,5 +27,5 @@ export default function NotFound() {
         </Button>
       </Link>
     </div>
-  )
+  );
 }

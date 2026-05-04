@@ -176,15 +176,13 @@ export function ProductsProvider({
       params: { ...s.params, ...next },
     }));
 
-    // اگر خواستی با هر تغییر پارامتر خودکار فچ بزنه، اینو فعال کن:
-    // void fetchProducts({ ...state.params, ...next });
+    void fetchProducts({ ...state.params, ...next });
   }, []);
 
   const fetchProducts = useCallback(async (p?: GetProductsParams) => {
     const params = p ?? state.params;
     const key = stableKey(params);
 
-    // cache hit
     const cached = listCacheRef.current.get(key);
     if (cached) {
       setState((s) => ({

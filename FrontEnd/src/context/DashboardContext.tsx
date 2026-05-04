@@ -40,6 +40,7 @@ export function DashboardProvider({
     }
   };
 
+  
   useEffect(() => {
     fetchProfile();
   }, []);

@@ -21,14 +21,14 @@ export default function ProductsTab() {
   const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
-    fetchProducts({
+    setParams({
       page,
       limit: PAGE_SIZE,
       q: search || undefined,
       owner_id: tokenStore.getUserId() ?? "",
       in_stock:
         status == "active" ? true : status == "inactive" ? false : undefined,
-    });
+    })
   }, [page, search, status]);
 
   useEffect(() => {
@@ -40,7 +40,6 @@ export default function ProductsTab() {
       cover: p.cover_image ?? "",
       status: p.stock > 0 ? "active" : "inactive",
     }));
-    setProducts(cleaned);
     setProducts(cleaned);
     setTotalItems(pagination?.total ?? 0);
   }, [items, pagination]);
@@ -99,9 +98,8 @@ export default function ProductsTab() {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border bg-muted/30 p-10 text-center text-sm opacity-70">
-          هنوز محصولی ثبت نشده است
-        </div>
+        <div className="px-10  py-20 text-center text-sm opacity-70">
+هنوز محصولی برای مشاهده ثبت نشده است!          </div>
       )}
 
       <Pagination

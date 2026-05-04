@@ -3,6 +3,6 @@
 
 import UsersTab from "../UsersTab";
 
-export default function ProductsPage() {
+export default function SettingPage() {
   return <UsersTab />;
 }
