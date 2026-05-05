@@ -18,10 +18,8 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
     },
   });
 
-  // ✅ اگر 401 نبود مستقیم برگردون
   if (res.status !== 401) return res;
 
-  // ✅ این endpoint ها نباید refresh بشن
   const skipRefreshEndpoints = [
     "/auth/login",
     "/auth/register",
@@ -30,10 +28,9 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
   ];
 
   if (skipRefreshEndpoints.some((endpoint) => url.includes(endpoint))) {
-    return res; // مستقیم ارور رو بده
+    return res; 
   }
 
-  // اگر یکی دیگه در حال refresh است
   if (isRefreshing) {
     return new Promise<Response>((resolve) => {
       queue.push(() => resolve(apiFetch(url, options)));

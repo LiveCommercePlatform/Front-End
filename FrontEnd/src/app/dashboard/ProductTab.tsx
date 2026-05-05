@@ -1,5 +1,6 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ListToolbar from "@/components/ui/ListToolbar";
 import { Button } from "@/components/ui/button";
@@ -8,18 +9,25 @@ import { ProductStatus, Product } from "@/types";
 import Pagination from "@/components/ui/Pagination";
 import { tokenStore } from "@/lib/token";
 import { useProducts } from "@/context/ProductContext";
+import { Loader2 } from "lucide-react";
+import Loading from "@/components/ui/Loading";
+import NotFound from "@/components/ui/NotFound";
 
 const PAGE_SIZE = 9;
+
 export default function ProductsTab() {
-  const { items, pagination, deleteProduct, setParams, fetchProducts } =
+  const { items, pagination, loading, deleteProduct, setParams } =
     useProducts();
+
   const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ProductStatus>("all");
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  // 🔹 تنظیم پارامترهای API
   useEffect(() => {
     setParams({
       page,
@@ -27,10 +35,11 @@ export default function ProductsTab() {
       q: search || undefined,
       owner_id: tokenStore.getUserId() ?? "",
       in_stock:
-        status == "active" ? true : status == "inactive" ? false : undefined,
-    })
-  }, [page, search, status]);
+        status === "active" ? true : status === "inactive" ? false : undefined,
+    });
+  }, [page, search, status, setParams]);
 
+  // 🔹 نرمال‌سازی داده‌ها
   useEffect(() => {
     const cleaned: Product[] = items.map((p: any) => ({
       id: String(p.id),
@@ -40,21 +49,34 @@ export default function ProductsTab() {
       cover: p.cover_image ?? "",
       status: p.stock > 0 ? "active" : "inactive",
     }));
+
     setProducts(cleaned);
     setTotalItems(pagination?.total ?? 0);
   }, [items, pagination]);
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setStatus("all");
+    setPage(1);
+  };
 
   return (
     <div className="space-y-6">
       <ListToolbar
         searchValue={search}
-        onSearchChange={setSearch}
+        onSearchChange={(v) => {
+          setSearch(v);
+          setPage(1);
+        }}
         searchPlaceholder="جستجوی محصول..."
         filters={[
           {
             key: "status",
             value: status,
-            onChange: setStatus,
+            onChange: (v) => {
+              setStatus(v);
+              setPage(1);
+            },
             options: [
               { label: "همه وضعیت‌ها", value: "all" },
               { label: "فعال", value: "active" },
@@ -64,15 +86,7 @@ export default function ProductsTab() {
         ]}
         actions={
           <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSearch("");
-                setStatus("all");
-                setPage(1);
-              }}
-            >
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>
               حذف فیلترها
             </Button>
             <Button
@@ -85,7 +99,10 @@ export default function ProductsTab() {
           </>
         }
       />
-      {products.length > 0 ? (
+
+      {loading ? (
+        <Loading text="در حال دریافت محصولات..." />
+      ) : products.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
             <ProductCard
@@ -98,16 +115,24 @@ export default function ProductsTab() {
           ))}
         </div>
       ) : (
-        <div className="px-10  py-20 text-center text-sm opacity-70">
-هنوز محصولی برای مشاهده ثبت نشده است!          </div>
+        <NotFound
+          title="محصولی موجود نیست"
+          message="در حال حاضر هیچ محصولی با فیلترهای اعمال شده پیدا نشد."
+          action={
+            <Button variant="outline" onClick={handleResetFilters}>
+              حذف فیلترها
+            </Button>
+          }
+        />
       )}
-
-      <Pagination
-        page={page}
-        totalItems={totalItems}
-        pageSize={PAGE_SIZE}
-        onPageChange={(newPage) => setPage(newPage)}
-      />
+      {!loading && products.length > 0 && (
+        <Pagination
+          page={page}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={(newPage) => setPage(newPage)}
+        />
+      )}
     </div>
   );
 }

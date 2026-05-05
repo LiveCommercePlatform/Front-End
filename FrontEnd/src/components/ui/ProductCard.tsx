@@ -2,8 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-
 import { formatPriceFa } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,8 +9,6 @@ import { Pencil, Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
 import clsx from "clsx";
 import { ProductCardProps } from "@/types";
 import { useCart } from "@/context/CartContext";
-import { apiFetch, isProfileComplete } from "@/lib/api";
-import { tokenStore } from "@/lib/token";
 import DeleteDialog from "@/components/ui/DeleteDialog";
 
 import ProfileCompleteModal from "./ProfileCompleteModal";
@@ -32,53 +28,28 @@ export default function ProductCard({
   className,
 }: ProductCardProps) {
   const router = useRouter();
-  const { cart, addToCart, updateQty, removeFromCart } = useCart();
+  const {
+    handleAddToCart,
+    getQty,
+    increase,
+    decrease,
+    profileModalOpen,
+    setProfileModalOpen,
+  } = useCart();
+  const count = getQty(id);
   const { deleteProduct } = useProducts();
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [pendingAdd, setPendingAdd] = useState(false);
-
-  const count = useMemo(() => {
-    const item = cart.find((i) => i.id === id);
-    return item?.qty ?? 0;
-  }, [cart, id]);
-
   const goToProduct = () => router.push(`/products/${id}`);
 
-  const doAddToCart = () => {
-    addToCart({ id, title, price, qty: 1, cover });
+  const onAdd = async (e?: React.MouseEvent) => {
+    if(e) e.stopPropagation();
+    await handleAddToCart({
+      id: id,
+      title: title,
+      price: price,
+      cover: cover || "",
+    });
   };
-
-  const increase = () => updateQty(id, count + 1);
-
-  const decrease = () => {
-    if (count - 1 <= 0) removeFromCart(id);
-    else updateQty(id, count - 1);
-  };
-
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    try {
-      const check = await isProfileComplete();
-
-      if (check.reason === "not_logged_in") {
-        toast("برای افزودن به سبد خرید، اول وارد شوید");
-        router.push("/login");
-        return;
-      }
-
-      if (!check.ok) {
-        setPendingAdd(true);
-        setProfileModalOpen(true);
-        return;
-      }
-
-      doAddToCart();
-    } catch (err: any) {
-      toast.error(err?.message || "خطا در بررسی پروفایل");
-    }
-  };
-
   return (
     <>
       <div
@@ -139,7 +110,7 @@ export default function ProductCard({
                       variant="outline"
                       size="sm"
                       className="gap-1 text-blue-600 border-blue-400"
-                      onClick={handleAddToCart}
+                      onClick={onAdd}
                     >
                       <ShoppingCart className="w-4 h-4" />
                       افزودن
@@ -155,7 +126,7 @@ export default function ProductCard({
                         className="border-blue-400 text-blue-600"
                         onClick={(e) => {
                           e.stopPropagation();
-                          increase();
+                          increase(id);
                         }}
                       >
                         <Plus className="w-4 h-4" />
@@ -171,7 +142,7 @@ export default function ProductCard({
                         className="border-blue-400 text-blue-600"
                         onClick={(e) => {
                           e.stopPropagation();
-                          decrease();
+                          decrease(id);
                         }}
                       >
                         <Minus className="w-4 h-4" />
@@ -241,7 +212,7 @@ export default function ProductCard({
           setProfileModalOpen(false);
 
           if (pendingAdd) {
-            doAddToCart();
+            onAdd();
             setPendingAdd(false);
           }
         }}

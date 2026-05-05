@@ -11,13 +11,11 @@ import DeleteDialog from "@/components/ui/DeleteDialog";
 
 import type { Stream, StreamStatus } from "@/types";
 import { Plus } from "lucide-react";
-import { toast } from "react-hot-toast";
-import { getErrorMessage } from "@/lib/getErrorMessage";
 import { useLiveRooms } from "@/context/LiveRoomContext";
 
 export default function LivesTab() {
   const router = useRouter();
-  const { lives, fetchLiveRooms, deleteLiveRoom } = useLiveRooms();
+  const { lives, fetchLiveRooms, deleteLiveRoom ,  startStream } = useLiveRooms();
   const [status, setStatus] = useState<StreamStatus | "all">("all");
   const [openUpsert, setOpenUpsert] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
@@ -44,6 +42,15 @@ export default function LivesTab() {
   const handleDelete = (s: Stream) => {
     deleteLiveRoom(s.ID);
   };
+
+const handleStart = async (s: Stream) => {
+  const ok = await startStream(s.ID);
+
+  if (ok) {
+    router.push(`/stream/${s.ID}`);
+  }
+};
+
 
   const goToStream = (s: Stream) => {
     router.push(`/stream/${s.ID}`);
@@ -81,6 +88,7 @@ export default function LivesTab() {
               onView={goToStream}
               onEdit={openEdit}
               onDelete={handleDelete}
+              onStart={handleStart}
             />
           </div>
         ))}

@@ -4,30 +4,33 @@ export type Stream = {
   ID: string;
   Title: string;
   Description?: string;
-  products?: [{ product: { title: string } }];
-  //   productTitle?: string;
+  Products: Array<
+    {
+      IsPinned: boolean;
+      ProductID: string;
+      Product: { title: string; description: string; price: number };
+    }
+  >;
   cover?: string;
   Status: StreamStatus;
-
-  // scheduledAt?: string; // ISO
-  StartedAt?: string; // ISO
-  EndedAt?: string; // ISO
+  StartedAt?: string; 
+  EndedAt?: string;
   IsRecorded?: boolean;
   TotalViews?: number;
-  // ordersCount?: number;
-  CreatedAt?: string; // ISO
-
+  CreatedAt?: string; 
   Duration?: number;
   HostID?: string;
   SFURoomID?: string;
-  // Host
-  // :
-  // {id: '00000000-0000-0000-0000-000000000000', name: '', email: '', role: '', verified: false, …}
-
-
-  TotalDislikes
-  :number;
-  
-  TotalLikes
-  :number;
+  Host: { id: String; name: string };
+  TotalDislikes: number;
+  TotalLikes: number;
 };
+
+export type LiveRoomStats = {
+  total_dislikes: number;
+  total_likes: number;
+  total_views: number;
+  viewer_count: number;
+};
+
+export type ReactionType = "like" | "dislike" | null;

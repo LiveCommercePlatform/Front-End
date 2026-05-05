@@ -54,12 +54,14 @@ export default function StreamCard({
   onView,
   onEdit,
   onDelete,
+  onStart,
   className,
 }: {
   stream: Stream;
   onView: (s: Stream) => void;
   onEdit: (s: Stream) => void;
   onDelete: (s: Stream) => void;
+  onStart: (s: Stream) => void;
   className?: string;
 }) {
   const meta = useMemo(() => {
@@ -175,7 +177,7 @@ export default function StreamCard({
               size="sm"
               variant="ghost"
               className="gap-2 text-green-600"
-              onClick={() => onEdit(stream)}
+              onClick={() => onStart(stream)}
             >
               <Play className="w-4 h-4" />
               شروع

@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import toast from "react-hot-toast";
 import { apiFetch } from "@/lib/api";
-import type { Stream } from "@/types";
+import type { Stream, LiveRoomStats, ReactionType } from "@/types";
 
 /* ================= Types ================= */
 
@@ -51,6 +51,22 @@ type LiveRoomContextValue = LiveRoomState & {
 
   startStream: (id: string) => Promise<boolean>;
   endStream: (id: string) => Promise<boolean>;
+  getLiveRoomProducts: (streamId: string) => Promise<any[]>;
+  removeProductFromLive: (
+    streamId: string,
+    productId: string,
+  ) => Promise<boolean>;
+  pinLiveProduct: (
+    streamId: string,
+    productId: string,
+    isPinned: boolean,
+  ) => Promise<boolean>;
+
+  likeStream: (streamId: string) => Promise<boolean>;
+  dislikeStream: (streamId: string) => Promise<boolean>;
+  getMyReaction: (streamId: string) => Promise<ReactionType>;
+  getLiveRoomStats: (streamId: string) => Promise<LiveRoomStats | null>;
+  removeReaction: (streamId: string) => Promise<boolean>;
 
   invalidate: (scope?: InvalidateKey, key?: string) => void;
 };
@@ -315,6 +331,145 @@ export function LiveRoomProvider({
     [refresh, invalidate],
   );
 
+  const getLiveRoomProducts = useCallback(async (streamId: string) => {
+    try {
+      const res = await apiFetch(`/live-rooms/${streamId}/products`);
+      if (!res.ok) throw new Error("خطا در دریافت محصولات لایو");
+      return await res.json();
+    } catch (e: any) {
+      toast.error(e?.message ?? "خطا در دریافت محصولات لایو");
+      return [];
+    }
+  }, []);
+
+  const removeProductFromLive = useCallback(
+    async (streamId: string, productId: string) => {
+      try {
+        const res = await apiFetch(
+          `/live-rooms/${streamId}/products/${productId}`,
+          {
+            method: "DELETE",
+          },
+        );
+        if (!res.ok) throw new Error("خطا در حذف محصول از لایو");
+        invalidate("single", streamId);
+        return true;
+      } catch (e: any) {
+        toast.error(e?.message ?? "خطا");
+        return false;
+      }
+    },
+    [invalidate],
+  );
+
+  const pinLiveProduct = useCallback(
+    async (streamId: string, productId: string, isPinned: boolean) => {
+      try {
+        const res = await apiFetch(
+          `/live-rooms/${streamId}/products/${productId}/pin`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ is_pinned: isPinned }),
+          },
+        );
+
+        if (!res.ok) throw new Error("خطا در پین کردن محصول");
+        invalidate("single", streamId);
+        return true;
+      } catch (e: any) {
+        toast.error(e?.message ?? "خطا در پین کردن");
+        return false;
+      }
+    },
+    [invalidate],
+  );
+
+
+  const likeStream = useCallback(
+    async (streamId: string) => {
+      try {
+        const res = await apiFetch(`/live-rooms/${streamId}/reactions/like`, {
+          method: "POST",
+        });
+
+        if (!res.ok) throw new Error("خطا در ارسال لایک");
+
+        invalidate("single", streamId);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [invalidate],
+  );
+
+  const dislikeStream = useCallback(
+    async (streamId: string) => {
+      try {
+        const res = await apiFetch(
+          `/live-rooms/${streamId}/reactions/dislike`,
+          {
+            method: "POST",
+          },
+        );
+
+        if (!res.ok) throw new Error("خطا در ارسال دیسلایک");
+
+        invalidate("single", streamId);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [invalidate],
+  );
+const removeReaction = useCallback(
+  async (streamId: string) => {
+    try {
+      const res = await apiFetch(
+        `/live-rooms/${streamId}/reactions`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) throw new Error("خطا در حذف واکنش");
+
+      invalidate("single", streamId);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  [invalidate],
+);
+
+  const getMyReaction = useCallback(async (streamId: string) => {
+    try {
+      const res = await apiFetch(`/live-rooms/${streamId}/reactions/me`);
+
+      if (!res.ok) throw new Error("خطا در دریافت واکنش");
+      const json = await res.json();
+      return json.reaction;
+    } catch (e: any) {
+      toast.error(e?.message ?? "خطا در دریافت واکنش");
+      return null;
+    }
+  }, []);
+
+  const getLiveRoomStats = useCallback(async (streamId: string) => {
+    try {
+      const res = await apiFetch(`/live-rooms/${streamId}/stats`);
+
+      if (!res.ok) throw new Error("خطا در گرفتن آمار لایو");
+
+      return await res.json(); // { total_likes, total_dislikes, total_views, viewer_count }
+    } catch (e: any) {
+      toast.error(e?.message ?? "خطا در گرفتن آمار");
+      return null;
+    }
+  }, []);
+
   const value: LiveRoomContextValue = useMemo(
     () => ({
       ...state,
@@ -328,6 +483,14 @@ export function LiveRoomProvider({
       deleteLiveRoom,
       startStream,
       endStream,
+      getLiveRoomProducts,
+      removeProductFromLive,
+      pinLiveProduct,
+      likeStream,
+      dislikeStream,
+      getMyReaction,
+      getLiveRoomStats,
+      removeReaction,
     }),
     [
       state,
@@ -341,6 +504,14 @@ export function LiveRoomProvider({
       deleteLiveRoom,
       startStream,
       endStream,
+      getLiveRoomProducts,
+      removeProductFromLive,
+      pinLiveProduct,
+      likeStream,
+      dislikeStream,
+      getMyReaction,
+      getLiveRoomStats,
+      removeReaction,
     ],
   );
 

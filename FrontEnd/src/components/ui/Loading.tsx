@@ -1,16 +1,14 @@
-export default function Loading() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b ">
-      <div className="text-center">
-        
-        <div className="relative w-12 h-12 mx-auto mb-4">
-          <div className="absolute inset-0 border-4 border-primary rounded-full border-t-transparent animate-spin"></div>
-        </div>
+import { Loader2 } from "lucide-react";
 
-        <p className=" font-medium text-sm md:text-base">
-          لطفاً کمی صبر کنید، داشبورد در حال بارگذاری است...
-        </p>
-      </div>
+export default function Loading({
+  text = " لطفاً کمی صبر کنید، در حال بارگذاری ...",
+}: {
+  text?: string;
+}) {
+  return (
+    <div className="min-h-[60vh] w-full flex flex-col items-center justify-center">
+      <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <p className="mt-4 text-muted-foreground">{text}</p>
     </div>
   );
 }

@@ -13,7 +13,6 @@ import {
   ThumbsDown,
   Star,
   ArrowRight,
-  Trash2,
   ShoppingCart,
   Minus,
   Plus,
@@ -21,20 +20,9 @@ import {
 } from "lucide-react";
 import { formatPriceFa } from "@/lib/utils";
 import { tokenStore } from "@/lib/token";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { StatBoxProps, ProductDetails } from "@/types";
 import { useCart } from "@/context/CartContext";
-import { apiFetch, isProfileComplete } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import ProfileCompleteModal from "@/components/ui/ProfileCompleteModal";
 import { useProducts } from "@/context/ProductContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,16 +32,17 @@ export default function ProductDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const id = Array.isArray(params.id) ? params.id[0] : (params.id as string);
+const {
+  handleAddToCart,
+  getQty,
+  increase,
+  decrease,
+  profileModalOpen,
+  setProfileModalOpen,
+} = useCart();
+  const count = getQty(id);
   const { getProductByIdCached, getMyEngagementCached, deleteProduct } =
     useProducts();
-  const { cart, addToCart, updateQty, removeFromCart } = useCart();
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [pendingAdd, setPendingAdd] = useState(false);
-  const count = useMemo(() => {
-    const item = cart.find((i) => i.id === id);
-    return item?.qty ?? 0;
-  }, [cart, id]);
-
   const [loading_, setLoading] = useState(true);
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [comments, setComments] = useState<any[]>([]);
@@ -74,43 +63,7 @@ export default function ProductDetailsPage() {
 
     if (id) fetchComments();
   }, [id]);
-  const doAddToCart = () => {
-    if (!product) return;
-    addToCart({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      qty: 1,
-      cover: product.cover_image || "",
-    });
-  };
-  const increase = () => updateQty(id, count + 1);
 
-  const decrease = () => {
-    if (count - 1 <= 0) removeFromCart(id);
-    else updateQty(id, count - 1);
-  };
-
-  useEffect(() => {}, []);
-
-  const handleAddToCart = async () => {
-    try {
-      const check = await isProfileComplete();
-      if (check.reason === "not_logged_in") {
-        toast("برای افزودن به سبد خرید، اول وارد شوید");
-        router.push("/login");
-        return;
-      }
-      if (!check.ok) {
-        setPendingAdd(true);
-        setProfileModalOpen(true);
-        return;
-      }
-      doAddToCart();
-    } catch (e: any) {
-      toast.error(e?.message || "خطا در بررسی پروفایل");
-    }
-  };
   async function handleCommentSubmit() {
     try {
       const access = tokenStore.getAccess?.();
@@ -119,9 +72,7 @@ export default function ProductDetailsPage() {
         router.push("/login");
         return;
       }
-
       setCommentLoading(true);
-
       const res = await apiFetch(`/products/${id}/comments`, {
         method: "POST",
         body: JSON.stringify({ content: commentText }),
@@ -157,6 +108,17 @@ export default function ProductDetailsPage() {
     })();
   }, [id]);
 
+
+const onAdd = async () => {
+  if (!product) return;
+
+  await handleAddToCart({
+    id: product.id,
+    title: product.title,
+    price: product.price,
+    cover: product.cover_image || "",
+  });
+};
   const coverSrc = useMemo(() => {
     if (!product?.cover_image) return null;
     return product.cover_image;
@@ -309,7 +271,7 @@ export default function ProductDetailsPage() {
                       variant="outline"
                       size="sm"
                       className="gap-1 text-blue-600 border-blue-400"
-                      onClick={handleAddToCart}
+                      onClick={onAdd}
                     >
                       <ShoppingCart className="w-4 h-4" />
                       افزودن
@@ -320,7 +282,7 @@ export default function ProductDetailsPage() {
                         size="sm"
                         variant="outline"
                         className="border-blue-400 text-blue-600"
-                        onClick={increase}
+                        onClick={()=>increase(product.id)}
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
@@ -333,7 +295,7 @@ export default function ProductDetailsPage() {
                         size="sm"
                         variant="outline"
                         className="border-blue-400 text-blue-600"
-                        onClick={decrease}
+                        onClick={()=>decrease(product.id)}
                       >
                         <Minus className="w-4 h-4" />
                       </Button>
@@ -345,12 +307,8 @@ export default function ProductDetailsPage() {
           </CardContent>
         </Card>
 
-        {/* Details */}
         <Card className="md:col-span-3">
-          {/* <CardHeader className="text-right font-medium">جزئیات</CardHeader> */}
           <CardContent className="space-y-4">
-            {/* Stats */}
-            {/* Comments */}
             <Card className="border rounded-xl">
               <CardHeader className="text-right font-medium">
                 کامنت‌ها
@@ -479,7 +437,7 @@ export default function ProductDetailsPage() {
         open={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
         onCompleted={() => {
-          doAddToCart();
+          onAdd();
         }}
       />
     </div>

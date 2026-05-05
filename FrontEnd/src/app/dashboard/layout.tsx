@@ -2,8 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Guard from "@/components/auth/Guard";
-import { DashboardProvider, useDashboard } from "@/context/DashboardContext";
-import { useEffect } from "react";
+import { useDashboard } from "@/context/DashboardContext";
 import Loading from "@/components/ui/Loading";
 
 const tabs = [
@@ -25,24 +24,20 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      // <div className="min-h-screen flex items-center justify-center">
-      //   در حال بارگذاری...
-      // </div>
-      <Loading/>
+      <Loading text = "لطفاً کمی صبر کنید، داشبورد در حال بارگذاری است..."/>
     );
   }
 
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        پروفایل یافت نشد
+        پروفایل یافت نشد!
       </div>
     );
   }
 
   return (
     <div className="min-h-screen p-3 md:p-6">
-      {/* Header */}
       <div className="flex items-center gap-3 md:gap-6 mb-6">
         <img
           src={`${DEFAULT_AVATAR}${encodeURIComponent(profile.name)}`}
@@ -88,9 +83,7 @@ export default function DashboardLayout({
 }) {
   return (
     <Guard requireAuth>
-      {/* <DashboardProvider> */}
         <DashboardShell>{children}</DashboardShell>
-      {/* </DashboardProvider> */}
     </Guard>
   );
 }
