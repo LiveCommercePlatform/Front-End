@@ -20,6 +20,7 @@ export default function ProductCard({
   price,
   status,
   cover,
+  stock,
   showEdit = true,
   showDelete = true,
   showAddToCart = false,
@@ -111,6 +112,7 @@ export default function ProductCard({
                       size="sm"
                       className="gap-1 text-blue-600 border-blue-400"
                       onClick={onAdd}
+                      disabled={stock == 0}
                     >
                       <ShoppingCart className="w-4 h-4" />
                       افزودن
@@ -128,6 +130,7 @@ export default function ProductCard({
                           e.stopPropagation();
                           increase(id);
                         }}
+                        disabled = {stock >= count}
                       >
                         <Plus className="w-4 h-4" />
                       </Button>

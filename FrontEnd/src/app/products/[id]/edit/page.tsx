@@ -34,7 +34,6 @@ const { getProductByIdCached } =
           category: res.category_id ?? "",
           stock: res.stock ?? 0,
           tags: res.tags ? res.tags.map((t: any) => t.name) : [],
-          cover: res.cover_image ?? "",
         });
       } catch (err: any) {
         toast.error(err?.message || "خطا در دریافت محصول");

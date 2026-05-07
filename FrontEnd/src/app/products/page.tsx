@@ -32,7 +32,7 @@ export default function AllProductsPage() {
       max_price: maxPrice?.trim() ? Number(maxPrice) : undefined,
       // category: category === "all" ? undefined : category, // اضافه کردن فیلتر دسته‌بندی
     });
-  }, [page, search, minPrice, maxPrice, category]); // category و fetchProducts به وابستگی‌ها اضافه شد
+  }, [page, search, minPrice, maxPrice, category]); 
 
   useEffect(() => {
     const cleaned: Product[] = items.map((p: any) => ({
@@ -139,7 +139,7 @@ export default function AllProductsPage() {
               title={product.title}
               price={product.price}
               status={product.status}
-              cover={"https://picsum.photos/600/400?2"}
+              cover={product.media?.at(-1)?.url || ""}
               showAddToCart={true}
               showEdit={false}
               showDelete={false}

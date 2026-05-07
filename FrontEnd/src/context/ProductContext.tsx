@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import toast from "react-hot-toast";
 import { apiFetch } from "@/lib/api";
-import type { ProductDetails, Product, Engagement } from "@/types";
+import type { ProductDetails, Product, Engagement , RatingData, ProductComment } from "@/types";
 
 /* ================= Types ================= */
 
@@ -39,14 +39,11 @@ export type ProductsResponse<T = any> = {
   pagination?: PaginationMeta;
 };
 
-export type ProductComment = {
-  id?: string | number;
-  content: string;
-  user_name?: string;
-  created_at?: string;
-};
 
-export type ProductWithEngagement = ProductDetails & { engagement?: Engagement };
+
+export type ProductWithEngagement = ProductDetails & {
+  engagement?: Engagement;
+};
 
 type ProductsState = {
   items: Product[];
@@ -56,7 +53,7 @@ type ProductsState = {
   params: GetProductsParams;
 };
 
-type InvalidateKey = "list" | "product" | "engagement" | "comments";
+type InvalidateKey = "list" | "product" | "engagement" | "comments" | "stat";
 
 type ProductsContextValue = ProductsState & {
   setParams: (next: Partial<GetProductsParams>) => void;
@@ -66,10 +63,13 @@ type ProductsContextValue = ProductsState & {
 
   getProductByIdCached: (id: string) => Promise<ProductDetails>;
   getMyEngagementCached: (id: string) => Promise<Engagement>;
-  getProductWithEngagementCached: (id: string) => Promise<ProductWithEngagement>;
+  getStatCached: (id: string) => Promise<RatingData>;
+  getMystatCached: (id: string) => Promise<number>;
+  getProductWithEngagementCached: (
+    id: string,
+  ) => Promise<ProductWithEngagement>;
 
-  fetchComments: (productId: string) => Promise<void>;
-  getCommentsCached: (productId: string) => ProductComment[];
+  fetchComments: (productId: string) => Promise<ProductComment[]>;
   commentsLoadingById: Record<string, boolean>;
 
   deleteProduct: (id: string) => Promise<boolean>;
@@ -92,7 +92,9 @@ function buildSearchParams(params?: GetProductsParams) {
 
 function stableKey(params?: GetProductsParams) {
   const obj = params ?? {};
-  const entries = Object.entries(obj).filter(([, v]) => v !== undefined && v !== null);
+  const entries = Object.entries(obj).filter(
+    ([, v]) => v !== undefined && v !== null,
+  );
 
   const normalized = entries.map(
     ([k, v]) => [k, Array.isArray(v) ? v.join(",") : String(v)] as const,
@@ -129,13 +131,19 @@ export function ProductsProvider({
   const listAbortRef = useRef<AbortController | null>(null);
 
   // caches
-  const listCacheRef = useRef<Map<string, ProductsResponse<Product>>>(new Map());
+  const listCacheRef = useRef<Map<string, ProductsResponse<Product>>>(
+    new Map(),
+  );
   const productCacheRef = useRef<Map<string, ProductDetails>>(new Map());
   const engagementCacheRef = useRef<Map<string, Engagement>>(new Map());
+  const statCacheRef = useRef<Map<string, RatingData>>(new Map());
+  const mystatCacheRef = useRef<Map<string, number>>(new Map());
   const commentsCacheRef = useRef<Map<string, ProductComment[]>>(new Map());
 
   // comments loading per product
-  const [commentsLoadingById, setCommentsLoadingById] = useState<Record<string, boolean>>({});
+  const [commentsLoadingById, setCommentsLoadingById] = useState<
+    Record<string, boolean>
+  >({});
 
   const invalidate = useCallback((scope?: InvalidateKey, key?: string) => {
     if (!scope) {
@@ -143,6 +151,8 @@ export function ProductsProvider({
       productCacheRef.current.clear();
       engagementCacheRef.current.clear();
       commentsCacheRef.current.clear();
+      statCacheRef.current.clear();
+      mystatCacheRef.current.clear();
       return;
     }
 
@@ -164,6 +174,12 @@ export function ProductsProvider({
       return;
     }
 
+    if (scope === "stat") {
+      if (!key) {statCacheRef.current.clear();mystatCacheRef.current.clear();}
+      else {statCacheRef.current.delete(key);mystatCacheRef.current.delete(key);}
+      return;
+    }
+
     if (scope === "comments") {
       if (!key) commentsCacheRef.current.clear();
       else commentsCacheRef.current.delete(key);
@@ -179,62 +195,65 @@ export function ProductsProvider({
     void fetchProducts({ ...state.params, ...next });
   }, []);
 
-  const fetchProducts = useCallback(async (p?: GetProductsParams) => {
-    const params = p ?? state.params;
-    const key = stableKey(params);
+  const fetchProducts = useCallback(
+    async (p?: GetProductsParams) => {
+      const params = p ?? state.params;
+      const key = stableKey(params);
 
-    const cached = listCacheRef.current.get(key);
-    if (cached) {
-      setState((s) => ({
-        ...s,
-        items: cached.data ?? [],
-        pagination: cached.pagination ?? null,
-        loading: false,
-        error: null,
-        params,
-      }));
-      return;
-    }
+      const cached = listCacheRef.current.get(key);
+      if (cached) {
+        setState((s) => ({
+          ...s,
+          items: cached.data ?? [],
+          pagination: cached.pagination ?? null,
+          loading: false,
+          error: null,
+          params,
+        }));
+        return;
+      }
 
-    // abort previous list request
-    if (listAbortRef.current) listAbortRef.current.abort();
-    const controller = new AbortController();
-    listAbortRef.current = controller;
+      // abort previous list request
+      if (listAbortRef.current) listAbortRef.current.abort();
+      const controller = new AbortController();
+      listAbortRef.current = controller;
 
-    setState((s) => ({ ...s, loading: true, error: null, params }));
+      setState((s) => ({ ...s, loading: true, error: null, params }));
 
-    try {
-      const qs = buildSearchParams(params);
-      const res = await apiFetch(`/products?${qs}`, {
-        method: "GET",
-        signal: controller.signal,
-      });
+      try {
+        const qs = buildSearchParams(params);
+        const res = await apiFetch(`/products?${qs}`, {
+          method: "GET",
+          signal: controller.signal,
+        });
 
-      if (!res.ok) throw new Error("خطا در دریافت محصولات");
+        if (!res.ok) throw new Error("خطا در دریافت محصولات");
 
-      const json: ProductsResponse<Product> = await res.json();
-      listCacheRef.current.set(key, json);
+        const json: ProductsResponse<Product> = await res.json();
+        listCacheRef.current.set(key, json);
 
-      setState((s) => ({
-        ...s,
-        items: json.data ?? [],
-        pagination: json.pagination ?? null,
-        loading: false,
-        error: null,
-        params,
-      }));
-    } catch (e: any) {
-      // اگر abort شد، خطا نشون نده
-      if (e?.name === "AbortError") return;
+        setState((s) => ({
+          ...s,
+          items: json.data ?? [],
+          pagination: json.pagination ?? null,
+          loading: false,
+          error: null,
+          params,
+        }));
+      } catch (e: any) {
+        // اگر abort شد، خطا نشون نده
+        if (e?.name === "AbortError") return;
 
-      setState((s) => ({
-        ...s,
-        loading: false,
-        error: e?.message ?? "خطا",
-        params,
-      }));
-    }
-  }, [state.params]);
+        setState((s) => ({
+          ...s,
+          loading: false,
+          error: e?.message ?? "خطا",
+          params,
+        }));
+      }
+    },
+    [state.params],
+  );
 
   const refresh = useCallback(async () => {
     const key = stableKey(state.params);
@@ -259,12 +278,44 @@ export function ProductsProvider({
     const cached = engagementCacheRef.current.get(id);
     if (cached) return cached;
 
-    const res = await apiFetch(`/products/${id}/engagement/me`, { method: "GET" });
+    const res = await apiFetch(`/products/${id}/engagement/me`, {
+      method: "GET",
+    });
     if (!res.ok) throw new Error("خطا در دریافت تعاملات");
     const json = await res.json();
 
     const data = json?.data ?? json;
     engagementCacheRef.current.set(id, data);
+    return data;
+  }, []);
+
+  const getStatCached = useCallback(async (id: string) => {
+    const cached = statCacheRef.current.get(id);
+    if (cached) return cached;
+
+    const res = await apiFetch(`/products/${id}/rating/summary`, {
+      method: "GET",
+    });
+    if (!res.ok) throw new Error("خطا در دریافت امتیازات");
+    const json = await res.json();
+
+    const data = json?.data ?? json;
+    statCacheRef.current.set(id, data);
+    return data;
+  }, []);
+
+  const getMystatCached = useCallback(async (id: string) => {
+    const cached = mystatCacheRef.current.get(id);
+    if (cached) return cached;
+
+    const res = await apiFetch(`/products/${id}/rating/me`, {
+      method: "GET",
+    });
+    if (!res.ok) throw new Error("خطا در دریافت امتیازات");
+    const json = await res.json();
+
+    const data = json?.data ?? json.my_rating;
+    mystatCacheRef.current.set(id, data);
     return data;
   }, []);
 
@@ -279,25 +330,22 @@ export function ProductsProvider({
     [getProductByIdCached, getMyEngagementCached],
   );
 
-  const getCommentsCached = useCallback((productId: string) => {
-    return commentsCacheRef.current.get(productId) ?? [];
-  }, []);
-
   const fetchComments = useCallback(async (productId: string) => {
     if (!productId) return;
 
-    // cache hit
     if (commentsCacheRef.current.has(productId)) return;
 
     setCommentsLoadingById((s) => ({ ...s, [productId]: true }));
     try {
-      const res = await apiFetch(`/products/${productId}/comment`, { method: "GET" });
+      const res = await apiFetch(`/products/${productId}/comments`, {
+        method: "GET",
+      });
       if (!res.ok) throw new Error("خطا در دریافت کامنت‌ها");
 
       const json = await res.json();
       const list = Array.isArray(json) ? json : (json.data ?? []);
-
       commentsCacheRef.current.set(productId, list);
+      return list;
     } catch (e: any) {
       toast.error(e?.message ?? "خطا در دریافت کامنت‌ها");
     } finally {
@@ -320,6 +368,8 @@ export function ProductsProvider({
         productCacheRef.current.delete(id);
         engagementCacheRef.current.delete(id);
         commentsCacheRef.current.delete(id);
+        statCacheRef.current.delete(id);
+        mystatCacheRef.current.delete(id);
 
         await refresh();
         return true;
@@ -339,9 +389,10 @@ export function ProductsProvider({
       refresh,
       getProductByIdCached,
       getMyEngagementCached,
+      getStatCached,
+      getMystatCached,
       getProductWithEngagementCached,
       fetchComments,
-      getCommentsCached,
       commentsLoadingById,
       deleteProduct,
       invalidate,
@@ -353,16 +404,21 @@ export function ProductsProvider({
       refresh,
       getProductByIdCached,
       getMyEngagementCached,
+      getStatCached,
+      getMystatCached,
       getProductWithEngagementCached,
       fetchComments,
-      getCommentsCached,
       commentsLoadingById,
       deleteProduct,
       invalidate,
     ],
   );
 
-  return <ProductsContext.Provider value={value}>{children}</ProductsContext.Provider>;
+  return (
+    <ProductsContext.Provider value={value}>
+      {children}
+    </ProductsContext.Provider>
+  );
 }
 
 export function useProducts() {

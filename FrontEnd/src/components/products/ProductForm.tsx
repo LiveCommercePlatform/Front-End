@@ -70,7 +70,6 @@ export default function ProductForm({
   parentID,
   onSubmit,
 }: ProductFormProps) {
-  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [priceDisplay, setPriceDisplay] = useState("");
   const [stockDisplay, setStockDisplay] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -164,7 +163,7 @@ export default function ProductForm({
       setSelectedParent(
         CATEGORIES.find((c) => c.id === parentID)?.value || "—",
       );
-          }
+    }
   }, [CATEGORIES]);
 
   const toggleTag = (tag: string) => {
@@ -183,34 +182,31 @@ export default function ProductForm({
     e.preventDefault();
     e.stopPropagation();
     const file = e.dataTransfer.files?.[0];
-    if (file) handleCoverFile(file);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleCoverFiles(files);
+    }
   };
+ 
+  const [coverPreviews, setCoverPreviews] = useState<string[]>([]);
 
-  const handleCoverFile = (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("فقط فایل تصویر مجاز است");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("حداکثر حجم تصویر ۵ مگابایت است");
-      return;
-    }
+  const handleCoverFiles = (files: FileList | File[]) => {
+    const arr = Array.from(files);
 
-    if (coverPreview) URL.revokeObjectURL(coverPreview);
-    const previewUrl = URL.createObjectURL(file);
-    setCoverPreview(previewUrl);
-    form.setValue("cover", file, { shouldValidate: true });
+    const previews = arr.map((file) => URL.createObjectURL(file));
+
+    setCoverPreviews((prev) => [...prev, ...previews]);
+    form.setValue("cover", [...(form.getValues("cover") || []), ...arr]);
   };
 
   const submitHandler = async (values: ProductFormValues) => {
     try {
       onSubmit(values);
-      // form.reset()
     } catch (err: any) {}
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-10">
+    <div className="max-w-5xl mx-5 py-10">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(submitHandler)} className="space-y-6">
           <div className="flex items-center justify-between border rounded-xl p-4">
@@ -240,16 +236,26 @@ export default function ProductForm({
 
                   <div className="mt-4 space-y-4 text-right">
                     <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
-                      {coverPreview ? (
-                        <img
-                          src={coverPreview}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full flex items-center justify-center text-sm opacity-60">
+                    {coverPreviews.length ? (
+                      coverPreviews.map((src, i) => (
+                        <div
+                          key={i}
+                          className="aspect-[4/3] rounded-lg overflow-hidden border relative"
+                        >
+                          <img
+                            src={src}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="aspect-[4/3] rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-1 text-xs opacity-70">
+                          <ImagePlus className="w-5 h-5" />
                           بدون تصویر
                         </div>
-                      )}
+                      </div>
+                    )}
                     </div>
 
                     <h2 className="text-lg font-semibold">
@@ -319,82 +325,78 @@ export default function ProductForm({
                   "bg-transparent",
                 ].join(" ")}
               >
-                {/* Preview */}
                 <div className="w-full md:w-56">
-                  <div className="aspect-[4/3] rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
-                    {coverPreview ? (
-                      <img
-                        src={coverPreview}
-                        alt="cover preview"
-                        className="w-full h-full object-cover"
-                      />
+                  <div className="grid grid-cols-3 gap-2">
+                    {coverPreviews.length ? (
+                      coverPreviews.map((src, i) => (
+                        <div
+                          key={i}
+                          className="aspect-[4/3] rounded-lg overflow-hidden border relative"
+                        >
+                          <img
+                            src={src}
+                            className="w-full h-full object-cover"
+                          />
+
+                          <button
+                            type="button"
+                            className="absolute top-1 right-1 bg-black/60 text-white text-xs px-1 rounded"
+                            onClick={() => {
+                              URL.revokeObjectURL(src);
+
+                              const newPreviews = coverPreviews.filter(
+                                (_, idx) => idx !== i,
+                              );
+                              const newFiles = (
+                                form.getValues("cover") || []
+                              ).filter((_: any, idx: number) => idx !== i);
+
+                              setCoverPreviews(newPreviews);
+                              form.setValue("cover", newFiles);
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))
                     ) : (
-                      <div className="flex flex-col items-center gap-1 text-xs opacity-70">
-                        <ImagePlus className="w-5 h-5" />
-                        بدون تصویر
+                      <div className="aspect-[4/3] rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-1 text-xs opacity-70">
+                          <ImagePlus className="w-5 h-5" />
+                          بدون تصویر
+                        </div>
                       </div>
                     )}
                   </div>
-
-                  {coverPreview && (
-                    <div className="mt-2 flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        تغییر
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          if (coverPreview) URL.revokeObjectURL(coverPreview);
-                          setCoverPreview(null);
-                          form.setValue("cover", undefined);
-                        }}
-                      >
-                        حذف
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 w-full space-y-2">
-                  <div className="font-medium text-sm">آپلود تصویر کاور</div>
-
-                  <div className="text-xs opacity-70 leading-relaxed">
-                    تصویر را بکشید و اینجا رها کنید یا از دکمه زیر برای انتخاب
-                    فایل استفاده کنید (حداکثر ۵MB)
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <Button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="gap-2"
-                    >
-                      <ImagePlus className="w-4 h-4" />
-                      انتخاب فایل
-                    </Button>
-                  </div>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleCoverFile(file);
-                    }}
-                  />
                 </div>
               </div>
+              <div className="flex-1 w-full space-y-2">
+                <div className="font-medium text-sm">آپلود تصاویر محصول</div>
 
+                <div className="text-xs opacity-70">
+                  می‌توانید چند تصویر انتخاب کنید (حداکثر ۵MB)
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  <ImagePlus className="w-4 h-4" />
+                  انتخاب فایل
+                </Button>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) handleCoverFiles(e.target.files);
+                  }}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="cover"

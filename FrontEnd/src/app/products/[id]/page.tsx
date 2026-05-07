@@ -17,52 +17,54 @@ import {
   Minus,
   Plus,
   Pencil,
+  Coins,
+  Boxes,
 } from "lucide-react";
-import { formatPriceFa } from "@/lib/utils";
+import { cn, formatPriceFa } from "@/lib/utils";
 import { tokenStore } from "@/lib/token";
-import { StatBoxProps, ProductDetails } from "@/types";
+import { StatBoxProps, ProductDetails, RatingData } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { apiFetch } from "@/lib/api";
 import ProfileCompleteModal from "@/components/ui/ProfileCompleteModal";
 import { useProducts } from "@/context/ProductContext";
 import { Textarea } from "@/components/ui/textarea";
 import DeleteDialog from "@/components/ui/DeleteDialog";
+import ProductImageGallery from "@/components/products/ProductImageGallery";
+import { getErrorMessage } from "@/lib/getErrorMessage";
+import ProductRating from "@/components/products/ProductRating";
+import InfoCard from "@/components/products/InfoCard";
+import Loading from "@/components/ui/Loading";
+import NotFound from "@/components/ui/NotFound";
+import RatingCard from "@/components/products/RatingCard";
 
 export default function ProductDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const id = Array.isArray(params.id) ? params.id[0] : (params.id as string);
-const {
-  handleAddToCart,
-  getQty,
-  increase,
-  decrease,
-  profileModalOpen,
-  setProfileModalOpen,
-} = useCart();
+  const {
+    handleAddToCart,
+    getQty,
+    increase,
+    decrease,
+    profileModalOpen,
+    setProfileModalOpen,
+  } = useCart();
   const count = getQty(id);
-  const { getProductByIdCached, getMyEngagementCached, deleteProduct } =
-    useProducts();
+  const {
+    getProductByIdCached,
+    getMyEngagementCached,
+    getStatCached,
+    deleteProduct,
+    fetchComments,
+    getMystatCached
+  } = useProducts();
   const [loading_, setLoading] = useState(true);
   const [product, setProduct] = useState<ProductDetails | null>(null);
+  const [my_rating, setMyRating] = useState<number>(0);
+  const [stats, setStats] = useState<RatingData | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchComments = async () => {
-      try {
-        const res = await apiFetch(`/products/${id}/comments`, {
-          method: "GET",
-        });
-        if (!res.ok) return;
-        const json = await res.json();
-        setComments(json.data ?? json ?? []);
-      } catch {}
-    };
-
-    if (id) fetchComments();
-  }, [id]);
 
   async function handleCommentSubmit() {
     try {
@@ -81,9 +83,7 @@ const {
       if (!res.ok) throw new Error("خطا در ثبت کامنت");
 
       const created = await res.json();
-
       setComments((prev: any[]) => [created, ...prev]);
-
       setCommentText("");
       toast.success("کامنت ثبت شد");
     } catch (e: any) {
@@ -92,59 +92,111 @@ const {
       setCommentLoading(false);
     }
   }
-  useEffect(() => {
-    if (!id) return;
-    (async () => {
-      try {
-        setLoading(true);
-        const product_ = await getProductByIdCached(id);
-        const engagement = await getMyEngagementCached(id);
-        setProduct({ ...product_, ...engagement });
-      } catch (e: any) {
-        toast.error(e?.message || "خطا در دریافت محصول");
-      } finally {
-        setLoading(false);
+async function handleSumbitRating(val:number) {
+    try {
+      if (!tokenStore.getAccess()) {
+        toast("برای ثبت کامنت، اول وارد شوید.");
+        router.push("/login");
+        return;
       }
-    })();
-  }, [id]);
+      const res = await apiFetch(`/products/${id}/rating`, {
+        method: "POST",
+        body: JSON.stringify({ rating: val }),
+      });
+      if (!res.ok) throw new Error("خطا در ثبت ریتینگ");
+    } catch (e: any) {
+      toast.error(e?.message || "خطا");
+    }
+  }
+
+  async function handleDeleteRating() {
+    try {
+      const res = await apiFetch(`/products/${id}/rating`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("خطا در ریتینگ ");
+    } catch (e: any) {
+      toast.error(e?.message || "خطا");
+    }
+  }
+
+  useEffect(() => {
+  if (!id) return;
+
+  async function load() {
+    try {
+      setLoading(true);
+
+      const [
+        product_,
+        engagement,
+        stat_,
+        comments_,
+        myrating,
+      ] = await Promise.all([
+        getProductByIdCached(id),
+        getMyEngagementCached(id),
+        getStatCached(id),
+        fetchComments(id),
+        getMystatCached(id),
+      ]);
+
+      setProduct({ ...product_, ...engagement });
+      setComments(comments_ ?? []);
+      setStats(stat_);
+      setMyRating(myrating);
+    } catch (e: any) {
+      toast.error(e?.message || "خطا در دریافت محصول");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  load();
+}, [id]);
 
 
-const onAdd = async () => {
-  if (!product) return;
+  const handleDeleteMedia = async (mediaId: string) => {
+    try {
+      const res = await apiFetch(`/media/${mediaId}`, {
+        method: "DELETE",
+      });
 
-  await handleAddToCart({
-    id: product.id,
-    title: product.title,
-    price: product.price,
-    cover: product.cover_image || "",
-  });
-};
-  const coverSrc = useMemo(() => {
-    if (!product?.cover_image) return null;
-    return product.cover_image;
-  }, [product]);
+      if (!res.ok) throw new Error("خطا در حذف مدیا");
+      setProduct((prev: any) => ({
+        ...prev,
+        media: prev.media?.filter((m: any) => m.id !== mediaId),
+      }));
+    } catch (e: any) {
+      toast.error(e?.message || "خطا");
+    }
+  };
+
+  const onAdd = async () => {
+    if (!product) return;
+
+    await handleAddToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      cover: product.media?.at(-1)?.url || "",
+    });
+  };
 
   if (loading_) {
-    return (
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <p className="text-sm opacity-70">در حال بارگذاری...</p>
-      </div>
-    );
+    return <Loading text="در حال بارگذاری محصول . . ." />;
   }
 
   if (!product) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <p className="text-sm opacity-70">محصول پیدا نشد</p>
-      </div>
+      <NotFound title="پیدا نشد." message="متاسفانه محصول مورد نظر پیدا نشد." />
     );
   }
 
   const isOwner = product.owner?.id == tokenStore.getUserId();
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
-      {/* Top bar */}
+    <div className="max-w-7xl mx-auto px-4 py-4 md:py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div className="text-right">
           <h1 className="text-lg md:text-2xl font-semibold">{product.title}</h1>
@@ -163,44 +215,42 @@ const onAdd = async () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        {/* Image */}
-        <Card className="md:col-span-2 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <Card className="md:col-span-3 overflow-hidden">
           <CardHeader className="text-right font-medium">
             جزنیات محصول
           </CardHeader>
           <CardContent>
             <div className="aspect-[4/3] rounded-xl overflow-hidden border bg-muted flex items-center justify-center">
-              {coverSrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={coverSrc}
-                  alt={product.title}
-                  className="w-75 h-50 object-cover"
+              {product.media?.length ? (
+                <ProductImageGallery
+                  owner={isOwner}
+                  OnDelete={handleDeleteMedia}
+                  media={product.media}
+                  title={product.title}
                 />
               ) : (
                 <span className="text-sm opacity-60">بدون تصویر</span>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-3">
-              <div className="rounded-xl border p-3 text-right">
-                <div className="text-xs opacity-60">قیمت</div>
-                <div className="text-sm font-semibold mt-1 text-left">
-                  {formatPriceFa(product.price)} تومان
-                </div>
-              </div>
-
-              <div className="rounded-xl border p-3 text-right">
-                <div className="text-xs opacity-60">موجودی</div>
-                <div className="text-lg font-semibold mt-1 text-left">
-                  {formatPriceFa(product.stock)}
-                </div>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-3">
+              <InfoCard
+                title="قیمت"
+                icon={() => <Coins className="w-4 h-4 text-[#00bfa6]" />}
+                count={product.price}
+              />
+              <InfoCard
+                title="موجودی"
+                icon={() => <Boxes className="w-4 h-4 text-[#00bfa6]" />}
+                count={product.stock}
+              />
+              <InfoCard
+                title="بازدید"
+                icon={() => <Eye className="w-4 h-4 text-[#00bfa6]" />}
+                count={product.view_count || 0}
+              />
             </div>
-
             <Separator />
-
-            {/* Description */}
             <div className="text-right my-3">
               <div className="text-sm font-medium mb-1">توضیحات</div>
               <p className="text-sm opacity-70 leading-relaxed mr-4">
@@ -228,10 +278,44 @@ const onAdd = async () => {
                   ))}
                 </div>
               ) : (
-                <></>
+                <div className="flex flex-wrap gap-2 justify-end opacity-60 text-sm">
+                  تگ ای برای اینم محصول انتخاب نشده.
+                </div>
               )}
             </div>
-            <div className="flex items-center justify-end pt-2">
+            <div className="flex items-center justify-between pt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatBox
+                  statKey={`${product.id}/like`}
+                  value={product.like_count ?? 0}
+                  initiallyActive={product.liked}
+                  icon={(active) => (
+                    <Heart
+                      className={[
+                        "w-5 h-5 transition",
+                        active
+                          ? "fill-red-500 text-red-500"
+                          : "text-muted-foreground",
+                      ].join(" ")}
+                    />
+                  )}
+                />
+                <StatBox
+                  statKey={`${product.id}/dislike`}
+                  value={product.dislike_count ?? 0}
+                  initiallyActive={product.disliked}
+                  icon={(active) => (
+                    <ThumbsDown
+                      className={[
+                        "w-5 h-5 transition",
+                        active
+                          ? "fill-blue-500 text-blue-500"
+                          : "text-muted-foreground",
+                      ].join(" ")}
+                    />
+                  )}
+                />
+              </div>
               {isOwner && (
                 <div className="flex gap-2">
                   <Button
@@ -282,7 +366,7 @@ const onAdd = async () => {
                         size="sm"
                         variant="outline"
                         className="border-blue-400 text-blue-600"
-                        onClick={()=>increase(product.id)}
+                        onClick={() => increase(product.id)}
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
@@ -295,7 +379,7 @@ const onAdd = async () => {
                         size="sm"
                         variant="outline"
                         className="border-blue-400 text-blue-600"
-                        onClick={()=>decrease(product.id)}
+                        onClick={() => decrease(product.id)}
                       >
                         <Minus className="w-4 h-4" />
                       </Button>
@@ -304,19 +388,39 @@ const onAdd = async () => {
                 </div>
               )}
             </div>
+            <RatingCard my_rating={my_rating} onDelete={handleDeleteRating} onRate={handleSumbitRating}/>
           </CardContent>
         </Card>
-
         <Card className="md:col-span-3">
+          <CardHeader className="text-right font-medium">
+            نظرات و امتیازات
+          </CardHeader>
           <CardContent className="space-y-4">
+            <ProductRating
+              rating={{
+                rating_avg: stats?.rating_avg ?? 11.5,
+                rating_count: stats?.rating_count ?? 43,
+                breakdown: stats?.breakdown ?? {
+                  1: 5,
+                  2: 5,
+                  3: 3,
+                  4: 10,
+                  5: 20,
+                },
+                user_rating: stats?.user_rating ?? null,
+              }}
+              onRate={async (value) => {
+                console.log("submit rating:", value);
+
+                // اینجا API صدا می‌زنی
+                // await rateProduct(product.id, value);
+              }}
+            />
             <Card className="border rounded-xl">
-              <CardHeader className="text-right font-medium">
-                کامنت‌ها
-              </CardHeader>
+              <CardHeader className="text-right font-medium">نظرات</CardHeader>
 
               <CardContent className="space-y-4">
-                {/* List */}
-                <div className="max-h-72 overflow-auto space-y-3 pr-1">
+                <div className="md:h-70 overflow-auto flex flex-col justify-center space-y-3 pr-1">
                   {comments?.length ? (
                     comments.map((c: any) => (
                       <div
@@ -332,8 +436,8 @@ const onAdd = async () => {
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-xl border bg-muted/30 p-6 text-center text-sm opacity-60">
-                      هنوز کامنتی ثبت نشده
+                    <div className="rounded-xl border bg-muted/30 p-6 text-center text-sm opacity-60 ">
+                      هنوز نظری ثبت نشده
                     </div>
                   )}
                 </div>
@@ -342,9 +446,8 @@ const onAdd = async () => {
 
                 <div className="space-y-2">
                   <div className="text-right text-sm font-medium">
-                    ثبت کامنت جدید
+                    ثبت نظر جدید
                   </div>
-
                   <Textarea
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
@@ -363,76 +466,15 @@ const onAdd = async () => {
                       disabled={commentLoading || !commentText.trim()}
                       onClick={handleCommentSubmit}
                     >
-                      ارسال کامنت
+                      ارسال نظر
                     </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatBox
-                statKey="view_count"
-                label="بازدید"
-                value={product.view_count ?? 0}
-                disabled={true}
-                icon={(active) => <Eye className={"w-5 h-5 transition"} />}
-              />
-
-              <StatBox
-                statKey={`${product.id}/like`}
-                label="پسند"
-                value={product.like_count ?? 0}
-                initiallyActive={product.liked} // اگر از بک داری
-                icon={(active) => (
-                  <Heart
-                    className={[
-                      "w-5 h-5 transition",
-                      active
-                        ? "fill-red-500 text-red-500"
-                        : "text-muted-foreground",
-                    ].join(" ")}
-                  />
-                )}
-              />
-              <StatBox
-                statKey={`${product.id}/dislike`}
-                label="دیس لایک"
-                value={product.dislike_count ?? 0}
-                initiallyActive={product.disliked}
-                icon={(active) => (
-                  <ThumbsDown
-                    className={[
-                      "w-5 h-5 transition",
-                      active
-                        ? "fill-blue-500 text-blue-500"
-                        : "text-muted-foreground",
-                    ].join(" ")}
-                  />
-                )}
-              />
-              <StatBox
-                statKey="view_count"
-                label="امتیاز"
-                value={
-                  product.rating_count
-                    ? `${(product.rating_avg ?? 0).toFixed(1)} / 5`
-                    : "-"
-                }
-                disabled={true}
-                icon={(active) => <Star className={"w-5 h-5 transition"} />}
-              />
-            </div>
           </CardContent>
         </Card>
       </div>
-
-      {product.cover_image?.startsWith("blob:") && (
-        <div className="rounded-xl border bg-muted/30 p-4 text-sm text-right">
-          ⚠️ <span className="font-medium">cover_image</span> الان blob هست. این
-          فقط برای پیش‌نمایش سمت فرانت خوبه. برای صفحه جزئیات باید از بک یک URL
-          واقعی (مثلاً CDN یا لینک فایل) برگردونی.
-        </div>
-      )}
       <ProfileCompleteModal
         open={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
@@ -447,7 +489,6 @@ const onAdd = async () => {
 function StatBox({
   statKey,
   icon,
-  label,
   value,
   initiallyActive = false,
   disabled = false,
@@ -464,26 +505,26 @@ function StatBox({
       const res = await apiFetch(`/products/${statKey}`, {
         method: newActive ? "POST" : "DELETE",
       });
-      setActive(newActive);
-      setCount((c) => (newActive ? Number(c) + 1 : Math.max(0, Number(c) - 1)));
       if (!res.ok) {
         throw new Error("خطا در ثبت عملیات");
       }
+      setActive(newActive);
+      setCount((c) => (newActive ? Number(c) + 1 : Math.max(0, Number(c) - 1)));
     } catch (err: any) {
-      toast.error(err?.message || "خطا رخ داد");
+      toast.error(getErrorMessage(err?.message) || "خطا رخ داد");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="rounded-xl border p-3 flex items-center justify-between">
+    <div className=" p-3 flex items-center justify-between ">
       <button
         type="button"
         onClick={handleToggle}
         disabled={disabled || loading}
         className={[
-          "p-2 rounded-lg transition",
+          "p-2 rounded-lg transition ",
           "hover:bg-muted/40 active:scale-95",
           loading ? "opacity-50" : "",
         ].join(" ")}
@@ -491,7 +532,6 @@ function StatBox({
         {icon(active)}
       </button>
       <div className="text-right">
-        <div className="text-xs opacity-60">{label}</div>
         <div className="text-sm font-semibold mt-1">{count}</div>
       </div>
     </div>

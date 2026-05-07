@@ -10,7 +10,7 @@ export type Product = {
   title: string;
   price: number;
   status: "active" | "inactive";
-  cover?: string;
+  media?: {url:string;id: string;}[];
   category?:string;
 };
 
@@ -20,6 +20,7 @@ export type ProductCardProps = {
   id: string;
   title: string;
   price: number;
+  stock: number;
   status: ProductCardStatus;
   cover: string;
   showEdit?: boolean;
@@ -36,7 +37,7 @@ export type ProductDetails = {
   description?: string;
   price: number;
   stock: number;
-  cover_image?: string;
+  media?: {url:string;id: string;}[];
   owner?: { id: string; name: string };
   view_count?: number;
   like_count?: number;
@@ -52,10 +53,24 @@ export type ProductDetails = {
   disliked? : boolean;
 };
 export type StatBoxProps = {
-  statKey: string; // مثلا: "like"
+  statKey: string; 
   icon: (active: boolean) => React.ReactNode;
-  label: string;
   value: number | string;
   initiallyActive?: boolean;
   disabled?: boolean;
+};
+
+
+export type RatingData = {
+  rating_avg: number;
+  rating_count: number;
+  breakdown: Record<string, number>;
+  user_rating?: number | null;
+};
+
+export type ProductComment = {
+  id?: string | number;
+  content: string;
+  user_name?: string;
+  created_at?: string;
 };
