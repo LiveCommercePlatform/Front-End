@@ -67,7 +67,7 @@ export function LiveChat({ id, UserId }: { id: string; UserId: string }) {
   }, [messages]);
 
   return (
-    <Card className="rounded-2xl shadow-lg flex flex-col h-[500px] bg-muted/30 overflow-hidden">
+    <Card className="rounded-2xl shadow-lg flex flex-col h-[513px] bg-muted/30 overflow-hidden">
       <CardContent className="flex flex-col flex-1 p-4 py-1 min-h-0">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-lg">چت زنده</h3>
@@ -82,7 +82,7 @@ export function LiveChat({ id, UserId }: { id: string; UserId: string }) {
         <div
           ref={messagesRef}
           onScroll={handleScroll}
-          className="flex-1 min-h-0 overflow-y-auto pr-2"
+          className="flex-1 min-h-0 overflow-y-auto px-2 "
         >
           <div className="flex flex-col space-y-3">
             {renderedMessages.map((msg) => (

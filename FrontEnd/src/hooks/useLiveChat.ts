@@ -17,21 +17,16 @@ export const useLiveChat = (roomId: string, currentUserId: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<Status>("connecting");
   const [connectionError, setConnectionError] = useState<string | null>(null);
-
+const refreshingCookieRef = useRef(false);
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
   const lastSend = useRef(0);
   const shouldReconnect = useRef(true);
-
+  const cookieInitializedRef = useRef(false);
   const messageIds = useRef<Set<string>>(new Set());
   const sendQueue = useRef<string[]>([]);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // const scrollToBottom = () => {
-  //   setTimeout(() => {
-  //     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  //   }, 50);
-  // };
 
   const loadHistory = useCallback(async () => {
     try {
@@ -57,7 +52,6 @@ export const useLiveChat = (roomId: string, currentUserId: string) => {
 
   const setupCookie = async () => {
     const token = tokenStore.getAccess();
-
     await fetch("http://localhost:8080/auth/ws-cookie", {
       method: "POST",
       headers: {
@@ -96,11 +90,14 @@ export const useLiveChat = (roomId: string, currentUserId: string) => {
     setStatus("connecting");
 
     try {
-      await setupCookie();
+      if (!cookieInitializedRef.current) {
+        cookieInitializedRef.current = true;
+        await setupCookie();
+      }
 
       const ws = new WebSocket(
         `ws://localhost:8080/ws/live-rooms/${roomId}/chat`,
-        ["access-token"]
+        ["access-token"],
       );
 
       socketRef.current = ws;
@@ -110,10 +107,27 @@ export const useLiveChat = (roomId: string, currentUserId: string) => {
         flushQueue();
       };
 
-      ws.onclose = () => {
-        setStatus("closed");
-        scheduleReconnect();
-      };
+      ws.onclose = async (event) => {
+  setStatus("closed");
+
+  if (event.code === 4401) {
+    if (refreshingCookieRef.current) return;
+
+    try {
+      refreshingCookieRef.current = true;
+      await setupCookie();
+      scheduleReconnect();
+    } catch (err) {
+      console.error("cookie refresh failed", err);
+      setConnectionError("Authentication refresh failed");
+    } finally {
+      refreshingCookieRef.current = false;
+    }
+    return;
+  }
+  scheduleReconnect();
+};
+
 
       ws.onerror = () => {
         setConnectionError("WebSocket error");
@@ -138,7 +152,7 @@ export const useLiveChat = (roomId: string, currentUserId: string) => {
               m.pending &&
               m.userId === currentUserId &&
               userId === currentUserId &&
-              m.text === text
+              m.text === text,
           );
 
           if (pendingIndex !== -1) {
@@ -169,8 +183,6 @@ export const useLiveChat = (roomId: string, currentUserId: string) => {
             },
           ].slice(-200);
         });
-
-        // scrollToBottom();
       };
     } catch (err) {
       console.error("ws connect error", err);
@@ -229,8 +241,6 @@ export const useLiveChat = (roomId: string, currentUserId: string) => {
     };
 
     setMessages((prev) => [...prev, msg].slice(-200));
-
-    // scrollToBottom();
 
     const ws = socketRef.current;
 
