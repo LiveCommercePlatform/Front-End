@@ -18,13 +18,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const currentTab = pathname.split("/").at(-1);
 
   const { profile, loading } = useDashboard();
-
-  const DEFAULT_AVATAR =
-    "https://commons.wikimedia.org/wiki/File:Unknown_person.jpg";
-
   if (loading) {
     return (
-      <Loading text = "لطفاً کمی صبر کنید، داشبورد در حال بارگذاری است..."/>
+      <Loading text="لطفاً کمی صبر کنید، داشبورد در حال بارگذاری است..." />
     );
   }
 
@@ -40,9 +36,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen p-3 md:p-6">
       <div className="flex items-center gap-3 md:gap-6 mb-6">
         <img
-          src={`${DEFAULT_AVATAR}${encodeURIComponent(profile.name)}`}
+          src="/user1.svg"
           alt="Profile"
-          className="w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-primary"
+          className="w-12 h-12 md:w-16 md:h-16 rounded-full border-4 "
         />
         <div>
           <h2 className="text-base md:text-2xl font-semibold">
@@ -83,7 +79,7 @@ export default function DashboardLayout({
 }) {
   return (
     <Guard requireAuth>
-        <DashboardShell>{children}</DashboardShell>
+      <DashboardShell>{children}</DashboardShell>
     </Guard>
   );
 }

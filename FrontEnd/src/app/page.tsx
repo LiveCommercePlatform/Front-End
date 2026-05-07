@@ -12,31 +12,21 @@ export default function Home() {
 
   return (
     <main className="space-y-0">
-      {/* Hero همیشه هست */}
       <HeroSection />
-
-      {/* Live Streams همیشه هست */}
       <LiveStreamsSection />
-
-      {/* Stats فقط دسکتاپ */}
       <div className="hidden md:block">
         <StatsSection />
       </div>
 
-      {/* CTA دسکتاپ فقط وقتی لاگین نیست */}
       {!isLoggedIn && (
         <div className="hidden md:block">
           <AuthCTASection page="home" usersCount={1240} />
         </div>
       )}
 
-      {/* How it works همیشه هست */}
       <HowItWorksSection />
-
-      {/* FAQ همیشه هست */}
       <FAQSection />
 
-      {/* Sticky CTA فقط موبایل + فقط وقتی لاگین نیست */}
       {!isLoggedIn && (
         <div className="md:hidden">
           <MobileStickyCTA />

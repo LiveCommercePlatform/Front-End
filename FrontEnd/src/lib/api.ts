@@ -8,14 +8,18 @@ let queue: Array<() => void> = [];
 
 export async function apiFetch(url: string, options: RequestInit = {}) {
   const token = tokenStore.getAccess();
+   const headers: any = {
+    Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
+  };
+
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const res = await fetch(`${API_BASE}${url}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers,
   });
 
   if (res.status !== 401) return res;

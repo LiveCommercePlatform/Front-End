@@ -7,7 +7,9 @@ const errorMap: Record<string, string> = {
   "User not found": "کاربری با این مشخصات یافت نشد!",
   "Incorrect current password":"پسورد فعلی نادرست وارد شده!",
   "Invalid credentials": "کاربر مورد نظر یافت نشد.",
-  "profile_not_completed": "اطلاعات شخصی را در داشبورد تکمیل کنید."
+  "profile_not_completed": "اطلاعات شخصی را در داشبورد تکمیل کنید.",
+  "You are the owner, you cannot dislike your own product":"مالک نمیتواند محصول خود را دیسلایک کند! ",
+  "You are the owner, you cannot like your own product":"مالک نمیتواند محصول خود رالایک کند! ",
 }
 
 export function getErrorMessage(

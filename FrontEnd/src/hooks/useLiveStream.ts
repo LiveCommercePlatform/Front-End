@@ -13,6 +13,7 @@ type UseLiveStreamReturn = {
   refetch: () => Promise<void>;
   like: () => Promise<boolean>;
   dislike: () => Promise<boolean>;
+  end: () => Promise<boolean>;
   pinLiveProduct: (productId: string, isPinned: boolean) => Promise<boolean>;
   removeProductFromLive: (productId: string) => Promise<boolean>;
 };
@@ -25,6 +26,7 @@ export function useLiveStream(id?: string): UseLiveStreamReturn {
     likeStream,
     dislikeStream,
     removeReaction,
+    endStream,
     pinLiveProduct: ctxPinLiveProduct,
     removeProductFromLive: ctxRemoveProductFromLive,
     invalidate,
@@ -60,6 +62,12 @@ export function useLiveStream(id?: string): UseLiveStreamReturn {
     }
   }, [id, getLiveRoomByIdCached, getLiveRoomStats, getMyReaction]);
 
+  const end = useCallback(async () => {
+    if (!id) return false;
+    if (!id) return false;
+    const ok = await endStream(id);
+    return ok;
+  }, [id, endStream]);
   const like = useCallback(async () => {
     if (!id) return false;
 
@@ -191,6 +199,7 @@ export function useLiveStream(id?: string): UseLiveStreamReturn {
     error,
     refetch,
     like,
+    end,
     dislike,
     pinLiveProduct,
     removeProductFromLive,

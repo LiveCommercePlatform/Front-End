@@ -7,15 +7,15 @@ import ListToolbar from "@/components/ui/ListToolbar";
 import { Button } from "@/components/ui/button";
 import StreamCard from "@/components/stream/StreamCard";
 import StreamUpsertModal from "@/components/stream/StreamUpsertModal";
-import DeleteDialog from "@/components/ui/DeleteDialog";
 
 import type { Stream, StreamStatus } from "@/types";
 import { Plus } from "lucide-react";
 import { useLiveRooms } from "@/context/LiveRoomContext";
+import toast from "react-hot-toast";
 
 export default function LivesTab() {
   const router = useRouter();
-  const { lives, fetchLiveRooms, deleteLiveRoom ,  startStream } = useLiveRooms();
+  const { lives, fetchLiveRooms, deleteLiveRoom ,  startStream, endStream} = useLiveRooms();
   const [status, setStatus] = useState<StreamStatus | "all">("all");
   const [openUpsert, setOpenUpsert] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
@@ -49,6 +49,10 @@ const handleStart = async (s: Stream) => {
   if (ok) {
     router.push(`/stream/${s.ID}`);
   }
+};
+
+const handleEnd = async (s: Stream) => {
+  const ok = await endStream(s.ID);
 };
 
 
@@ -89,6 +93,7 @@ const handleStart = async (s: Stream) => {
               onEdit={openEdit}
               onDelete={handleDelete}
               onStart={handleStart}
+              onEnd={handleEnd}
             />
           </div>
         ))}

@@ -118,15 +118,13 @@ export function Navbar() {
             </Link>
           )}
 
-          {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Avatar className="cursor-pointer w-7 h-7 md:w-9 md:h-9">
-                <AvatarImage src="https://randomuser.me/api/portraits/men/50.jpg" />
+                <AvatarImage src="/user1.svg" />
                 <AvatarFallback>شما</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-
             <DropdownMenuContent
               align="end"
               sideOffset={8}
@@ -140,9 +138,10 @@ export function Navbar() {
       mx-4
     "
             >
-              <DropdownMenuLabel onClick={
-                ()=>router.push("/dashboard")
-                } className="text-right text-sm opacity-80">
+              <DropdownMenuLabel
+                onClick={() => router.push("/dashboard")}
+                className="text-right text-sm opacity-80"
+              >
                 حساب کاربری
               </DropdownMenuLabel>
 
