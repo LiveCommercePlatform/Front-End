@@ -15,11 +15,13 @@ import {
 export default function DeleteDialog({
   trigger,
   title = "حذف استریم",
+  buttonText = "خذف شود",
   description = "آیا از حذف این استریم مطمئن هستید؟ این عملیات غیرقابل بازگشت است.",
   onConfirm,
 }: {
   trigger: React.ReactNode;
   title?: string;
+  buttonText?: string;
   description?: string;
   onConfirm: () => void;
 }) {
@@ -40,7 +42,7 @@ export default function DeleteDialog({
             className="bg-red-600 hover:bg-red-700"
             onClick={onConfirm}
           >
-            حذف شود
+           {buttonText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

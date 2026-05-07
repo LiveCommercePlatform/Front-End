@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   XCircle,
   Play,
+  Pause,
   Video,
   VideoOff,
 } from "lucide-react";
@@ -55,6 +56,7 @@ export default function StreamCard({
   onEdit,
   onDelete,
   onStart,
+  onEnd,
   className,
 }: {
   stream: Stream;
@@ -62,6 +64,7 @@ export default function StreamCard({
   onEdit: (s: Stream) => void;
   onDelete: (s: Stream) => void;
   onStart: (s: Stream) => void;
+  onEnd: (s: Stream) => void;
   className?: string;
 }) {
   const meta = useMemo(() => {
@@ -114,19 +117,6 @@ export default function StreamCard({
               )}
             </Badge>
           </div>
-
-          {stream.products &&
-            stream.products.map((p) => (
-              <div className="text-xs opacity-70 mt-1 text-right line-clamp-1">
-                محصول: <span className="font-medium">{p.product.title}</span>
-              </div>
-            ))}
-
-          {stream.Description?.trim() && (
-            <p className="text-xs sm:text-sm opacity-70 mt-2 text-right leading-relaxed line-clamp-2">
-              {stream.Description}
-            </p>
-          )}
         </div>
       </div>
 
@@ -155,10 +145,7 @@ export default function StreamCard({
         </div>
       </div>
 
-      <div
-        className="mt-3 flex items-center justify-between"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="mt-3 flex items-center justify-between">
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -171,41 +158,66 @@ export default function StreamCard({
           </Button>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2" onClick={(e)=>e.stopPropagation()}>
           {stream.Status == "scheduled" && (
             <Button
               size="sm"
               variant="ghost"
               className="gap-2 text-green-600"
-              onClick={() => onStart(stream)}
+              onClick={() => {
+                onStart(stream);
+              }}
             >
               <Play className="w-4 h-4" />
               شروع
             </Button>
           )}
+          {stream.Status == "live" && (
+            <DeleteDialog
+              title="اتمام لایو استریم"
+              description=" آیا از اتمام این استریم مطمئن هستید؟ این عملیات غیرقابل بازگشت است."
+              buttonText = "اتمام لایو"
+              onConfirm={() => {
+                onEnd(stream);
+             }}
+              trigger={
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-2 text-red-600"
+                >
+                  <Pause className="w-4 h-4" />
+                  پایان
+                </Button>
+              }
+            />
+          )}
           <Button
             size="sm"
             variant="ghost"
             className="gap-2 text-yellow-600"
-            onClick={() => onEdit(stream)}
+            onClick={() => {
+              onEdit(stream);
+            }}
           >
             <Pencil className="w-4 h-4" />
             ویرایش
           </Button>
-
-          <DeleteDialog
-            onConfirm={() => onDelete(stream)}
-            trigger={
-              <Button
-                size="sm"
-                variant="ghost"
-                className="gap-2 text-red-600"
-              >
-                <Trash2 className="w-4 h-4" />
-                حذف
-              </Button>
-            }
-          />
+          <div>
+            <DeleteDialog
+              onConfirm={() => onDelete(stream)}
+              trigger={
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-2 text-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  حذف
+                </Button>
+              }
+            />
+          </div>
         </div>
       </div>
     </div>

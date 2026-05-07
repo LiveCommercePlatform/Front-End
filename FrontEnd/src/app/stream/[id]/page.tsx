@@ -8,6 +8,9 @@ import { useParams } from "next/navigation";
 import { useLiveStream } from "@/hooks/useLiveStream";
 import Loading from "@/components/ui/Loading";
 import NotFound from "@/components/ui/NotFound";
+import { tokenStore } from "@/lib/token";
+import { apiFetch } from "@/lib/api";
+import { useEffect } from "react";
 
 export default function StreamPage() {
   const params = useParams();
@@ -23,9 +26,24 @@ export default function StreamPage() {
     dislike,
     refetch,
     pinLiveProduct,
+    end,
     removeProductFromLive,
   } = useLiveStream(id);
 
+  // useEffect(() => {
+  //   const setupCookie = async () => {
+  //     const token = tokenStore.getAccess();
+  //     await apiFetch("/auth/ws-cookie", {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //       credentials: "include",
+  //     });
+  //   };
+  //   setupCookie();
+  // }, []);
+  
   if (loading) return <Loading />;
 
   if (error) {
@@ -42,9 +60,8 @@ export default function StreamPage() {
   return (
     <div className="min-h-screen bg-background text-foreground p-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         <div className="lg:col-span-2 space-y-6">
-          <VideoPlayer />
+          <VideoPlayer stream={stream} onEnd={end} />
 
           <VideoInfo
             streamInfo={stream}
@@ -59,10 +76,9 @@ export default function StreamPage() {
         </div>
 
         <div className="space-y-6">
-          <LiveChat />
+          <LiveChat id={stream.ID} UserId={tokenStore.getUserId() || ""} />
           <RelatedVideos />
         </div>
-
       </div>
     </div>
   );

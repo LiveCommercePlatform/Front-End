@@ -22,6 +22,7 @@ import NotFound from "../ui/NotFound";
 import { tokenStore } from "@/lib/token";
 import { useCart } from "@/context/CartContext";
 import ProfileCompleteModal from "../ui/ProfileCompleteModal";
+
 export function VideoInfo({
   stat,
   streamInfo,
@@ -41,8 +42,10 @@ export function VideoInfo({
   onPin: (productId: string, isPinned: boolean) => Promise<boolean>;
   onDelete: (productId: string) => Promise<boolean>;
 }) {
+
   const [copied, setCopied] = useState(false);
   const [loadingReaction, setLoadingReaction] = useState(false);
+
   const {
     handleAddToCart,
     getQty,
@@ -51,10 +54,13 @@ export function VideoInfo({
     profileModalOpen,
     setProfileModalOpen,
   } = useCart();
+
   const isOwner = streamInfo.HostID == tokenStore.getUserId();
-const sortedProducts = [...streamInfo.Products].sort(
-  (a, b) => Number(b.IsPinned) - Number(a.IsPinned)
-);
+
+  const sortedProducts = [...streamInfo.Products].sort(
+    (a, b) => Number(b.IsPinned) - Number(a.IsPinned)
+  );
+
   const onAdd = async (product: any) => {
     if (!product) return;
 
@@ -65,6 +71,7 @@ const sortedProducts = [...streamInfo.Products].sort(
       cover: product.cover_image || "",
     });
   };
+
   const handleShare = async () => {
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (navigator.share) {
@@ -95,192 +102,203 @@ const sortedProducts = [...streamInfo.Products].sort(
     await onDislike();
     setLoadingReaction(false);
   };
-  console.log("12");
+
   const products = streamInfo.Products ?? [];
 
   return (
-    <>
-      <Card className="rounded-2xl shadow-lg">
-        <CardContent className="p-6 space-y-6">
-          <div className="space-y-3">
-            <h2 className="text-xl font-bold">{streamInfo.Title}</h2>
-            <p className="text-sm text-muted-foreground">
-              توسط: {streamInfo.Host.name}
-            </p>
-            <p className="text-muted-foreground text-md leading-relaxed">
-              {streamInfo.Description}
-            </p>
+    <Card className="rounded-2xl shadow-lg">
+      <CardContent className="p-6 space-y-6">
+
+        {/* Title */}
+        <div className="space-y-3">
+          <h2 className="text-xl font-bold">{streamInfo.Title}</h2>
+          <p className="text-sm text-muted-foreground">
+            توسط: {streamInfo.Host.name}
+          </p>
+          <p className="text-muted-foreground text-md leading-relaxed">
+            {streamInfo.Description}
+          </p>
+        </div>
+
+        {/* ⭐ اکشن‌ها — ریسپانسیو کامل */}
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 items-start sm:items-center">
+
+          {/* Like */}
+          <div onClick={handleLike} className="flex items-center gap-2 cursor-pointer">
+            <ThumbsUp
+              className={`w-5 h-5 transition ${
+                myReaction === "like"
+                  ? "text-primary fill-primary"
+                  : "text-muted-foreground"
+              }`}
+            />
+            <span className="text-sm font-medium">
+              {formatPriceFa(stat.total_likes ?? 0)}
+            </span>
           </div>
 
-          {/* اکشن‌ها */}
-          <div className="flex gap-6 items-center">
-            <div
-              onClick={handleLike}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <ThumbsUp
-                className={`w-5 h-5 transition ${
-                  myReaction === "like"
-                    ? "text-primary fill-primary"
-                    : "text-muted-foreground"
-                }`}
-              />
-              <span className="text-sm font-medium">
-                {formatPriceFa(stat.total_likes ?? 0)}
-              </span>
-            </div>
-
-            <div
-              onClick={handleDislike}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <ThumbsDown
-                className={`w-5 h-5 transition ${
-                  myReaction === "dislike"
-                    ? "text-destructive fill-destructive"
-                    : "text-muted-foreground"
-                }`}
-              />
-              <span className="text-sm font-medium">
-                {formatPriceFa(stat.total_dislikes ?? 0)}
-              </span>
-            </div>
-            <span className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
-              {formatPriceFa(stat?.total_views ?? 0)} بازدید
+          {/* Dislike */}
+          <div onClick={handleDislike} className="flex items-center gap-2 cursor-pointer">
+            <ThumbsDown
+              className={`w-5 h-5 transition ${
+                myReaction === "dislike"
+                  ? "text-destructive fill-destructive"
+                  : "text-muted-foreground"
+              }`}
+            />
+            <span className="text-sm font-medium">
+              {formatPriceFa(stat.total_dislikes ?? 0)}
             </span>
-            <span className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              {formatPriceFa(stat?.viewer_count ?? 0)} نفر آنلاین
-            </span>
-            <Button
-              onClick={handleShare}
-              variant="outline"
-              className="mr-auto flex items-center gap-2"
-            >
-              <Share2 className="w-4 h-4" />
-              {copied ? "لینک کپی شد ✅" : "اشتراک‌گذاری"}
-            </Button>
           </div>
-          {products.length > 0 ? (
-            <div className="mt-4">
-              <h3 className="mb-2 text-sm font-semibold text-gray-700">
-                محصولات این لایو
-              </h3>
 
-              <div className="space-y-2">
-                {sortedProducts.map((lp) => (
-                  <div
-                    key={lp.ProductID}
-                    className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2"
-                  >
-                    <ProfileCompleteModal
-                      open={profileModalOpen}
-                      onClose={() => setProfileModalOpen(false)}
-                      onCompleted={() => {
-                        onAdd(lp);
-                      }}
-                    />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {lp.Product.title || "بدون عنوان"}{lp.ProductID}
-                      </div>
+          {/* Views */}
+          <span className="flex items-center gap-1 text-sm">
+            <Eye className="w-4 h-4" />
+            {formatPriceFa(stat?.total_views ?? 0)} بازدید
+          </span>
 
-                      <div className="mt-0.5 text-xs text-gray-500">
-                        قیمت:{" "}
-                        {lp.Product.price
-                          ? lp.Product.price.toLocaleString("fa-IR")
-                          : "نامشخص"}
-                      </div>
+          {/* Online */}
+          <span className="flex items-center gap-1 text-sm">
+            <Users className="w-4 h-4" />
+            {formatPriceFa(stat?.viewer_count ?? 0)} نفر آنلاین
+          </span>
 
-                      {lp.IsPinned && (
-                        <span className="mt-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                          پین شده
-                        </span>
-                      )}
+          {/* Share Button — در موبایل full width */}
+          <Button
+            onClick={handleShare}
+            variant="outline"
+            className="sm:ml-auto w-full sm:w-auto flex items-center gap-2"
+          >
+            <Share2 className="w-4 h-4" />
+            {copied ? "لینک کپی شد ✅" : "اشتراک‌گذاری"}
+          </Button>
+        </div>
+
+        {/* Products */}
+        {products.length > 0 ? (
+          <div className="mt-4">
+            <h3 className="mb-2 text-sm font-semibold text-primary">
+              محصولات این لایو
+            </h3>
+
+            <div className="space-y-3">
+              {sortedProducts.map((lp) => (
+                <div
+                  key={lp.ProductID}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-3"
+                >
+                  {/* Modal */}
+                  <ProfileCompleteModal
+                    open={profileModalOpen}
+                    onClose={() => setProfileModalOpen(false)}
+                    onCompleted={() => {
+                      onAdd(lp);
+                    }}
+                  />
+
+                  {/* Product info */}
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">
+                      {lp.Product.title || "بدون عنوان"}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      {isOwner ? (
-                        <>
-                          <Button
-                            variant={lp.IsPinned ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => onPin(lp.ProductID, !lp.IsPinned)}
-                            className={`flex items-center gap-1 ${
-                              lp.IsPinned
-                                ? "bg-yellow-500 hover:bg-yellow-600 text-white"
-                                : ""
-                            }`}
-                          >
-                            <Pin className="h-4 w-4" />
-                            {lp.IsPinned ? "برداشتن پین" : "پین"}
-                          </Button>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      قیمت:{" "}
+                      {lp.Product.price
+                        ? lp.Product.price.toLocaleString("fa-IR")
+                        : "نامشخص"}
+                    </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onDelete(lp.ProductID)}
-                            className="flex items-center gap-1 text-red-600 border-red-200 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            حذف
-                          </Button>
-                        </>
-                      ) : (
-                        <></>
-                      )}
+                    {lp.IsPinned && (
+                      <span className="mt-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                        پین شده
+                      </span>
+                    )}
+                  </div>
 
-                      {getQty(lp.ProductID) === 0 ? (
+                  {/* Controls — ریسپانسیو */}
+                  <div className="flex flex-wrap gap-2 w-full sm:w-auto sm:flex-nowrap sm:items-center">
+                    
+                    {isOwner && (
+                      <>
+                        {/* Pin button */}
+                        <Button
+                          variant={lp.IsPinned ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => onPin(lp.ProductID, !lp.IsPinned)}
+                          className={`flex items-center gap-1 w-full sm:w-auto ${
+                            lp.IsPinned
+                              ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                              : ""
+                          }`}
+                        >
+                          <Pin className="h-4 w-4" />
+                          {lp.IsPinned ? "برداشتن پین" : "پین"}
+                        </Button>
+
+                        {/* Delete */}
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1 text-blue-600 border-blue-400"
-                          onClick={() => onAdd(lp)}
+                          onClick={() => onDelete(lp.ProductID)}
+                          className="flex items-center gap-1 w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50"
                         >
-                          <ShoppingCart className="w-4 h-4" />
-                          افزودن
+                          <Trash2 className="h-4 w-4" />
+                          حذف
                         </Button>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-blue-400 text-blue-600"
-                            onClick={() => increase(lp.ProductID)}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
+                      </>
+                    )}
 
-                          <span className="text-sm font-semibold w-6 text-center">
-                            {formatPriceFa(getQty(lp.ProductID))}
-                          </span>
+                    {/* Add / + - */}
+                    {getQty(lp.ProductID) === 0 ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1 w-full sm:w-auto text-blue-600 border-blue-400"
+                        onClick={() => onAdd(lp)}
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        افزودن
+                      </Button>
+                    ) : (
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-blue-400 text-blue-600"
+                          onClick={() => increase(lp.ProductID)}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
 
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-blue-400 text-blue-600"
-                            onClick={() => decrease(lp.ProductID)}
-                          >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                        <span className="text-sm font-semibold w-6 text-center">
+                          {formatPriceFa(getQty(lp.ProductID))}
+                        </span>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-blue-400 text-blue-600"
+                          onClick={() => decrease(lp.ProductID)}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="mt-4">
-              <NotFound
-                title="محصولی در این لایو ثبت نشده است"
-                message="هنوز محصولی برای این لایو اضافه نشده است."
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </>
+          </div>
+        ) : (
+          <div className="mt-4">
+            <NotFound
+              title="محصولی در این لایو ثبت نشده است"
+              message="هنوز محصولی برای این لایو اضافه نشده است."
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
