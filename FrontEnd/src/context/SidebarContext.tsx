@@ -1,41 +1,53 @@
-"use client";
+// "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 
 type SidebarContextType = {
   collapsed: boolean;
-  toggle: () => void;
+  setCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleCollapsed: () => void;
+
+  mobileOpen: boolean;
+  setMobileOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleMobileOpen: () => void;
+  closeMobileSidebar: () => void;
 };
 
-const SidebarContext = createContext<SidebarContextType | null>(null);
+const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
-export function SidebarProvider({ children }: { children: React.ReactNode }) {
+export function SidebarProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // حفظ حالت بعد از refresh
-  useEffect(() => {
-    const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved) setCollapsed(saved === "true");
-  }, []);
-
-  const toggle = () => {
-    setCollapsed((prev) => {
-      localStorage.setItem("sidebar-collapsed", String(!prev));
-      return !prev;
-    });
-  };
+  const toggleCollapsed = () => setCollapsed((prev) => !prev);
+  const toggleMobileOpen = () => setMobileOpen((prev) => !prev);
+  const closeMobileSidebar = () => setMobileOpen(false);
 
   return (
-    <SidebarContext.Provider value={{ collapsed, toggle }}>
+    <SidebarContext.Provider
+      value={{
+        collapsed,
+        setCollapsed,
+        toggleCollapsed,
+        mobileOpen,
+        setMobileOpen,
+        toggleMobileOpen,
+        closeMobileSidebar,
+      }}
+    >
       {children}
     </SidebarContext.Provider>
   );
 }
 
 export function useSidebar() {
-  const ctx = useContext(SidebarContext);
-  if (!ctx) {
-    throw new Error("useSidebar must be used inside SidebarProvider");
+  const context = useContext(SidebarContext);
+  if (!context) {
+    throw new Error("useSidebar must be used within a SidebarProvider");
   }
-  return ctx;
+  return context;
 }

@@ -12,6 +12,7 @@ import {
   LogOut,
   Settings,
   LogIn,
+  Menu,
 } from "lucide-react";
 
 import { ModeToggle } from "@/components/mode-toggle";
@@ -35,7 +36,7 @@ import { logoutRequest } from "@/lib/auth";
 export function Navbar() {
   const [search, setSearch] = useState("");
   const { cart } = useCart();
-  const { collapsed, toggle } = useSidebar();
+  const { collapsed, toggleCollapsed, toggleMobileOpen } = useSidebar();
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -67,13 +68,28 @@ export function Navbar() {
       <div className="h-full flex items-center justify-between px-3 md:px-4">
         {/* Right section */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggle}>
-            {collapsed ? (
-              <PanelRightOpen className="w-5 h-5" />
-            ) : (
-              <PanelRightClose className="w-5 h-5" />
-            )}
-          </Button>
+         <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleMobileOpen}
+        className="md:hidden"
+      >
+        <Menu className="w-5 h-5" />
+      </Button>
+
+      {/* Desktop */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleCollapsed}
+        className="hidden md:flex"
+      >
+        {collapsed ? (
+          <PanelRightOpen className="w-5 h-5" />
+        ) : (
+          <PanelRightClose className="w-5 h-5" />
+        )}
+      </Button>
 
           <h1 className="text-[15px] md:text-lg font-bold">📦 سایت من</h1>
         </div>
