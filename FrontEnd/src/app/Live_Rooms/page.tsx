@@ -49,7 +49,7 @@ export default function LivesPage() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {lives.map((live) => (
-          <Link key={live.ID} href={`/stream/${live.ID}`}>
+          <Link key={live.ID} href={`/Live_Rooms/${live.ID}`}>
             <Card className="cursor-pointer overflow-hidden bg-card border border-border hover:border-primary/40 transition-all duration-300 hover:shadow-lg">
               <div className="relative aspect-video w-full overflow-hidden">
                 {/* Thumbnail */}

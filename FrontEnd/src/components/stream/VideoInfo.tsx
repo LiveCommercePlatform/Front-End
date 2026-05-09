@@ -19,7 +19,6 @@ import { useState } from "react";
 import { formatPriceFa } from "@/lib/utils";
 import { LiveRoomStats, Stream, ReactionType } from "@/types";
 import NotFound from "../ui/NotFound";
-import { tokenStore } from "@/lib/token";
 import { useCart } from "@/context/CartContext";
 import ProfileCompleteModal from "../ui/ProfileCompleteModal";
 
@@ -27,6 +26,7 @@ export function VideoInfo({
   stat,
   streamInfo,
   myReaction,
+  isOwner,
   onLike,
   onDislike,
   onRefresh,
@@ -36,6 +36,7 @@ export function VideoInfo({
   stat: LiveRoomStats;
   streamInfo: Stream;
   myReaction: ReactionType;
+  isOwner: boolean;
   onLike: () => Promise<boolean>;
   onDislike: () => Promise<boolean>;
   onRefresh: () => Promise<void>;
@@ -54,8 +55,6 @@ export function VideoInfo({
     profileModalOpen,
     setProfileModalOpen,
   } = useCart();
-
-  const isOwner = streamInfo.HostID == tokenStore.getUserId();
 
   const sortedProducts = [...streamInfo.Products].sort(
     (a, b) => Number(b.IsPinned) - Number(a.IsPinned)

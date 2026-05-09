@@ -17,7 +17,7 @@ export const useLiveChat = (roomId: string, currentUserId: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<Status>("connecting");
   const [connectionError, setConnectionError] = useState<string | null>(null);
-const refreshingCookieRef = useRef(false);
+  const refreshingCookieRef = useRef(false);
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
   const lastSend = useRef(0);
@@ -26,7 +26,6 @@ const refreshingCookieRef = useRef(false);
   const messageIds = useRef<Set<string>>(new Set());
   const sendQueue = useRef<string[]>([]);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-
 
   const loadHistory = useCallback(async () => {
     try {
@@ -108,26 +107,25 @@ const refreshingCookieRef = useRef(false);
       };
 
       ws.onclose = async (event) => {
-  setStatus("closed");
+        setStatus("closed");
 
-  if (event.code === 4401) {
-    if (refreshingCookieRef.current) return;
+        if (event.code === 4401) {
+          if (refreshingCookieRef.current) return;
 
-    try {
-      refreshingCookieRef.current = true;
-      await setupCookie();
-      scheduleReconnect();
-    } catch (err) {
-      console.error("cookie refresh failed", err);
-      setConnectionError("Authentication refresh failed");
-    } finally {
-      refreshingCookieRef.current = false;
-    }
-    return;
-  }
-  scheduleReconnect();
-};
-
+          try {
+            refreshingCookieRef.current = true;
+            await setupCookie();
+            scheduleReconnect();
+          } catch (err) {
+            console.error("cookie refresh failed", err);
+            setConnectionError("Authentication refresh failed");
+          } finally {
+            refreshingCookieRef.current = false;
+          }
+          return;
+        }
+        scheduleReconnect();
+      };
 
       ws.onerror = () => {
         setConnectionError("WebSocket error");

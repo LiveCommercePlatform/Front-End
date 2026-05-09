@@ -47,7 +47,7 @@ const handleStart = async (s: Stream) => {
   const ok = await startStream(s.ID);
 
   if (ok) {
-    router.push(`/stream/${s.ID}`);
+    router.push(`/Live_Rooms/${s.ID}`);
   }
 };
 
@@ -57,7 +57,7 @@ const handleEnd = async (s: Stream) => {
 
 
   const goToStream = (s: Stream) => {
-    router.push(`/stream/${s.ID}`);
+    router.push(`/Live_Rooms/${s.ID}`);
   };
 
   return (

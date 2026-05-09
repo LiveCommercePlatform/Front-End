@@ -1,6 +1,5 @@
 "use client";
 
-import { VideoPlayer } from "@/components/stream/VideoPlayer";
 import { VideoInfo } from "@/components/stream/VideoInfo";
 import { LiveChat } from "@/components/stream/LiveChat";
 import { RelatedVideos } from "@/components/stream/RelatedVideos";
@@ -9,13 +8,12 @@ import { useLiveStream } from "@/hooks/useLiveStream";
 import Loading from "@/components/ui/Loading";
 import NotFound from "@/components/ui/NotFound";
 import { tokenStore } from "@/lib/token";
-import { apiFetch } from "@/lib/api";
-import { useEffect } from "react";
+import LiveBroadcaster from "@/components/stream/Broadcaster/LiveBroadcaster";
+import LiveViewer from "@/components/stream/Viewer/LiveViewer";
 
 export default function StreamPage() {
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : (params.id as string);
-
   const {
     stream,
     stats,
@@ -29,21 +27,8 @@ export default function StreamPage() {
     end,
     removeProductFromLive,
   } = useLiveStream(id);
-
-  // useEffect(() => {
-  //   const setupCookie = async () => {
-  //     const token = tokenStore.getAccess();
-  //     await apiFetch("/auth/ws-cookie", {
-  //       method: "POST",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       credentials: "include",
-  //     });
-  //   };
-  //   setupCookie();
-  // }, []);
-  
+  const UserID = tokenStore.getUserId();
+  const IsHost = stream?.HostID == UserID;
   if (loading) return <Loading />;
 
   if (error) {
@@ -61,12 +46,16 @@ export default function StreamPage() {
     <div className="min-h-screen bg-background text-foreground p-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <VideoPlayer stream={stream} onEnd={end} />
-
+          {IsHost ? (
+            <LiveBroadcaster roomId={stream.ID} />
+          ) : (
+            <LiveViewer roomId={stream.ID} />
+          )}{" "}
           <VideoInfo
             streamInfo={stream}
             stat={stats}
             myReaction={myReaction}
+            isOwner={IsHost}
             onLike={like}
             onDislike={dislike}
             onRefresh={refetch}
@@ -76,7 +65,7 @@ export default function StreamPage() {
         </div>
 
         <div className="space-y-6">
-          <LiveChat id={stream.ID} UserId={tokenStore.getUserId() || ""} />
+          <LiveChat id={stream.ID} UserId={UserID || ""} />
           <RelatedVideos />
         </div>
       </div>
