@@ -1,4 +1,5 @@
 "use client";
+import { formatPriceFa } from "@/lib/utils";
 
 type PaginationProps = {
   page: number;
@@ -38,7 +39,7 @@ export default function Pagination({
                 : "border hover:bg-muted"
             }`}
           >
-            {p}
+            {formatPriceFa(p)}
           </button>
         );
       })}
