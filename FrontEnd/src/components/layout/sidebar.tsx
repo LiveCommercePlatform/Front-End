@@ -195,10 +195,10 @@ export function Sidebar() {
           "h-[calc(100vh-3rem)] md:h-[calc(100vh-3.5rem)]",
           "border-s bg-muted px-2 transition-all duration-300",
           "md:translate-x-0",
-          mobileOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
+          mobileOpen ? "translate-x-0 w-40" : "translate-x-full md:translate-x-0"
         )}
         style={{
-          width: collapsed ? "4rem" : "13rem",
+          width: collapsed ? "4rem" : mobileOpen ? "" : "14rem",
         }}
       >
         <SidebarContent
