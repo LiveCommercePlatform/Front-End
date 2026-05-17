@@ -1,5 +1,5 @@
 export type CartItemType = {
-  id: number | string
+  id: string
   title: string
   price: number
   qty: number
@@ -7,10 +7,8 @@ export type CartItemType = {
   deliveryInfo?: string
 }
 
-export type Props = {
+export type CartProps = {
   item: CartItemType
-  onQtyChange: (id: number | string, qty: number) => void
-  onRemove: (id: number | string) => void
   selected?: boolean
   onToggleSelect?: (id: number | string) => void
 }

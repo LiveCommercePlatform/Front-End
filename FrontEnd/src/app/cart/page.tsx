@@ -12,9 +12,9 @@ import animationData from "./empty-cart-animation.json";
 
 export default function CartPage() {
   const [currentstep, setCurrentStep] = useState(0);
-  const { cart, updateQty, removeFromCart } = useCart();
+  const { cart, removeFromCart } = useCart();
   const [selected, setSelected] = useState<Record<string | number, boolean>>(
-    {},
+    {}
   );
 
   const toggleSelect = (id: number | string) => {
@@ -24,21 +24,24 @@ export default function CartPage() {
   if (cart.length === 0) {
     return (
       <main
-        className="flex flex-col justify-center items-center  p-4 sm:p-6 md:p-8 text-center"
+        className="flex flex-col justify-center items-center p-6 md:p-10 text-center min-h-[60vh]"
         dir="rtl"
       >
         <Lottie
           loop
           animationData={animationData}
           play
-          style={{ width: 300, height: 450 }}
+          style={{ width: 260, height: 360 }}
         />
-        <h2 className="text-2xl font-semibold mt-6 mb-2">
+
+        <h2 className="text-xl sm:text-2xl font-semibold mt-4 mb-2">
           سبد خرید شما خالی است
         </h2>
-        <p className="text-gray-500 mb-6">
-          برای اضافه کردن محصولات، به صفحه اصلی بروید.
+
+        <p className="text-muted-foreground mb-6 text-sm sm:text-base">
+          برای اضافه کردن محصولات، به صفحه فروشگاه بروید.
         </p>
+
         <Button
           variant="outline"
           onClick={() => (window.location.href = "/shop")}
@@ -49,19 +52,23 @@ export default function CartPage() {
     );
   }
 
-  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
-
   return (
-    <main className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8" dir="rtl">
+    <main className="max-w-7xl mx-auto px-4 py-6 md:py-8" dir="rtl">
       <Stepper
         steps={["سبد خرید", "آدرس", "پرداخت"]}
         current={currentstep}
         onChange={(step) => setCurrentStep(step)}
       />
 
-      <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
-        <div className="md:col-span-2 space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+      {/* layout */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+
+        {/* cart items */}
+        <div className="lg:col-span-2 space-y-4">
+
+          {/* select header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-border rounded-lg p-3 bg-card">
+
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -76,42 +83,44 @@ export default function CartPage() {
                   }
                 }}
               />
-              <span className="text-sm">
+
+              <span className="text-xs sm:text-sm text-muted-foreground">
                 {formatPriceFa(
-                  Object.values(selected).filter(Boolean).length,
+                  Object.values(selected).filter(Boolean).length
                 )}
-                /{formatPriceFa(cart.length)} موارد انتخاب شده
+                /
+                {formatPriceFa(cart.length)} مورد انتخاب شده
               </span>
             </div>
 
             <Button
               size="sm"
+              variant="destructive"
+              className="w-full sm:w-auto"
               disabled={Object.values(selected).every((v) => !v)}
               onClick={() => {
-                const toRemove = Object.keys(selected).filter(
-                  (k) => selected[k],
-                );
-                toRemove.forEach((id) => removeFromCart(Number(id)));
+                const toRemove = Object.keys(selected).filter((k) => selected[k]);
+                toRemove.forEach((id) => removeFromCart(id));
                 setSelected({});
               }}
             >
-              حذف
+              حذف موارد انتخاب شده
             </Button>
           </div>
 
-          {cart.map((it, index) => (
+          {/* items */}
+          {cart.map((it) => (
             <CartItem
-              key={index}
+              key={it.id}
               item={it}
-              onQtyChange={updateQty}
-              onRemove={removeFromCart}
               selected={!!selected[it.id]}
               onToggleSelect={toggleSelect}
             />
           ))}
         </div>
 
-        <div className="mt-6 md:mt-0">
+        {/* summary */}
+        <div className="lg:sticky lg:top-24 h-fit">
           <CheckoutSummary
             items={cart}
             onPlaceOrder={() => alert("Place order pressed")}
