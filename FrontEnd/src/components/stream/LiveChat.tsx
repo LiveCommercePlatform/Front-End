@@ -8,11 +8,17 @@ import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveChat } from "@/hooks/useLiveChat";
 
-function getInitial(name: string) {
+function getInitial(name?: string) {
   return name?.trim()?.[0] ?? "?";
 }
 
-export function LiveChat({ id, UserId }: { id: string; UserId: string }) {
+export function LiveChat({
+  id,
+  UserId,
+}: {
+  id: string;
+  UserId?: string;
+}) {
   const [text, setText] = useState("");
 
   const messagesRef = useRef<HTMLDivElement | null>(null);
@@ -24,23 +30,31 @@ export function LiveChat({ id, UserId }: { id: string; UserId: string }) {
     status,
     currentUserId,
     connectionError,
+    authRequired,
+    canSend,
   } = useLiveChat(id, UserId);
 
-  const canSend = status === "open" && text.trim().length > 0;
+  const submitEnabled = canSend && text.trim().length > 0;
 
   const handleSend = () => {
+    const value = text.trim();
+    if (!value) return;
     if (!canSend) return;
-    sendMessage(text.trim());
+
+    sendMessage(value);
     setText("");
   };
 
   const renderedMessages = useMemo(() => {
     return messages.map((msg) => {
       const isMe = msg.userId === currentUserId;
+
       return {
         ...msg,
         isMe,
-        name: isMe ? "شما" : `کاربر ${String(msg.userId).slice(0, 4)}`,
+        name:
+          msg.userName?.trim() ||
+          (isMe ? "شما" : `کاربر ${String(msg.userId ?? "").slice(0, 4)}`),
       };
     });
   }, [messages, currentUserId]);
@@ -50,7 +64,6 @@ export function LiveChat({ id, UserId }: { id: string; UserId: string }) {
     if (!el) return;
 
     const threshold = 120;
-
     const isNearBottom =
       el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
 
@@ -66,25 +79,61 @@ export function LiveChat({ id, UserId }: { id: string; UserId: string }) {
     }
   }, [messages]);
 
+  const statusLabel =
+    status === "connecting"
+      ? "در حال اتصال..."
+      : status === "open"
+      ? authRequired
+        ? "فقط خواندنی"
+        : "متصل"
+      : "قطع شده";
+
+  const inputPlaceholder = authRequired
+    ? "برای ارسال نظر ابتدا وارد شوید"
+    : status === "open"
+    ? "پیامت رو بنویس..."
+    : status === "connecting"
+    ? "در حال اتصال به چت..."
+    : "چت در دسترس نیست";
+
   return (
     <Card className="rounded-2xl shadow-lg flex flex-col h-[513px] bg-muted/30 overflow-hidden">
       <CardContent className="flex flex-col flex-1 p-4 py-1 min-h-0">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-lg">چت زنده</h3>
 
-          <span className="text-[11px] text-muted-foreground">
-            {status === "connecting" && "در حال اتصال..."}
-            {status === "open" && "متصل"}
-            {status === "closed" && "قطع شده"}
+          <span
+            className={cn(
+              "text-[11px]",
+              status === "open"
+                ? "text-green-600"
+                : status === "connecting"
+                ? "text-amber-600"
+                : "text-muted-foreground"
+            )}
+          >
+            {statusLabel}
           </span>
         </div>
+
+        {connectionError && (
+          <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+            {connectionError}
+          </div>
+        )}
 
         <div
           ref={messagesRef}
           onScroll={handleScroll}
-          className="flex-1 min-h-0 overflow-y-auto px-2 "
+          className="flex-1 min-h-0 overflow-y-auto px-2"
         >
           <div className="flex flex-col space-y-3">
+            {renderedMessages.length === 0 && (
+              <div className="text-center text-sm text-muted-foreground py-6">
+                هنوز پیامی ارسال نشده است.
+              </div>
+            )}
+
             {renderedMessages.map((msg) => (
               <div
                 key={msg.id}
@@ -99,7 +148,7 @@ export function LiveChat({ id, UserId }: { id: string; UserId: string }) {
                   </div>
                 ) : (
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/30 text-xs font-semibold text-primary select-none">
-                    ش
+                    {getInitial(msg.name)}
                   </div>
                 )}
 
@@ -116,6 +165,12 @@ export function LiveChat({ id, UserId }: { id: string; UserId: string }) {
                     )}
                   >
                     {msg.name}
+
+                    {msg.pending && (
+                      <span className="text-[10px] text-muted-foreground">
+                        در حال ارسال...
+                      </span>
+                    )}
                   </p>
 
                   <div
@@ -144,18 +199,14 @@ export function LiveChat({ id, UserId }: { id: string; UserId: string }) {
           }}
         >
           <Input
-            placeholder={
-              status === "open"
-                ? "پیامت رو بنویس..."
-                : "در حال اتصال به چت..."
-            }
+            placeholder={inputPlaceholder}
             className="flex-1"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            disabled={status !== "open"}
+            disabled={!canSend}
           />
 
-          <Button size="icon" type="submit" disabled={!canSend}>
+          <Button size="icon" type="submit" disabled={!submitEnabled}>
             <Send className="w-4 h-4" />
           </Button>
         </form>

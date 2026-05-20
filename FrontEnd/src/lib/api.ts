@@ -6,23 +6,43 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 let isRefreshing = false;
 let queue: Array<() => void> = [];
 
-export async function apiFetch(url: string, options: RequestInit = {}) {
+type AuthMode = "required" | "optional" | "none";
+
+type ApiFetchOptions = RequestInit & {
+  authMode?: AuthMode;
+};
+
+export async function apiFetch(
+  url: string,
+  options: ApiFetchOptions = {}
+): Promise<Response> {
+  const { authMode = "required", ...fetchOptions } = options;
+
   const token = tokenStore.getAccess();
-   const headers: any = {
-    Authorization: `Bearer ${token}`,
-      ...(options.headers || {}),
+
+  const headers: any = {
+    ...(fetchOptions.headers || {}),
   };
 
-  if (!(options.body instanceof FormData)) {
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (!(fetchOptions.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
   const res = await fetch(`${API_BASE}${url}`, {
-    ...options,
+    ...fetchOptions,
     headers,
   });
 
   if (res.status !== 401) return res;
+
+  // اگر auth اختیاری است اصلاً refresh نکن
+  if (authMode === "optional" || authMode === "none") {
+    return res;
+  }
 
   const skipRefreshEndpoints = [
     "/auth/login",
@@ -32,7 +52,7 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
   ];
 
   if (skipRefreshEndpoints.some((endpoint) => url.includes(endpoint))) {
-    return res; 
+    return res;
   }
 
   if (isRefreshing) {
@@ -52,25 +72,45 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
     return apiFetch(url, options);
   } catch (err) {
     tokenStore.clear();
-    window.location.href = "/login";
+
+    if (authMode === "required") {
+      window.location.href = "/login";
+    }
+
     throw err;
   } finally {
     isRefreshing = false;
   }
 }
+
 export const isProfileComplete = async () => {
-    const access = tokenStore.getAccess?.();
-    if (!access) return { ok: false, reason: "not_logged_in" as const };
+  const access = tokenStore.getAccess?.();
 
-    const res = await apiFetch("/profile/completed", { method: "GET" });
-    const data = await res.json();
+  if (!access) {
+    return { ok: false, reason: "not_logged_in" as const };
+  }
 
-    if (!res.ok) {
-      return { ok: false, reason: "api_error" as const, message: data?.error };
-    }
+  const res = await apiFetch("/profile/completed", {
+    method: "GET",
+    authMode: "optional",
+  });
 
+  if (res.status === 401) {
+    return { ok: false, reason: "not_logged_in" as const };
+  }
+
+  const data = await res.json();
+
+  if (!res.ok) {
     return {
-      ok: data.completed,
-      reason: data.completed ? "complete" : ("incomplete" as const),
+      ok: false,
+      reason: "api_error" as const,
+      message: data?.error,
     };
+  }
+
+  return {
+    ok: data.completed,
+    reason: data.completed ? "complete" : ("incomplete" as const),
   };
+};

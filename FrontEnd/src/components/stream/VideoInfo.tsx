@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   ThumbsDown,
   ThumbsUp,
@@ -21,6 +20,7 @@ import { LiveRoomStats, Stream, ReactionType } from "@/types";
 import NotFound from "../ui/NotFound";
 import { useCart } from "@/context/CartContext";
 import ProfileCompleteModal from "../ui/ProfileCompleteModal";
+import { Badge } from "../ui/badge";
 
 export function VideoInfo({
   stat,
@@ -29,9 +29,8 @@ export function VideoInfo({
   isOwner,
   onLike,
   onDislike,
-  onRefresh,
-  onDelete,
   onPin,
+  onDelete,
 }: {
   stat: LiveRoomStats;
   streamInfo: Stream;
@@ -43,7 +42,6 @@ export function VideoInfo({
   onPin: (productId: string, isPinned: boolean) => Promise<boolean>;
   onDelete: (productId: string) => Promise<boolean>;
 }) {
-
   const [copied, setCopied] = useState(false);
   const [loadingReaction, setLoadingReaction] = useState(false);
 
@@ -56,18 +54,17 @@ export function VideoInfo({
     setProfileModalOpen,
   } = useCart();
 
-  const sortedProducts = [...streamInfo.Products].sort(
-    (a, b) => Number(b.IsPinned) - Number(a.IsPinned)
+  const sortedProducts = [...(streamInfo.Products || [])].sort(
+    (a, b) => Number(b.IsPinned) - Number(a.IsPinned),
   );
 
   const onAdd = async (product: any) => {
     if (!product) return;
-
     await handleAddToCart({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      cover: product.cover_image || "",
+      id: product.ProductID,
+      title: product.Product.title,
+      price: product.Product.price,
+      cover: product.Product.cover_image || "",
     });
   };
 
@@ -77,7 +74,7 @@ export function VideoInfo({
       try {
         await navigator.share({
           title: streamInfo.Title,
-          text: "این لایو رو ببین 👇",
+          text: "این لایو رو از دست نده!",
           url,
         });
       } catch {}
@@ -88,105 +85,109 @@ export function VideoInfo({
     }
   };
 
-  const handleLike = async () => {
-    if (loadingReaction) return;
-    setLoadingReaction(true);
-    await onLike();
-    setLoadingReaction(false);
-  };
-
-  const handleDislike = async () => {
-    if (loadingReaction) return;
-    setLoadingReaction(true);
-    await onDislike();
-    setLoadingReaction(false);
-  };
-
-  const products = streamInfo.Products ?? [];
-
   return (
-    <Card className="rounded-2xl shadow-lg">
-      <CardContent className="p-6 space-y-6">
-
+    <Card className="rounded-2xl shadow-sm border border-border bg-card text-card-foreground">
+      <CardContent className="p-4 md:p-6 space-y-6">
         {/* Title */}
-        <div className="space-y-3">
-          <h2 className="text-xl font-bold">{streamInfo.Title}</h2>
-          <p className="text-sm text-muted-foreground">
-            توسط: {streamInfo.Host.name}
-          </p>
-          <p className="text-muted-foreground text-md leading-relaxed">
+        <div className="space-y-2">
+          <h2 className="text-lg md:text-2xl font-bold leading-tight">
+            {streamInfo.Title}
+          </h2>
+
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[11px] font-bold">
+              میزبان
+            </span>
+            {streamInfo.Host.name}
+          </div>
+
+          <p className="text-muted-foreground text-sm md:text-base leading-relaxed line-clamp-3 md:line-clamp-none">
             {streamInfo.Description}
           </p>
         </div>
 
-        {/* ⭐ اکشن‌ها — ریسپانسیو کامل */}
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 items-start sm:items-center">
+        {/* Stats */}
+        <div className="flex flex-col gap-4 border-y border-border py-4">
+          <div className="grid grid-cols-2 md:flex items-center gap-4 md:gap-8">
+            <div className="flex items-center gap-4">
+              <button
+                disabled={loadingReaction}
+                onClick={onLike}
+                className={`flex items-center gap-1.5 transition ${
+                  myReaction === "like"
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <ThumbsUp
+                  className={`w-5 h-5 ${myReaction === "like" ? "fill-primary" : ""}`}
+                />
+                <span className="text-sm font-bold">
+                  {formatPriceFa(stat.total_likes || 0)}
+                </span>
+              </button>
 
-          {/* Like */}
-          <div onClick={handleLike} className="flex items-center gap-2 cursor-pointer">
-            <ThumbsUp
-              className={`w-5 h-5 transition ${
-                myReaction === "like"
-                  ? "text-primary fill-primary"
-                  : "text-muted-foreground"
-              }`}
-            />
-            <span className="text-sm font-medium">
-              {formatPriceFa(stat.total_likes ?? 0)}
-            </span>
+              <button
+                disabled={loadingReaction}
+                onClick={onDislike}
+                className={`flex items-center gap-1.5 transition ${
+                  myReaction === "dislike"
+                    ? "text-destructive"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <ThumbsDown
+                  className={`w-5 h-5 ${myReaction === "dislike" ? "fill-destructive" : ""}`}
+                />
+                <span className="text-sm font-bold">
+                  {formatPriceFa(stat.total_dislikes || 0)}
+                </span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 text-muted-foreground border-r md:border-r-0 pr-4 md:pr-0 border-border">
+              <div className="flex items-center gap-1.5 text-xs md:text-sm">
+                <Eye className="w-4 h-4 opacity-70" />
+                {formatPriceFa(stat.total_views || 0)}
+              </div>
+            </div>
           </div>
 
-          {/* Dislike */}
-          <div onClick={handleDislike} className="flex items-center gap-2 cursor-pointer">
-            <ThumbsDown
-              className={`w-5 h-5 transition ${
-                myReaction === "dislike"
-                  ? "text-destructive fill-destructive"
-                  : "text-muted-foreground"
-              }`}
-            />
-            <span className="text-sm font-medium">
-              {formatPriceFa(stat.total_dislikes ?? 0)}
-            </span>
-          </div>
-
-          {/* Views */}
-          <span className="flex items-center gap-1 text-sm">
-            <Eye className="w-4 h-4" />
-            {formatPriceFa(stat?.total_views ?? 0)} بازدید
-          </span>
-
-          {/* Online */}
-          <span className="flex items-center gap-1 text-sm">
-            <Users className="w-4 h-4" />
-            {formatPriceFa(stat?.viewer_count ?? 0)} نفر آنلاین
-          </span>
-
-          {/* Share Button — در موبایل full width */}
           <Button
             onClick={handleShare}
-            variant="outline"
-            className="sm:ml-auto w-full sm:w-auto flex items-center gap-2"
+            variant="secondary"
+            className="w-full md:w-auto md:mr-auto rounded-xl gap-2 h-11 md:h-10"
           >
             <Share2 className="w-4 h-4" />
-            {copied ? "لینک کپی شد ✅" : "اشتراک‌گذاری"}
+            {copied ? "کپی شد" : "اشتراک‌گذاری"}
           </Button>
         </div>
 
         {/* Products */}
-        {products.length > 0 ? (
-          <div className="mt-4">
-            <h3 className="mb-2 text-sm font-semibold text-primary">
-              محصولات این لایو
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm md:text-base font-bold flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              محصولات معرفی شده
             </h3>
 
-            <div className="space-y-3">
+            <span className="text-xs text-muted-foreground">
+              {sortedProducts.length} محصول
+            </span>
+          </div>
+
+          {sortedProducts.length > 0 ? (
+            <div className="grid gap-3">
               {sortedProducts.map((lp) => (
                 <div
                   key={lp.ProductID}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-3"
+                  className={`group relative flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-2xl border transition-all
+              ${
+                lp.IsPinned
+                  ? "border-amber-300/40 bg-amber-500/10"
+                  : "border-border hover:bg-muted/40"
+              }`}
                 >
-                  {/* Modal */}
                   <ProfileCompleteModal
                     open={profileModalOpen}
                     onClose={() => setProfileModalOpen(false)}
@@ -194,109 +195,109 @@ export function VideoInfo({
                       onAdd(lp);
                     }}
                   />
-
-                  {/* Product info */}
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">
-                      {lp.Product.title || "بدون عنوان"}
+                  <div className="flex flex-1 gap-3 items-center">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <ShoppingCart className="w-6 h-6 text-muted-foreground opacity-60" />
                     </div>
 
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      قیمت:{" "}
-                      {lp.Product.price
-                        ? lp.Product.price.toLocaleString("fa-IR")
-                        : "نامشخص"}
-                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold truncate">
+                          {lp.Product.title}
+                        </h4>
 
-                    {lp.IsPinned && (
-                      <span className="mt-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                        پین شده
-                      </span>
-                    )}
+                        {lp.IsPinned && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500">
+                            پین شده
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-sm font-black text-primary mt-1">
+                        {lp.Product.price
+                          ? lp.Product.price.toLocaleString("fa-IR")
+                          : "۰"}
+                        <span className="text-[10px] font-normal text-muted-foreground mr-1">
+                          تومان
+                        </span>
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Controls — ریسپانسیو */}
-                  <div className="flex flex-wrap gap-2 w-full sm:w-auto sm:flex-nowrap sm:items-center">
-                    
+                  {/* Buttons */}
+                  <div className="grid grid-cols-2 sm:flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-none border-border">
                     {isOwner && (
                       <>
-                        {/* Pin button */}
                         <Button
-                          variant={lp.IsPinned ? "default" : "outline"}
+                          variant="ghost"
                           size="sm"
                           onClick={() => onPin(lp.ProductID, !lp.IsPinned)}
-                          className={`flex items-center gap-1 w-full sm:w-auto ${
-                            lp.IsPinned
-                              ? "bg-yellow-500 hover:bg-yellow-600 text-white"
-                              : ""
-                          }`}
+                          className="h-9 rounded-lg gap-1.5"
                         >
                           <Pin className="h-4 w-4" />
-                          {lp.IsPinned ? "برداشتن پین" : "پین"}
+                          <span className="text-xs">
+                            {lp.IsPinned ? "آن‌پین" : "پین"}
+                          </span>
                         </Button>
 
-                        {/* Delete */}
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           onClick={() => onDelete(lp.ProductID)}
-                          className="flex items-center gap-1 w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50"
+                          className="h-9 rounded-lg gap-1.5 text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
-                          حذف
+                          <span className="text-xs">حذف</span>
                         </Button>
                       </>
                     )}
 
-                    {/* Add / + - */}
-                    {getQty(lp.ProductID) === 0 ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1 w-full sm:w-auto text-blue-600 border-blue-400"
-                        onClick={() => onAdd(lp)}
-                      >
-                        <ShoppingCart className="w-4 h-4" />
-                        افزودن
-                      </Button>
-                    ) : (
-                      <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                    <div className="col-span-2 sm:w-32">
+                      {getQty(lp.ProductID) === 0 ? (
                         <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-blue-400 text-blue-600"
-                          onClick={() => increase(lp.ProductID)}
+                          onClick={() => onAdd(lp)}
+                          className="w-full h-9 rounded-lg gap-2"
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5" />
+                          افزودن به سبد
                         </Button>
+                      ) : (
+                        <div className="flex items-center justify-between bg-muted rounded-lg h-9 px-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => increase(lp.ProductID)}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
 
-                        <span className="text-sm font-semibold w-6 text-center">
-                          {formatPriceFa(getQty(lp.ProductID))}
-                        </span>
+                          <span className="text-sm font-bold w-8 text-center">
+                            {formatPriceFa(getQty(lp.ProductID))}
+                          </span>
 
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-blue-400 text-blue-600"
-                          onClick={() => decrease(lp.ProductID)}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => decrease(lp.ProductID)}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        ) : (
-          <div className="mt-4">
+          ) : (
             <NotFound
-              title="محصولی در این لایو ثبت نشده است"
-              message="هنوز محصولی برای این لایو اضافه نشده است."
+              title="محصولی یافت نشد"
+              message="در حال حاضر محصولی برای نمایش وجود ندارد."
             />
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );

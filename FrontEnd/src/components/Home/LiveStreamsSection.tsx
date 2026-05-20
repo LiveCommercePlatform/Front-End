@@ -3,6 +3,7 @@
 import { PlayCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 type Stream = {
   id: number;
@@ -41,6 +42,7 @@ const streams: Stream[] = [
 ];
 
 export default function LiveStreamsSection() {
+  const router = useRouter();
   return (
     <section className="py-16 sm:pt-0">
       <div className="max-w-7xl mx-auto px-4 space-y-10">
@@ -54,7 +56,7 @@ export default function LiveStreamsSection() {
             </p>
           </div>
 
-          <Button variant="outline">مشاهده همه</Button>
+          <Button onClick={() => router.push("/Live_Rooms")} variant="outline">مشاهده همه</Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -72,7 +74,7 @@ export default function LiveStreamsSection() {
 
                 {stream.isLive ? (
                   <Badge className="absolute top-3 right-3 bg-red-600 text-white">
-                    LIVE
+                    زنده
                   </Badge>
                 ) : (
                   <Badge className="absolute top-3 right-3" variant="secondary">

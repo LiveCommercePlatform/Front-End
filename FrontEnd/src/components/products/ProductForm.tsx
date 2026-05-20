@@ -209,100 +209,118 @@ export default function ProductForm({
     <div className="max-w-5xl mx-5 py-10">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(submitHandler)} className="space-y-6">
-          <div className="flex items-center justify-between border rounded-xl p-4">
-            <div>
-              <h1 className="font-semibold text-base sm:text-lg md:text-xl">
-                {mode === "create" ? "ایجاد محصول جدید" : "ویرایش محصول"}
-              </h1>
-              <p className="text-xs sm:text-sm opacity-70">
-                {mode === "create"
-                  ? "اطلاعات محصول را تکمیل کنید"
-                  : "اطلاعات محصول را ویرایش کنید"}
-              </p>
+          <div className="flex flex-col gap-4 rounded-xl border border-border p-4 md:flex-row md:items-center md:justify-between">
+  <div className="min-w-0">
+    <h1 className="font-semibold text-base sm:text-lg md:text-xl">
+      {mode === "create" ? "ایجاد محصول جدید" : "ویرایش محصول"}
+    </h1>
+
+    <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+      {mode === "create"
+        ? "اطلاعات محصول را تکمیل کنید"
+        : "اطلاعات محصول را ویرایش کنید"}
+    </p>
+  </div>
+
+  <div className="flex flex-col-reverse sm:flex-row gap-2 w-full md:w-auto">
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-auto"
+        >
+          <Eye className="w-4 h-4 ml-1" />
+          پیش‌نمایش
+        </Button>
+      </SheetTrigger>
+
+      <SheetContent
+        side="left"
+        className="w-full sm:max-w-lg p-4 sm:p-5 overflow-y-auto"
+      >
+        <SheetHeader>
+          <SheetTitle>پیش‌نمایش محصول</SheetTitle>
+        </SheetHeader>
+
+        <div className="mt-4 space-y-4 text-right">
+          <div className="space-y-3">
+            {coverPreviews.length ? (
+              <div className="grid grid-cols-1 gap-3">
+                {coverPreviews.map((src, i) => (
+                  <div
+                    key={i}
+                    className="aspect-[4/3] rounded-lg overflow-hidden border border-border relative"
+                  >
+                    <img
+                      src={src}
+                      className="w-full h-full object-cover"
+                      alt={`preview-${i}`}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="aspect-[4/3] rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center">
+                <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                  <ImagePlus className="w-5 h-5" />
+                  بدون تصویر
+                </div>
+              </div>
+            )}
+          </div>
+
+          <h2 className="text-lg font-semibold break-words">
+            {title || "عنوان محصول"}
+          </h2>
+
+          {description && (
+            <p className="text-sm text-muted-foreground leading-6 break-words">
+              {description}
+            </p>
+          )}
+
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">قیمت</span>
+              <span className="text-left">
+                {formatPriceFa(price)} تومان
+              </span>
             </div>
 
-            <div className="flex gap-2">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Eye className="w-4 h-4 ml-1" /> پیش‌نمایش
-                  </Button>
-                </SheetTrigger>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">تعداد موجودی</span>
+              <span>{formatPriceFa(stock)}</span>
+            </div>
 
-                <SheetContent side="left" className="sm:max-w-lg p-5">
-                  <SheetHeader>
-                    <SheetTitle>پیش‌نمایش محصول</SheetTitle>
-                  </SheetHeader>
-
-                  <div className="mt-4 space-y-4 text-right">
-                    <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
-                    {coverPreviews.length ? (
-                      coverPreviews.map((src, i) => (
-                        <div
-                          key={i}
-                          className="aspect-[4/3] rounded-lg overflow-hidden border relative"
-                        >
-                          <img
-                            src={src}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ))
-                    ) : (
-                      <div className="aspect-[4/3] rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
-                        <div className="flex flex-col items-center gap-1 text-xs opacity-70">
-                          <ImagePlus className="w-5 h-5" />
-                          بدون تصویر
-                        </div>
-                      </div>
-                    )}
-                    </div>
-
-                    <h2 className="text-lg font-semibold">
-                      {title || "عنوان محصول"}
-                    </h2>
-
-                    {description && (
-                      <p className="text-sm opacity-70">{description}</p>
-                    )}
-
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="opacity-60">قیمت</span>
-                        <span>{formatPriceFa(price)} تومان</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="opacity-60">تعداد موجودی</span>
-                        <span>{formatPriceFa(stock)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="opacity-60">دسته‌بندی</span>
-                        <span>
-                          {CATEGORIES.find((c) => c.value === selectedParent)
-                            ?.label || "—"}{" "}
-                          -
-                          {/* {selectedParent && CATEGORY_TAGS[selectedParent].find((c) => c.id === category)
-                            ?.label || "—"} */}
-                        </span>
-                      </div>
-                    </div>
-
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {tags.map((tag) => (
-                          <Badge key={tag}>{tag}</Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-
-              <Button type="submit">
-                {mode === "create" ? "ذخیره محصول" : "ذخیره تغییرات"}
-              </Button>
+            <div className="flex items-start justify-between gap-3">
+              <span className="text-muted-foreground shrink-0">دسته‌بندی</span>
+              <span className="text-left break-words">
+                {CATEGORIES.find((c) => c.value === selectedParent)?.label || "—"} -
+              </span>
             </div>
           </div>
+
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              {tags.map((tag) => (
+                <Badge key={tag}>{tag}</Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+
+    <Button
+      type="submit"
+      className="w-full sm:w-auto"
+    >
+      {mode === "create" ? "ذخیره محصول" : "ذخیره تغییرات"}
+    </Button>
+  </div>
+</div>
+
 
           <Card>
             <CardHeader className="flex items-center gap-2 font-medium">

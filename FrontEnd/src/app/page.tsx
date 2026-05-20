@@ -8,7 +8,7 @@ import MobileStickyCTA from "@/components/Home/MobileAuthCTA";
 import { tokenStore } from "@/lib/token";
 
 export default function Home() {
-  const isLoggedIn = !!tokenStore.getAccess;
+  const isLoggedIn = !tokenStore.getAccess;
 
   return (
     <main className="space-y-0">

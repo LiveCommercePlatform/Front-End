@@ -48,38 +48,35 @@ export default function CompleteProfileModal({
   const isValidPhone = (phone: string) => /^09\d{9}$/.test(phone);
   const isValidPostal = (postal: string) => /^\d{10}$/.test(postal);
 
-  // ✅ prefill وقتی مودال باز شد
-  useEffect(() => {
-    if (!open) return;
+  // useEffect(() => {
+  //   if (!open) return;
 
-    const fetchProfile = async () => {
-      try {
-        setPrefillLoading(true);
+  //   const fetchProfile = async () => {
+  //     try {
+  //       setPrefillLoading(true);
 
-        // این مسیر رو اگر تو بک فرق داره عوض کن
-        const res = await apiFetch("/profile/get", { method: "GET" });
-        const data = await res.json();
+  //       const res = await apiFetch("/profile/get", { method: "GET" });
+  //       const data = await res.json();
 
-        if (!res.ok) throw new Error(data?.error || "خطا در دریافت پروفایل");
+  //       if (!res.ok) throw new Error(data?.error || "خطا در دریافت پروفایل");
 
-        const user = data?.user || {};
+  //       const user = data?.user || {};
 
-        // ✅ فقط چیزایی که null/undefined/"" نیست رو می‌ذاریم
-        reset({
-          name: user.name ?? "",
-          phone: user.phone ?? "",
-          postal_code: user.postal_code ?? "",
-          address: user.address ?? "",
-        });
-      } catch (err: any) {
-        toast.error(err.message);
-      } finally {
-        setPrefillLoading(false);
-      }
-    };
+  //       reset({
+  //         name: user.name ?? "",
+  //         phone: user.phone ?? "",
+  //         postal_code: user.postal_code ?? "",
+  //         address: user.address ?? "",
+  //       });
+  //     } catch (err: any) {
+  //       toast.error(err.message);
+  //     } finally {
+  //       setPrefillLoading(false);
+  //     }
+  //   };
 
-    fetchProfile();
-  }, [open, reset]);
+  //   fetchProfile();
+  // }, [open, reset]);
 
   const onSubmit = async (data: FormValues) => {
     if (!isValidPhone(data.phone)) {

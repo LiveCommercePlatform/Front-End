@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { Profile } from "@/types";
-import { toast } from "react-hot-toast";
 
 type DashboardContextType = {
   profile: Profile | null;
@@ -24,23 +23,32 @@ export function DashboardProvider({
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const res = await apiFetch("/profile/get", { method: "GET" });
+
+      const res = await apiFetch("/profile/get", {
+        method: "GET",
+        authMode: "optional",
+      });
+
+      if (res.status === 401) {
+        setProfile(null);
+        return;
+      }
+
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error || "خطا در دریافت پروفایل");
+        setProfile(null);
+        return;
       }
 
-      setProfile(data.user);
-    } catch (err: any) {
-      toast.error(err.message || "خطایی رخ داد");
+      setProfile(data.user ?? null);
+    } catch {
       setProfile(null);
     } finally {
       setLoading(false);
     }
   };
 
-  
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -58,11 +66,12 @@ export function DashboardProvider({
   );
 }
 
-/** Hook امن */
 export function useDashboard() {
   const ctx = useContext(DashboardContext);
+
   if (!ctx) {
     throw new Error("useDashboard باید داخل DashboardProvider استفاده شود");
   }
+
   return ctx;
 }

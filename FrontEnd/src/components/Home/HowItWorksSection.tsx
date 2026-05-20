@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPriceFa } from "@/lib/utils";
 import { PlayCircle, MessageCircle, CreditCard } from "lucide-react";
 
 const steps = [
@@ -55,9 +56,8 @@ export default function HowItWorksSection() {
                   {step.desc}
                 </p>
 
-                {/* Step number */}
                 <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
-                  {i + 1}
+                  {formatPriceFa(i + 1)}
                 </div>
               </div>
             );
