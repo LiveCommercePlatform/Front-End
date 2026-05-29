@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
-import { useViewerWebRTC } from "@/hooks/useViewerWebRTC";
+import { useViewer } from "@/hooks/useViewerWebRTC";
+import VideoPlayer from "../Shared/VideoPlayer";
 
-export default function LiveViewer({ roomId }: { roomId: string }) {
-  const WS_URL = `ws://localhost:8080/ws/live-rooms/${roomId}/events`;
-  const { videoRef, isConnected } = useViewerWebRTC(roomId, WS_URL);
+export default function LiveViewer({ roomId , status}: { roomId: string; status:string; }) {
+  const WS_URL = `ws://localhost:8080/ws/live-rooms/${roomId}/signaling`;
+
+  const { videoRef, isStreaming } = useViewer({
+    signalingUrl: WS_URL,
+    roomId,
+    autoStart: status == "live" ? true : false,
+  });
 
   const [muted, setMuted] = useState(true);
   const [volume, setVolume] = useState(1);
@@ -51,41 +57,39 @@ export default function LiveViewer({ roomId }: { roomId: string }) {
 
   return (
     <div className="max-w-5xl mx-auto px-3 md:px-0 space-y-4">
-
       {/* header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg md:text-xl font-semibold">تماشای پخش زنده</h2>
       </div>
 
-      {/* video */}
-      <div className="relative aspect-video bg-black rounded-xl overflow-hidden group">
-
-        <video
+      {/* video player */}
+      <div className="relative group">
+        <VideoPlayer
           ref={videoRef}
-          autoPlay
-          playsInline
           muted={muted}
           controls={false}
           className="w-full h-full object-contain"
+          isStreaming={isStreaming}
+          isLiveEnded={status =="ended" ? true : false} // فعلاً چون از hook نمی‌آید
         />
 
-        {/* live badge */}
+        {/* status badge */}
         <div
-          className={`absolute top-3 left-3 flex items-center gap-2 text-white text-xs px-3 py-1 rounded-full
-          ${isConnected ? "bg-red-600" : "bg-gray-600"}`}
+          className={`absolute top-3 left-3 flex items-center gap-2 text-white text-xs px-3 py-1 rounded-full z-20 ${
+            isStreaming ? "bg-red-600" : "bg-gray-600"
+          }`}
         >
           <span
             className={`w-2 h-2 rounded-full ${
-              isConnected ? "bg-white animate-pulse" : "bg-gray-300"
+              isStreaming ? "bg-white animate-pulse" : "bg-gray-300"
             }`}
-          ></span>
-
-          {isConnected ? "زنده" : "قطع شده"}
+          />
+          {isStreaming ? "زنده" : "قطع شده"}
         </div>
 
         {/* controls */}
         <div
-          className="absolute bottom-0 left-0 right-0
+          className="absolute bottom-0 left-0 right-0 z-20
           bg-gradient-to-t from-black/70 to-transparent
           opacity-100 md:opacity-0 md:group-hover:opacity-100
           transition p-3 flex flex-wrap md:flex-nowrap items-center gap-3"

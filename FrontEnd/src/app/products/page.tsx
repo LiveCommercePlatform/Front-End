@@ -40,7 +40,8 @@ export default function AllProductsPage() {
       title: String(p.title),
       price: Number(p.price),
       category: String(p.category_name_fa),
-      cover: p.cover_image ?? "",
+      media: p.media,
+      stock: Number(p.stcok),
       status: p.stock > 0 ? "active" : "inactive",
     }));
 
@@ -139,7 +140,8 @@ export default function AllProductsPage() {
               title={product.title}
               price={product.price}
               status={product.status}
-              cover={product.media?.at(-1)?.url || ""}
+              media={product.media}
+              stock={product.stock}
               showAddToCart={true}
               showEdit={false}
               showDelete={false}

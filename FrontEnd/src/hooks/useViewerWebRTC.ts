@@ -1,222 +1,174 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
-export function useViewerWebRTC(roomId: string, wsUrl: string) {
-  console.log("RENDERED");
-  const ws = useRef<WebSocket | null>(null);
-  const peer = useRef<RTCPeerConnection | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const manualClose = useRef(false);
+export interface UseViewerSFUOptions {
+  signalingUrl: string;
+  roomId: string;
+  autoStart?: boolean;
+}
 
-  // ‍‍state و ref
-  const [isConnected, setIsConnected] = useState(false);
-  const [viewerCount, setViewerCount] = useState(0);
-  const viewerIdRef = useRef<string | null>(null);
-  const reconnectingFlag = useRef(false);
-  const reconnectAttempts = useRef(0);
-  const iceQueue = useRef<RTCIceCandidateInit[]>([]);
+export function useViewer({
+  signalingUrl,
+  roomId,
+  autoStart = false,
+}: UseViewerSFUOptions) {
+  const [isStreaming, setIsStreaming] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isManualClose = useRef<boolean>(false);
 
-  const resetPeer = useCallback(() => {
-    if (peer.current) {
-      peer.current.onicecandidate = null;
-      peer.current.ontrack = null;
-      peer.current.close();
+  const sendSignal = useCallback((type: string, payload: any) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type, payload }));
     }
-    peer.current = null;
-    iceQueue.current = [];
   }, []);
 
-  const createPeer = useCallback(() => {
+  const createPeerConnection = useCallback(() => {
+    if (pcRef.current) return pcRef.current;
+
+        console.log("[Viewer] Creating PeerConnection...");
+
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }],
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
-    pc.ontrack = (e) => {
-      const video = videoRef.current;
-      if (!video) return;
+    pc.ontrack = (event) => {
+            console.log("[Viewer] Track received.");
 
-      video.srcObject = e.streams[0];
-      video.play().catch(() => {});
-    };
-
-    pc.onicecandidate = (e) => {
-      if (!e.candidate || !ws.current || !viewerIdRef.current) return;
-      ws.current.send(
-        JSON.stringify({
-          type: "ice-candidate",
-          roomId,
-          sender: viewerIdRef.current,
-          target: "broadcaster",
-          data: e.candidate,
-        }),
-      );
-    };
-
-    pc.onconnectionstatechange = () => {
-      console.log("connectionState", pc.connectionState);
-
-      if (
-        pc.connectionState === "failed" ||
-        pc.connectionState === "disconnected"
-      ) {
-        setIsConnected(false);
-        console.warn("Viewer: connection failed → attempting reconnect...");
-        attemptReconnect();
+      const stream = event.streams[0];
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(e => console.error("[Viewer] Play failed:", e));
+        setIsStreaming(true);
       }
     };
-    pc.oniceconnectionstatechange = () => {
-      console.log("iceConnectionState", pc.iceConnectionState);
+
+    pc.onicecandidate = (event) => {
+      
+      if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(
+          JSON.stringify({
+            type: "ice_candidate",
+            payload: event.candidate,
+          }),
+        );
+      }
     };
 
-    peer.current = pc;
+    pc.oniceconnectionstatechange = () => {
+            console.log(`[Viewer] ICE state: ${pc.iceConnectionState}`);
+
+      if (["failed", "disconnected", "closed"].includes(pc.iceConnectionState)) {
+        setIsStreaming(false);
+      }
+    };
+
+    pcRef.current = pc;
     return pc;
-  }, [roomId]);
-
-  /** ---------------------------
-   ** WebSocket اتصال و reconnect ایمن
-   ** -------------------------- */
-
-  const attemptReconnect = useCallback(() => {
-    if (reconnectingFlag.current) return;
-    reconnectingFlag.current = true;
-
-    // setReconnecting(true);
-    reconnectAttempts.current += 1;
-
-    const waitMs = Math.min(5000, reconnectAttempts.current * 800);
-
-    setTimeout(() => {
-      reconnectingFlag.current = false;
-      // setReconnecting(false);
-      connectWS();
-    }, waitMs);
-  }, []);
+  }, [sendSignal]);
 
   const connectWS = useCallback(() => {
-    console.log("Viewer: connecting to", wsUrl);
-    resetPeer();
-
-    // if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-    //   ws.current.close();
-    // }
-    if (ws.current && ws.current.readyState <= 1) {
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
       return;
     }
-    const socket = new WebSocket(wsUrl);
-    ws.current = socket;
+
+    isManualClose.current = false;
+    const socket = new WebSocket(signalingUrl);
+    wsRef.current = socket;
 
     socket.onopen = () => {
-      console.log("Viewer WS connected → sending join-viewer");
-      reconnectAttempts.current = 0;
-      socket.send(
-        JSON.stringify({
-          type: "join-viewer",
-          roomId,
-          sender: viewerIdRef.current ?? "",
-        }),
-      );
-    };
+            console.log("[Viewer] WebSocket connected.");
 
-    socket.onclose = () => {
-      console.warn("Viewer WS closed → reconnecting");
-      setIsConnected(false);
-      // attemptReconnect();
-      if (manualClose.current) return;
-      setTimeout(connectWS, 2000);
-      console.log("-/-/-/-/");
-    };
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      
+      createPeerConnection();
 
-    socket.onerror = (err) => {
-      console.error("Viewer WS error:", err);
-      socket.close();
+      socket.send(JSON.stringify({
+        type: "join",
+        payload: { room_id: roomId, role: "viewer" },
+      }));
     };
 
     socket.onmessage = async (ev) => {
       try {
         const msg = JSON.parse(ev.data);
-        console.log("Viewer recv:", msg);
-
+        console.log("V:", msg)
         switch (msg.type) {
-          case "viewer-joined":
-            viewerIdRef.current = msg.id;
-            setIsConnected(true);
-            reconnectAttempts.current = 0;
+          case "renegotiate": 
+            if (!pcRef.current) createPeerConnection();
+            await pcRef.current!.setRemoteDescription(new RTCSessionDescription(msg.payload));
+            const answer = await pcRef.current!.createAnswer();
+            await pcRef.current!.setLocalDescription(answer);
+            
+            socket.send(JSON.stringify({ type: "answer", payload: answer }));
+            console.log("[Viewer] Answer sent.");
             break;
 
-          case "offer": {
-            const pc = peer.current ?? createPeer();
-            console.log("offer ricieved:", msg);
-            try {
-              await pc.setRemoteDescription(
-                new RTCSessionDescription(msg.data),
-              );
-            } catch (err) {
-              console.error("setRemoteDescription error", err);
-              socket.close();
-              return;
-            }
 
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-
-            socket.send(
-              JSON.stringify({
-                type: "answer",
-                roomId,
-                sender: viewerIdRef.current,
-                target: "broadcaster",
-                data: answer,
-              }),
-            );
-            console.log("answer sent");
-
-            while (iceQueue.current.length > 0) {
-              const c = iceQueue.current.shift();
-              if (c) await pc.addIceCandidate(c);
+          case "ice_candidate":
+            if (pcRef.current && pcRef.current.remoteDescription) {
+              await pcRef.current.addIceCandidate(new RTCIceCandidate(msg.payload));
             }
             break;
-          }
-
-          case "ice-candidate":
-            console.log("ice recieved");
-            const candidate = new RTCIceCandidate(msg.data);
-
-            if (!peer.current || !peer.current.remoteDescription) {
-              iceQueue.current.push(candidate);
-            } else {
-              await peer.current.addIceCandidate(candidate);
-            }
-            break;
-
+            
           case "broadcaster-left":
-            console.log("Broadcaster left, tearing down viewer peer");
-            resetPeer();
+            console.log("[Viewer] Broadcaster left the room.");
+            setIsStreaming(false);
             break;
-
-          case "viewer-count":
-            setViewerCount(msg.count);
-            break;
-
-          default:
-            console.log("Unhandled message type:", msg.type);
         }
-      } catch (err) {
-        console.error("WS message parse error:", err);
+      } catch (e) {
+        console.error("[Viewer] Message error:", e);
       }
     };
-  }, [attemptReconnect, createPeer, resetPeer, roomId, wsUrl]);
+
+    socket.onclose = (e) => {
+      wsRef.current = null;
+      setIsStreaming(false);
+
+      if (!isManualClose.current) {
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = setTimeout(connectWS, 3000);
+      }
+    };
+
+    socket.onerror = (err) => {
+      socket.close();
+    };
+  }, [signalingUrl, roomId, createPeerConnection, sendSignal]);
+
+  const start = useCallback(() => {
+    connectWS();
+  }, [connectWS]);
+
+  const stop = useCallback(() => {
+    isManualClose.current = true;
+    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+
+    sendSignal("leave", { room_id: roomId, role: "viewer" });
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsStreaming(false);
+    setTimeout(() => {
+      if (wsRef.current) {
+        wsRef.current.close(1000);
+        wsRef.current = null;
+      }
+    }, 100);
+  }, [roomId, sendSignal]);
 
   useEffect(() => {
-    connectWS();
+    if (autoStart) start();
     return () => {
-      console.log("Viewer cleanup");
-      manualClose.current = true;
-      ws.current?.close();
+      //  stop(); 
     };
-  }, [connectWS, resetPeer]);
+  }, [autoStart, start, stop]);
 
-  return {
-    videoRef,
-    isConnected,
-    viewerCount,
-  };
+  return { videoRef, isStreaming, start, stop };
 }

@@ -7,11 +7,11 @@ import { useLiveRooms } from "@/context/LiveRoomContext";
 import { StreamStatus } from "@/types";
 import Loading from "@/components/ui/Loading";
 import ListToolbar from "@/components/ui/ListToolbar";
-import { Eye } from "lucide-react";
+import { Calendar, Eye, PlayCircle, Radio, ShoppingBag } from "lucide-react";
 import NotFound from "@/components/ui/NotFound";
 
 export default function LivesPage() {
-  const { lives, fetchLiveRooms, loading } = useLiveRooms();
+  const { lives, fetchLiveRooms, loading, refresh } = useLiveRooms();
   const [status, setStatus] = useState<StreamStatus | "all">("all");
 
   useEffect(() => {
@@ -26,23 +26,6 @@ export default function LivesPage() {
 
   return (
     <div className="container max-w-7xl py-4 md:py-8 px-4 md:px-6 space-y-5 md:space-y-7">
-
-      {/* Header */}
-      {/* <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-        <div className="space-y-1">
-          <h1 className="text-xl md:text-3xl font-black text-primary">
-            لایوها
-          </h1>
-
-          <p className="text-sm text-muted-foreground">
-            مشاهده و دنبال کردن پخش‌های زنده
-          </p>
-        </div>
-
-      </div> */}
-
-      {/* Toolbar */}
       <div className="overflow-x-auto pb-1">
         <ListToolbar
           filters={[
@@ -62,146 +45,169 @@ export default function LivesPage() {
       </div>
 
       {lives.length === 0 && (
-        <NotFound title="" message="متاسفانه لایو استریمی برای مشاهده موجود نیست."/>
+        <NotFound
+          title=""
+          message="متاسفانه لایو استریمی برای مشاهده موجود نیست."
+        />
       )}
 
       {/* Grid */}
       <div
         className="
           grid
-          grid-cols-1
-          sm:grid-cols-2
-          xl:grid-cols-3
+          grid-cols-2
+          sm:grid-cols-3
+          xl:grid-cols-4
           gap-4
           md:gap-6
         "
       >
         {lives.map((live) => (
-          <Link
-            key={live.ID}
-            href={`/Live_Rooms/${live.ID}`}
-            className="group"
-          >
+          <Link key={live.ID} href={`/Live_Rooms/${live.ID}`} className="group">
             <Card
               className="
-                overflow-hidden
-                bg-card
-                border
-                border-border
-                transition-all
-                duration-300
-                hover:border-primary/40
-                hover:shadow-xl
-                hover:-translate-y-1
-              "
+        group 
+        relative
+        overflow-hidden
+        bg-card/60
+        backdrop-blur-sm
+        border
+        border-border/80
+        transition-all
+        duration-300
+        hover:border-primary/30
+        hover:shadow-2xl
+        hover:shadow-primary/5
+        hover:-translate-y-1.5
+        rounded-2xl
+      "
             >
-              {/* Thumbnail */}
-              <div className="relative aspect-video w-full overflow-hidden bg-muted">
+              {/* Thumbnail Area */}
+              <div className="relative aspect-video w-full overflow-hidden bg-muted rounded-t-2xl">
+                {/* Placeholder Gradient / Thumbnail */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.15)_0,transparent_100%)]" />
+                  <Radio className="w-10 h-10 text-primary/40 animate-pulse" />
+                </div>
 
-                {/* Placeholder */}
-                <div className="w-full h-full animate-pulse bg-muted" />
+                {/* Dynamic Overlay on Hover */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition duration-300" />
-
-                {/* LIVE Badge */}
-                {live.Status === "live" && (
-                  <div className="absolute top-3 right-3">
-                    <span className="flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-1 text-[10px] md:text-xs font-bold text-white shadow-lg">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                {/* Badges (Top-Right) */}
+                <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
+                  {/* LIVE Badge */}
+                  {live.Status === "live" && (
+                    <span className="flex items-center gap-1.5 rounded-full bg-red-600/90 backdrop-blur-md px-2.5 py-1 text-[10px] md:text-xs font-bold text-white shadow-lg shadow-red-600/20">
+                      <span className="w-2 h-2 rounded-full bg-white animate-ping absolute" />
+                      <span className="w-2 h-2 rounded-full bg-white relative" />
                       زنده
                     </span>
-                  </div>
-                )}
+                  )}
 
-                {/* Scheduled Badge */}
-                {live.Status === "scheduled" && (
-                  <div className="absolute top-3 right-3">
-                    <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] md:text-xs font-bold text-white shadow-lg">
+                  {/* Scheduled Badge */}
+                  {live.Status == "scheduled" && (
+                    <span className="flex items-center gap-1.5 rounded-full bg-amber-500/95 backdrop-blur-md px-2.5 py-1 text-[10px] md:text-xs font-bold text-white shadow-lg">
+                      <Calendar className="w-3.5 h-3.5" />
                       به‌زودی
                     </span>
-                  </div>
-                )}
+                  )}
 
-                {/* Ended Badge */}
-                {live.Status === "ended" && (
-                  <div className="absolute top-3 right-3">
-                    <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] md:text-xs font-bold text-secondary-foreground shadow-lg">
-                      پایان یافته
+                  {/* Ended Badge / Recorded */}
+                  {live.Status === "ended" && (
+                    <span className="flex items-center gap-1.5 rounded-full bg-slate-800/90 backdrop-blur-md px-2.5 py-1 text-[10px] md:text-xs font-bold text-slate-200 shadow-lg">
+                      {live.IsRecorded ? (
+                        <>
+                          <PlayCircle className="w-3.5 h-3.5 text-primary" />
+                          ضبط شده
+                        </>
+                      ) : (
+                        "پایان یافته"
+                      )}
+                    </span>
+                  )}
+                </div>
+
+                {/* Bottom Metadata Overlays (Views & Products) */}
+                <div className="absolute bottom-3 right-3 left-3 z-10 flex items-center justify-between pointer-events-none">
+                  {/* Views */}
+                  <div className="flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] md:text-xs text-white border border-white/10">
+                    <Eye className="w-3.5 h-3.5 text-white/80" />
+                    <span>
+                      {live.TotalViews?.toLocaleString("fa-IR")} بازدید
                     </span>
                   </div>
-                )}
 
-                {/* Views */}
-                <div
-                  className="
-                    absolute
-                    bottom-3
-                    left-3
-                    flex
-                    items-center
-                    gap-1.5
-                    rounded-full
-                    bg-black/60
-                    backdrop-blur-md
-                    px-2.5
-                    py-1
-                    text-[10px]
-                    md:text-xs
-                    text-white
-                  "
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>{live.TotalViews}</span>
+                  {/* Products Count (If available) */}
+                  {live.Products && live.Products.length > 0 && (
+                    <div className="flex items-center gap-1 rounded-full bg-primary/90 backdrop-blur-sm px-2 py-1 text-[10px] md:text-xs text-white font-medium">
+                      <ShoppingBag className="w-3 h-3" />
+                      <span>{live.Products.length} کالا</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Content */}
-              <CardContent className="p-3 md:p-4">
+              {/* Card Content */}
+              <CardContent className="p-4">
                 <div className="flex items-start gap-3">
+                  {/* Host Avatar with dynamic border/pulse based on status */}
+                  <div className="relative shrink-0">
+                    <img
+                      src="/user.svg"
+                      className={`
+                w-10 h-10
+                md:w-11 md:h-11
+                rounded-full
+                object-cover
+                border-2
+                transition-all
+                duration-300
+                ${
+                  live.Status == "live"
+                    ? "border-red-500 ring-2 ring-red-500/30 ring-offset-2 ring-offset-background animate-pulse"
+                    : "border-border"
+                }
+              `}
+                      alt={live.Host.name || "host avatar"}
+                    />
+                    {live.Status === "live" && (
+                      <span className="absolute -bottom-1 -left-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white border border-background">
+                        ●
+                      </span>
+                    )}
+                  </div>
 
-                  {/* Avatar */}
-                  <img
-                    src="/user.svg"
-                    className="
-                      w-10 h-10
-                      md:w-11 md:h-11
-                      rounded-full
-                      object-cover
-                      border
-                      border-border
-                      shrink-0
-                    "
-                    alt="host avatar"
-                  />
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0 space-y-1">
-
+                  {/* Title & Host info */}
+                  <div className="flex-1 min-w-0 space-y-1.5">
                     <h2
                       className="
-                        font-bold
-                        text-sm
-                        md:text-base
-                        leading-snug
-                        line-clamp-2
-                        group-hover:text-primary
-                        transition-colors
-                      "
+                font-bold
+                text-sm
+                md:text-base
+                leading-snug
+                line-clamp-2
+                text-foreground/90
+                group-hover:text-primary
+                transition-colors
+                duration-200
+                h-10 md:h-12 /* ارتفاع ثابت برای هماهنگ ماندن کارت‌ها در گرید */
+              "
                     >
                       {live.Title}
                     </h2>
 
-                    <p
-                      className="
-                        text-xs
-                        md:text-sm
-                        text-muted-foreground
-                        truncate
-                      "
-                    >
-                      {live.Host.name}
-                    </p>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="font-medium hover:text-foreground transition-colors truncate">
+                        {live.Host.name || "برگزارکننده"}
+                      </span>
+
+                      {/* زمان برگزاری در صورت شروع شدن یا به زودی بودن */}
+                      {live.Status == "scheduled" && live.StartedAt && (
+                        <span className="text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                          {new Date(live.StartedAt).toLocaleDateString("fa-IR")}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>

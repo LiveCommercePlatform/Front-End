@@ -187,7 +187,7 @@ export default function ProductForm({
       handleCoverFiles(files);
     }
   };
- 
+
   const [coverPreviews, setCoverPreviews] = useState<string[]>([]);
 
   const handleCoverFiles = (files: FileList | File[]) => {
@@ -206,460 +206,467 @@ export default function ProductForm({
   };
 
   return (
-    <div className="max-w-5xl mx-5 py-10">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(submitHandler)} className="space-y-6">
-          <div className="flex flex-col gap-4 rounded-xl border border-border p-4 md:flex-row md:items-center md:justify-between">
-  <div className="min-w-0">
-    <h1 className="font-semibold text-base sm:text-lg md:text-xl">
-      {mode === "create" ? "ایجاد محصول جدید" : "ویرایش محصول"}
-    </h1>
+    <main className="flex-1 flex justify-center w-full py-10">
+      <div className="w-full max-w-5xl">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(submitHandler)}
+            className="space-y-6"
+          >
+            <div className="flex flex-col gap-4 rounded-xl border border-border p-4 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <h1 className="font-semibold text-base sm:text-lg md:text-xl">
+                  {mode === "create" ? "ایجاد محصول جدید" : "ویرایش محصول"}
+                </h1>
 
-    <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-      {mode === "create"
-        ? "اطلاعات محصول را تکمیل کنید"
-        : "اطلاعات محصول را ویرایش کنید"}
-    </p>
-  </div>
+                <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+                  {mode === "create"
+                    ? "اطلاعات محصول را تکمیل کنید"
+                    : "اطلاعات محصول را ویرایش کنید"}
+                </p>
+              </div>
 
-  <div className="flex flex-col-reverse sm:flex-row gap-2 w-full md:w-auto">
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full sm:w-auto"
-        >
-          <Eye className="w-4 h-4 ml-1" />
-          پیش‌نمایش
-        </Button>
-      </SheetTrigger>
+              <div className="flex flex-col-reverse sm:flex-row gap-2 w-full md:w-auto">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                    >
+                      <Eye className="w-4 h-4 ml-1" />
+                      پیش‌نمایش
+                    </Button>
+                  </SheetTrigger>
 
-      <SheetContent
-        side="left"
-        className="w-full sm:max-w-lg p-4 sm:p-5 overflow-y-auto"
-      >
-        <SheetHeader>
-          <SheetTitle>پیش‌نمایش محصول</SheetTitle>
-        </SheetHeader>
-
-        <div className="mt-4 space-y-4 text-right">
-          <div className="space-y-3">
-            {coverPreviews.length ? (
-              <div className="grid grid-cols-1 gap-3">
-                {coverPreviews.map((src, i) => (
-                  <div
-                    key={i}
-                    className="aspect-[4/3] rounded-lg overflow-hidden border border-border relative"
+                  <SheetContent
+                    side="left"
+                    className="w-full sm:max-w-lg p-4 sm:p-5 overflow-y-auto"
                   >
-                    <img
-                      src={src}
-                      className="w-full h-full object-cover"
-                      alt={`preview-${i}`}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="aspect-[4/3] rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center">
-                <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
-                  <ImagePlus className="w-5 h-5" />
-                  بدون تصویر
-                </div>
-              </div>
-            )}
-          </div>
+                    <SheetHeader>
+                      <SheetTitle>پیش‌نمایش محصول</SheetTitle>
+                    </SheetHeader>
 
-          <h2 className="text-lg font-semibold break-words">
-            {title || "عنوان محصول"}
-          </h2>
+                    <div className="mt-4 space-y-4 text-right">
+                      <div className="space-y-3">
+                        {coverPreviews.length ? (
+                          <div className="grid grid-cols-1 gap-3">
+                            {coverPreviews.map((src, i) => (
+                              <div
+                                key={i}
+                                className="aspect-[4/3] rounded-lg overflow-hidden border border-border relative"
+                              >
+                                <img
+                                  src={src}
+                                  className="w-full h-full object-cover"
+                                  alt={`preview-${i}`}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="aspect-[4/3] rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center">
+                            <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                              <ImagePlus className="w-5 h-5" />
+                              بدون تصویر
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-          {description && (
-            <p className="text-sm text-muted-foreground leading-6 break-words">
-              {description}
-            </p>
-          )}
+                      <h2 className="text-lg font-semibold break-words">
+                        {title || "عنوان محصول"}
+                      </h2>
 
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">قیمت</span>
-              <span className="text-left">
-                {formatPriceFa(price)} تومان
-              </span>
-            </div>
+                      {description && (
+                        <p className="text-sm text-muted-foreground leading-6 break-words">
+                          {description}
+                        </p>
+                      )}
 
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">تعداد موجودی</span>
-              <span>{formatPriceFa(stock)}</span>
-            </div>
-
-            <div className="flex items-start justify-between gap-3">
-              <span className="text-muted-foreground shrink-0">دسته‌بندی</span>
-              <span className="text-left break-words">
-                {CATEGORIES.find((c) => c.value === selectedParent)?.label || "—"} -
-              </span>
-            </div>
-          </div>
-
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2">
-              {tags.map((tag) => (
-                <Badge key={tag}>{tag}</Badge>
-              ))}
-            </div>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
-
-    <Button
-      type="submit"
-      className="w-full sm:w-auto"
-    >
-      {mode === "create" ? "ذخیره محصول" : "ذخیره تغییرات"}
-    </Button>
-  </div>
-</div>
-
-
-          <Card>
-            <CardHeader className="flex items-center gap-2 font-medium">
-              <ImagePlus className="w-4 h-4 opacity-70" />
-              تصویر کاور محصول
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div
-                onDragEnter={(e) => {
-                  e.preventDefault();
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                }}
-                onDrop={handleDrop}
-                className={[
-                  "rounded-xl border border-dashed transition",
-                  "p-4 md:p-6 flex flex-col md:flex-row gap-4 items-center",
-                  "bg-transparent",
-                ].join(" ")}
-              >
-                <div className="w-full md:w-56">
-                  <div className="grid grid-cols-3 gap-2">
-                    {coverPreviews.length ? (
-                      coverPreviews.map((src, i) => (
-                        <div
-                          key={i}
-                          className="aspect-[4/3] rounded-lg overflow-hidden border relative"
-                        >
-                          <img
-                            src={src}
-                            className="w-full h-full object-cover"
-                          />
-
-                          <button
-                            type="button"
-                            className="absolute top-1 right-1 bg-black/60 text-white text-xs px-1 rounded"
-                            onClick={() => {
-                              URL.revokeObjectURL(src);
-
-                              const newPreviews = coverPreviews.filter(
-                                (_, idx) => idx !== i,
-                              );
-                              const newFiles = (
-                                form.getValues("cover") || []
-                              ).filter((_: any, idx: number) => idx !== i);
-
-                              setCoverPreviews(newPreviews);
-                              form.setValue("cover", newFiles);
-                            }}
-                          >
-                            ✕
-                          </button>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-muted-foreground">قیمت</span>
+                          <span className="text-left">
+                            {formatPriceFa(price)} تومان
+                          </span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="aspect-[4/3] rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
-                        <div className="flex flex-col items-center gap-1 text-xs opacity-70">
-                          <ImagePlus className="w-5 h-5" />
-                          بدون تصویر
+
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-muted-foreground">
+                            تعداد موجودی
+                          </span>
+                          <span>{formatPriceFa(stock)}</span>
+                        </div>
+
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="text-muted-foreground shrink-0">
+                            دسته‌بندی
+                          </span>
+                          <span className="text-left break-words">
+                            {CATEGORIES.find((c) => c.value === selectedParent)
+                              ?.label || "—"}{" "}
+                            -
+                          </span>
                         </div>
                       </div>
-                    )}
+
+                      {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {tags.map((tag) => (
+                            <Badge key={tag}>{tag}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+
+                <Button type="submit" className="w-full sm:w-auto">
+                  {mode === "create" ? "ذخیره محصول" : "ذخیره تغییرات"}
+                </Button>
+              </div>
+            </div>
+
+            <Card>
+              <CardHeader className="flex items-center gap-2 font-medium">
+                <ImagePlus className="w-4 h-4 opacity-70" />
+                تصویر کاور محصول
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                <div
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                  }}
+                  onDrop={handleDrop}
+                  className={[
+                    "rounded-xl border border-dashed transition",
+                    "p-4 md:p-6 flex flex-col md:flex-row gap-4 items-center",
+                    "bg-transparent",
+                  ].join(" ")}
+                >
+                  <div className="w-full md:w-56">
+                    <div className="grid grid-cols-3 gap-2">
+                      {coverPreviews.length ? (
+                        coverPreviews.map((src, i) => (
+                          <div
+                            key={i}
+                            className="aspect-[4/3] rounded-lg overflow-hidden border relative"
+                          >
+                            <img
+                              src={src}
+                              className="w-full h-full object-cover"
+                            />
+
+                            <button
+                              type="button"
+                              className="absolute top-1 right-1 bg-black/60 text-white text-xs px-1 rounded"
+                              onClick={() => {
+                                URL.revokeObjectURL(src);
+
+                                const newPreviews = coverPreviews.filter(
+                                  (_, idx) => idx !== i,
+                                );
+                                const newFiles = (
+                                  form.getValues("cover") || []
+                                ).filter((_: any, idx: number) => idx !== i);
+
+                                setCoverPreviews(newPreviews);
+                                form.setValue("cover", newFiles);
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="aspect-[4/3] rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                          <div className="flex flex-col items-center gap-1 text-xs opacity-70">
+                            <ImagePlus className="w-5 h-5" />
+                            بدون تصویر
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex-1 w-full space-y-2">
-                <div className="font-medium text-sm">آپلود تصاویر محصول</div>
+                <div className="flex-1 w-full space-y-2">
+                  <div className="font-medium text-sm">آپلود تصاویر محصول</div>
 
-                <div className="text-xs opacity-70">
-                  می‌توانید چند تصویر انتخاب کنید (حداکثر ۵MB)
+                  <div className="text-xs opacity-70">
+                    می‌توانید چند تصویر انتخاب کنید (حداکثر ۵MB)
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <ImagePlus className="w-4 h-4" />
+                    انتخاب فایل
+                  </Button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files) handleCoverFiles(e.target.files);
+                    }}
+                  />
                 </div>
-
-                <Button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="gap-2"
-                >
-                  <ImagePlus className="w-4 h-4" />
-                  انتخاب فایل
-                </Button>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files) handleCoverFiles(e.target.files);
-                  }}
+                <FormField
+                  control={form.control}
+                  name="cover"
+                  render={() => (
+                    <FormItem>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <FormField
-                control={form.control}
-                name="cover"
-                render={() => (
-                  <FormItem>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* BASIC INFO */}
-          <Card>
-            <CardHeader className="flex items-center gap-2 font-medium">
-              <FileText className="w-4 h-4 opacity-70" />
-              اطلاعات پایه
-            </CardHeader>
-            <CardContent className="md:cols-2">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>عنوان</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <br />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>قیمت</FormLabel>
-                    <FormControl>
-                      <div className="relative">
+            {/* BASIC INFO */}
+            <Card>
+              <CardHeader className="flex items-center gap-2 font-medium">
+                <FileText className="w-4 h-4 opacity-70" />
+                اطلاعات پایه
+              </CardHeader>
+              <CardContent className="md:cols-2">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>عنوان</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <br />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>قیمت</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            value={priceDisplay}
+                            onChange={(e) => {
+                              const en = faToEnDigits(e.target.value);
+                              const raw = en.replace(/[^\d]/g, "");
+
+                              setPriceDisplay(
+                                raw ? Number(raw).toLocaleString("fa-IR") : "",
+                              );
+                              field.onChange(raw ? Number(raw) : undefined);
+                            }}
+                            className="pl-12"
+                          />
+
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm opacity-60">
+                            تومان
+                          </span>
+                        </div>
+                      </FormControl>
+                      <br />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="stock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>تعداد موجودی</FormLabel>
+                      <FormControl>
                         <Input
                           type="text"
                           inputMode="numeric"
-                          value={priceDisplay}
+                          value={stockDisplay}
                           onChange={(e) => {
                             const en = faToEnDigits(e.target.value);
                             const raw = en.replace(/[^\d]/g, "");
 
-                            setPriceDisplay(
+                            setStockDisplay(
                               raw ? Number(raw).toLocaleString("fa-IR") : "",
                             );
                             field.onChange(raw ? Number(raw) : undefined);
                           }}
                           className="pl-12"
                         />
+                      </FormControl>
+                      <br />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>توضیحات</FormLabel>
+                      <FormControl>
+                        <Textarea rows={4} {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm opacity-60">
-                          تومان
-                        </span>
-                      </div>
-                    </FormControl>
-                    <br />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="stock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>تعداد موجودی</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        value={stockDisplay}
-                        onChange={(e) => {
-                          const en = faToEnDigits(e.target.value);
-                          const raw = en.replace(/[^\d]/g, "");
+            {/* CATEGORY + TAGS */}
+            <Card>
+              <CardHeader>دسته‌بندی و تگ‌ها</CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>دسته‌بندی</FormLabel>
 
-                          setStockDisplay(
-                            raw ? Number(raw).toLocaleString("fa-IR") : "",
-                          );
-                          field.onChange(raw ? Number(raw) : undefined);
-                        }}
-                        className="pl-12"
-                      />
-                    </FormControl>
-                    <br />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>توضیحات</FormLabel>
-                    <FormControl>
-                      <Textarea rows={4} {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* CATEGORY + TAGS */}
-          <Card>
-            <CardHeader>دسته‌بندی و تگ‌ها</CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>دسته‌بندی</FormLabel>
-
-                    <div className="flex flex-col sm:flex-row gap-4 w-full">
-                      {/* Parent */}
-                      <div className="w-full sm:w-1/2">
-                        <Select
-                          value={selectedParent}
-                          onValueChange={(v) => {
-                            setSelectedParent(v);
-                            field.onChange("");
-                          }}
-                          disabled={catsLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="انتخاب سر دسته" />
-                            </SelectTrigger>
-                          </FormControl>
-
-                          <SelectContent className="bg-card">
-                            {CATEGORIES.map((c) => (
-                              <SelectItem
-                                key={c.id}
-                                value={c.value}
-                                className="justify-end"
-                              >
-                                {c.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Child */}
-                      {selectedParent && (
+                      <div className="flex flex-col sm:flex-row gap-4 w-full">
+                        {/* Parent */}
                         <div className="w-full sm:w-1/2">
                           <Select
-                            value={field.value ? String(field.value) : ""}
-                            onValueChange={(v) => field.onChange(Number(v))}
-                            disabled={catsLoading || !selectedParent}
+                            value={selectedParent}
+                            onValueChange={(v) => {
+                              setSelectedParent(v);
+                              field.onChange("");
+                            }}
+                            disabled={catsLoading}
                           >
                             <FormControl>
                               <SelectTrigger className="w-full">
-                                <SelectValue placeholder="انتخاب زیر دسته" />
+                                <SelectValue placeholder="انتخاب سر دسته" />
                               </SelectTrigger>
                             </FormControl>
 
                             <SelectContent className="bg-card">
-                              {(CATEGORY_TAGS[selectedParent] ?? []).map(
-                                (t) => (
-                                  <SelectItem
-                                    key={t.id}
-                                    value={String(t.id)} // 👈 اینجا id رو string می‌کنیم
-                                    className="justify-end"
-                                  >
-                                    {t.label}
-                                  </SelectItem>
-                                ),
-                              )}
+                              {CATEGORIES.map((c) => (
+                                <SelectItem
+                                  key={c.id}
+                                  value={c.value}
+                                  className="justify-end"
+                                >
+                                  {c.label}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
-                      )}
-                    </div>
 
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        {/* Child */}
+                        {selectedParent && (
+                          <div className="w-full sm:w-1/2">
+                            <Select
+                              value={field.value ? String(field.value) : ""}
+                              onValueChange={(v) => field.onChange(Number(v))}
+                              disabled={catsLoading || !selectedParent}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="انتخاب زیر دسته" />
+                                </SelectTrigger>
+                              </FormControl>
 
-              <div className="max-w-sm space-y-2">
-                <div className="text-sm font-medium">تگ دلخواه</div>
+                              <SelectContent className="bg-card">
+                                {(CATEGORY_TAGS[selectedParent] ?? []).map(
+                                  (t) => (
+                                    <SelectItem
+                                      key={t.id}
+                                      value={String(t.id)} // 👈 اینجا id رو string می‌کنیم
+                                      className="justify-end"
+                                    >
+                                      {t.label}
+                                    </SelectItem>
+                                  ),
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
 
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Input
-                    value={customTag}
-                    onChange={(e) => setCustomTag(e.target.value)}
-                    placeholder="مثلاً: ارسال رایگان"
-                    className="text-right"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addCustomTag();
-                      }
-                    }}
-                  />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={!customTag.trim()}
-                    onClick={addCustomTag}
-                    className="shrink-0"
-                  >
-                    افزودن
-                  </Button>
+                <div className="max-w-sm space-y-2">
+                  <div className="text-sm font-medium">تگ دلخواه</div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      value={customTag}
+                      onChange={(e) => setCustomTag(e.target.value)}
+                      placeholder="مثلاً: ارسال رایگان"
+                      className="text-right"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCustomTag();
+                        }
+                      }}
+                    />
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!customTag.trim()}
+                      onClick={addCustomTag}
+                      className="shrink-0"
+                    >
+                      افزودن
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Tags selected */}
-              <div className="flex gap-2 flex-wrap">
-                {tags.map((t) => {
-                  return (
-                    <Badge key={t} className="gap-1">
-                      {t}
+                {/* Tags selected */}
+                <div className="flex gap-2 flex-wrap">
+                  {tags.map((t) => {
+                    return (
+                      <Badge key={t} className="gap-1">
+                        {t}
 
-                      <button
-                        type="button"
-                        onClick={() => toggleTag(t)}
-                        className="inline-flex items-center justify-center rounded-sm p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
-                        aria-label="حذف تگ"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-          <Separator />
-          <Button type="submit">
-            {mode === "create" ? "ذخیره محصول" : "ذخیره تغییرات"}
-          </Button>
-        </form>
-      </Form>
-    </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleTag(t)}
+                          className="inline-flex items-center justify-center rounded-sm p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
+                          aria-label="حذف تگ"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+            <Separator />
+            <Button type="submit">
+              {mode === "create" ? "ذخیره محصول" : "ذخیره تغییرات"}
+            </Button>
+          </form>
+        </Form>
+      </div>
+    </main>
   );
 }

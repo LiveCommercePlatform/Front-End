@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { Stream, StreamStatus } from "@/types/stream";
 import DeleteDialog from "../ui/DeleteDialog";
+import { tokenStore } from "@/lib/token";
 
 function statusLabel(s: StreamStatus) {
   switch (s) {
@@ -67,10 +68,24 @@ export default function StreamCard({
   onEnd: (s: Stream) => void;
   className?: string;
 }) {
-  const meta = useMemo(() => {
-    const when = stream.Status === "live" ? stream.StartedAt : stream.EndedAt;
-    return when ? new Date(when).toLocaleDateString("fa-IR") : "نامشحص";
-  }, [stream]);
+
+ const meta = useMemo(() => {
+  const when = stream.Status === "live" ? stream.StartedAt : stream.EndedAt;
+  
+  if (!when) return "نامشخص";
+
+  return new Date(when).toLocaleString("fa-IR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}, [stream]);
+
+
+  const isHost = stream.HostID == tokenStore.getUserId();
 
   return (
     <div
@@ -159,7 +174,7 @@ export default function StreamCard({
         </div>
 
         <div className="flex gap-2" onClick={(e)=>e.stopPropagation()}>
-          {stream.Status == "scheduled" && (
+          {stream.Status == "scheduled" && isHost && (
             <Button
               size="sm"
               variant="ghost"

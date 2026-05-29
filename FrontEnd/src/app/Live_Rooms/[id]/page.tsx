@@ -2,7 +2,6 @@
 
 import { VideoInfo } from "@/components/stream/VideoInfo";
 import { LiveChat } from "@/components/stream/LiveChat";
-import { RelatedVideos } from "@/components/stream/RelatedVideos";
 import { useParams } from "next/navigation";
 import { useLiveStream } from "@/hooks/useLiveStream";
 import Loading from "@/components/ui/Loading";
@@ -47,9 +46,9 @@ export default function StreamPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {IsHost ? (
-            <LiveBroadcaster roomId={stream.ID} />
+            <LiveBroadcaster roomId={stream.ID} status={stream.Status} />
           ) : (
-            <LiveViewer roomId={stream.ID} />
+            <LiveViewer roomId={stream.ID} status={stream.Status} />
           )}{" "}
           <VideoInfo
             streamInfo={stream}
@@ -65,8 +64,7 @@ export default function StreamPage() {
         </div>
 
         <div className="space-y-6">
-          <LiveChat id={stream.ID} UserId={UserID || ""} />
-          <RelatedVideos />
+          <LiveChat id={stream.ID} UserId={UserID || ""} Livestatus={stream.Status} />
         </div>
       </div>
     </div>

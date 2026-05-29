@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import ListToolbar from "@/components/ui/ListToolbar";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { ProductStatus, Product } from "@/types";
 import Pagination from "@/components/ui/Pagination";
 import { tokenStore } from "@/lib/token";
 import { useProducts } from "@/context/ProductContext";
-import { Loader2 } from "lucide-react";
 import Loading from "@/components/ui/Loading";
 import NotFound from "@/components/ui/NotFound";
 
@@ -23,11 +22,7 @@ export default function ProductsTab() {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ProductStatus>("all");
-  const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-
-  // 🔹 تنظیم پارامترهای API
   useEffect(() => {
     setParams({
       page,
@@ -39,20 +34,21 @@ export default function ProductsTab() {
     });
   }, [page, search, status, setParams]);
 
-  // 🔹 نرمال‌سازی داده‌ها
-  useEffect(() => {
-    const cleaned: Product[] = items.map((p: any) => ({
-      id: String(p.id),
-      title: String(p.title),
-      price: Number(p.price),
-      category: String(p.category_name_fa),
-      cover: p.cover_image ?? "",
-      status: p.stock > 0 ? "active" : "inactive",
-    }));
+  const products = useMemo<Product[]>(
+    () =>
+      items.map((p: any) => ({
+        id: String(p.id),
+        title: String(p.title),
+        price: Number(p.price),
+        stock: p.stock,
+        category: String(p.category_name_fa),
+        media: p.media,
+        status: p.stock > 0 ? "active" : "inactive",
+      })),
+    [items],
+  );
 
-    setProducts(cleaned);
-    setTotalItems(pagination?.total ?? 0);
-  }, [items, pagination]);
+  const totalItems = pagination?.total ?? 0;
 
   const handleResetFilters = () => {
     setSearch("");
@@ -116,7 +112,6 @@ export default function ProductsTab() {
         </div>
       ) : (
         <NotFound
-          title="محصولی موجود نیست"
           message="در حال حاضر هیچ محصولی با فیلترهای اعمال شده پیدا نشد."
           action={
             <Button variant="outline" onClick={handleResetFilters}>

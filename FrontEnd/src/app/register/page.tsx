@@ -98,7 +98,7 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(getErrorMessage(data?.error));
+        throw new Error(data?.error);
       }
       tokenStore.setAuth({
         access_token: data.access_token,

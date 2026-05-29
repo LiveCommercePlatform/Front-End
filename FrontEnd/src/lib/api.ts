@@ -19,7 +19,6 @@ export async function apiFetch(
   const { authMode = "required", ...fetchOptions } = options;
 
   const token = tokenStore.getAccess();
-
   const headers: any = {
     ...(fetchOptions.headers || {}),
   };
@@ -40,9 +39,9 @@ export async function apiFetch(
   if (res.status !== 401) return res;
 
   // اگر auth اختیاری است اصلاً refresh نکن
-  if (authMode === "optional" || authMode === "none") {
-    return res;
-  }
+  // if (authMode === "optional" || authMode === "none") {
+  //   return res;
+  // }
 
   const skipRefreshEndpoints = [
     "/auth/login",

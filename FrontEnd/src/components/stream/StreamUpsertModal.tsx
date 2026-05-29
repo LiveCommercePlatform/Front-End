@@ -36,7 +36,6 @@ import type { Product } from "@/types/product";
 import { useProducts } from "@/context/ProductContext";
 import { useLiveRooms } from "@/context/LiveRoomContext";
 
-/* ================== SCHEMA ================== */
 
 const schema = z.object({
   title: z.string().min(3, "حداقل ۳ کاراکتر"),
@@ -57,7 +56,6 @@ export default function StreamUpsertModal({
   initial?: Partial<Stream>;
   onClose: () => void;
 }) {
-  /* ================== STATE ================== */
 
   const [step, setStep] = useState<1 | 2>(1);
   const [streamId, setStreamId] = useState<string | null>(null);
@@ -67,7 +65,6 @@ export default function StreamUpsertModal({
   const { createLiveRoom, updateLiveRoom } = useLiveRooms();
   const [loadingProducts, setLoadingProducts] = useState(false);
 
-  /* ================== FORM ================== */
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -93,7 +90,6 @@ export default function StreamUpsertModal({
     setSearch("");
   }, [open, initial, form]);
 
-  /* ================== CHECK IF DATA CHANGED ================== */
 
   const hasStreamChanged = (values: Values) => {
     if (mode === "create") return true;
@@ -156,11 +152,7 @@ const handleStep1 = async (values: Values) => {
   };
 
   loadData();
-}, [step, streamId, mode, fetchProducts]); // وابستگی‌ها
-
-
-
-  /* ================== FILTER PRODUCTS ================== */
+}, [step, streamId, mode, fetchProducts]); 
 
   const filteredProducts = useMemo(() => {
     return items.filter((p) =>
@@ -168,7 +160,6 @@ const handleStep1 = async (values: Values) => {
     );
   }, [items, search]);
 
-  /* ================== SAVE PRODUCTS ================== */
 
   const saveProducts = async () => {
     if (!streamId) return;
@@ -185,15 +176,11 @@ const handleStep1 = async (values: Values) => {
       if (!res.ok) {
         throw new Error("خطا در ثبت محصولات");
       }
-
-      toast.success("محصولات ثبت شدند ✅");
       handleClose();
     } catch (err: any) {
       toast.error(err.message);
     }
   };
-
-  /* ================== CLOSE ================== */
 
   const handleClose = () => {
     setStep(1);
@@ -202,8 +189,6 @@ const handleStep1 = async (values: Values) => {
     setSearch("");
     onClose();
   };
-
-  /* ================== UI ================== */
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
@@ -218,7 +203,6 @@ const handleStep1 = async (values: Values) => {
           </DialogTitle>
         </DialogHeader>
 
-        {/* ================= STEP 1 ================= */}
         {step === 1 && (
           <Form {...form}>
             <form
@@ -278,7 +262,6 @@ const handleStep1 = async (values: Values) => {
           </Form>
         )}
 
-        {/* ================= STEP 2 ================= */}
         {step === 2 && (
           <div className="space-y-4">
             {/* 🔍 Search */}

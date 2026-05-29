@@ -12,20 +12,29 @@ import type { Stream, StreamStatus } from "@/types";
 import { Plus } from "lucide-react";
 import { useLiveRooms } from "@/context/LiveRoomContext";
 import toast from "react-hot-toast";
+import NotFound from "@/components/ui/NotFound";
+import { tokenStore } from "@/lib/token";
 
 export default function LivesTab() {
   const router = useRouter();
-  const { lives, fetchLiveRooms, deleteLiveRoom ,  startStream, endStream} = useLiveRooms();
+  const { lives, fetchLiveRooms, deleteLiveRoom, startStream, endStream } =
+    useLiveRooms();
   const [status, setStatus] = useState<StreamStatus | "all">("all");
   const [openUpsert, setOpenUpsert] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<Stream | undefined>(undefined);
-  
+  const currentUserId = tokenStore.getUserId();
   useEffect(() => {
     fetchLiveRooms({
       status: status == "all" ? undefined : status,
+      host_id: currentUserId ? currentUserId : ""
     });
   }, [status]);
+
+  // const filteredLives = useMemo(() => {
+  //   if (!hostId) return [];
+  //   return lives.filter((s) => s.HostID === hostId);
+  // }, [lives, hostId]);
 
   const openCreate = () => {
     setMode("create");
@@ -43,18 +52,17 @@ export default function LivesTab() {
     deleteLiveRoom(s.ID);
   };
 
-const handleStart = async (s: Stream) => {
-  const ok = await startStream(s.ID);
+  const handleStart = async (s: Stream) => {
+    const ok = await startStream(s.ID);
 
-  if (ok) {
-    router.push(`/Live_Rooms/${s.ID}`);
-  }
-};
+    if (ok) {
+      router.push(`/Live_Rooms/${s.ID}`);
+    }
+  };
 
-const handleEnd = async (s: Stream) => {
-  const ok = await endStream(s.ID);
-};
-
+  const handleEnd = async (s: Stream) => {
+    const ok = await endStream(s.ID);
+  };
 
   const goToStream = (s: Stream) => {
     router.push(`/Live_Rooms/${s.ID}`);
@@ -98,18 +106,16 @@ const handleEnd = async (s: Stream) => {
           </div>
         ))}
 
-        {lives.length === 0 && (
-          <div className="px-10  py-20 text-center text-sm opacity-70">
-            لایو استریمی یافت نشد!
-          </div>
-        )}
+        {lives.length === 0 && <NotFound message="" />}
       </div>
 
       <StreamUpsertModal
         open={openUpsert}
         mode={mode}
         initial={editing}
-        onClose={() => setOpenUpsert(false)}
+        onClose={() => 
+          setOpenUpsert(false)
+        }
       />
     </div>
   );

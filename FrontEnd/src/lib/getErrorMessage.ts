@@ -1,5 +1,4 @@
 const errorMap: Record<string, string> = {
-  "Email already exists": "این ایمیل قبلاً ثبت شده است!",
   "Invalid email": "ایمیل نامعتبر است!",
   "Invalid password": "رمز عبور نامعتبر است!",
   "Verification code expired": "کد تایید منقضی شده است!",
@@ -10,6 +9,7 @@ const errorMap: Record<string, string> = {
   "profile_not_completed": "اطلاعات شخصی را در داشبورد تکمیل کنید.",
   "You are the owner, you cannot dislike your own product":"مالک نمیتواند محصول خود را دیسلایک کند! ",
   "You are the owner, you cannot like your own product":"مالک نمیتواند محصول خود رالایک کند! ",
+  "Email already exists":"ایمیل وارد شده در سیستم موجود است.",
 }
 
 export function getErrorMessage(

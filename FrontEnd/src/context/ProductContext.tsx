@@ -10,9 +10,25 @@ import React, {
 } from "react";
 import toast from "react-hot-toast";
 import { apiFetch } from "@/lib/api";
-import type { ProductDetails, Product, Engagement , RatingData, ProductComment } from "@/types";
+import type {
+  ProductDetails,
+  Product,
+  Engagement,
+  RatingData,
+  ProductComment,
+} from "@/types";
 
-/* ================= Types ================= */
+const CACHE_TTL = 20_000; 
+
+type CachedItem<T> = {
+  data: T;
+  timestamp: number;
+};
+
+const isExpired = (item?: CachedItem<any>) => {
+  if (!item) return true;
+  return Date.now() - item.timestamp > CACHE_TTL;
+};
 
 export type GetProductsParams = {
   owner_id?: string;
@@ -20,7 +36,7 @@ export type GetProductsParams = {
   category_id?: number;
   min_price?: number;
   max_price?: number;
-  tags?: string[]; // => comma separated
+  tags?: string[];
   in_stock?: boolean;
   sort?: string;
   page?: number;
@@ -33,14 +49,10 @@ export type PaginationMeta = {
   total: number;
   total_pages: number;
 };
-
 export type ProductsResponse<T = any> = {
   data: T[];
   pagination?: PaginationMeta;
 };
-
-
-
 export type ProductWithEngagement = ProductDetails & {
   engagement?: Engagement;
 };
@@ -57,10 +69,8 @@ type InvalidateKey = "list" | "product" | "engagement" | "comments" | "stat";
 
 type ProductsContextValue = ProductsState & {
   setParams: (next: Partial<GetProductsParams>) => void;
-
   fetchProducts: (p?: GetProductsParams) => Promise<void>;
   refresh: () => Promise<void>;
-
   getProductByIdCached: (id: string) => Promise<ProductDetails>;
   getMyEngagementCached: (id: string) => Promise<Engagement>;
   getStatCached: (id: string) => Promise<RatingData>;
@@ -68,12 +78,9 @@ type ProductsContextValue = ProductsState & {
   getProductWithEngagementCached: (
     id: string,
   ) => Promise<ProductWithEngagement>;
-
   fetchComments: (productId: string) => Promise<ProductComment[]>;
   commentsLoadingById: Record<string, boolean>;
-
   deleteProduct: (id: string) => Promise<boolean>;
-
   invalidate: (scope?: InvalidateKey, key?: string) => void;
 };
 
@@ -83,7 +90,6 @@ function buildSearchParams(params?: GetProductsParams) {
   const sp = new URLSearchParams();
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value === undefined || value === null) return;
-
     if (Array.isArray(value)) sp.append(key, value.join(","));
     else sp.append(key, String(value));
   });
@@ -95,14 +101,19 @@ function stableKey(params?: GetProductsParams) {
   const entries = Object.entries(obj).filter(
     ([, v]) => v !== undefined && v !== null,
   );
-
   const normalized = entries.map(
     ([k, v]) => [k, Array.isArray(v) ? v.join(",") : String(v)] as const,
   );
-
   normalized.sort(([a], [b]) => a.localeCompare(b));
   return normalized.map(([k, v]) => `${k}=${v}`).join("&");
 }
+
+const enforceCacheLimit = (map: Map<any, any>, limit: number) => {
+  if (map.size > limit) {
+    const firstKey = map.keys().next().value;
+    map.delete(firstKey);
+  }
+};
 
 /* ================= Context ================= */
 
@@ -120,105 +131,79 @@ export function ProductsProvider({
     pagination: null,
     loading: false,
     error: null,
-    params: {
-      page: 1,
-      limit: 20,
-      ...(initialParams ?? {}),
-    },
+    params: { page: 1, limit: 20, ...(initialParams ?? {}) },
   });
 
-  // Abort controllers
   const listAbortRef = useRef<AbortController | null>(null);
 
-  // caches
-  const listCacheRef = useRef<Map<string, ProductsResponse<Product>>>(
+  // تغییر ساختار تمام کش‌ها برای نگهداری تایم‌استمپ
+  const listCacheRef = useRef<
+    Map<string, CachedItem<ProductsResponse<Product>>>
+  >(new Map());
+  const productCacheRef = useRef<Map<string, CachedItem<ProductDetails>>>(
     new Map(),
   );
-  const productCacheRef = useRef<Map<string, ProductDetails>>(new Map());
-  const engagementCacheRef = useRef<Map<string, Engagement>>(new Map());
-  const statCacheRef = useRef<Map<string, RatingData>>(new Map());
-  const mystatCacheRef = useRef<Map<string, number>>(new Map());
-  const commentsCacheRef = useRef<Map<string, ProductComment[]>>(new Map());
+  const engagementCacheRef = useRef<Map<string, CachedItem<Engagement>>>(
+    new Map(),
+  );
+  const statCacheRef = useRef<Map<string, CachedItem<RatingData>>>(new Map());
+  const mystatCacheRef = useRef<Map<string, CachedItem<number>>>(new Map());
+  const commentsCacheRef = useRef<Map<string, CachedItem<ProductComment[]>>>(
+    new Map(),
+  );
 
-  // comments loading per product
   const [commentsLoadingById, setCommentsLoadingById] = useState<
     Record<string, boolean>
   >({});
 
   const invalidate = useCallback((scope?: InvalidateKey, key?: string) => {
+    const caches = {
+      list: listCacheRef,
+      product: productCacheRef,
+      engagement: engagementCacheRef,
+      comments: commentsCacheRef,
+      stat: [statCacheRef, mystatCacheRef],
+    };
+
     if (!scope) {
-      listCacheRef.current.clear();
-      productCacheRef.current.clear();
-      engagementCacheRef.current.clear();
-      commentsCacheRef.current.clear();
-      statCacheRef.current.clear();
-      mystatCacheRef.current.clear();
+      Object.values(caches)
+        .flat()
+        .forEach((ref) => ref.current.clear());
       return;
     }
 
-    if (scope === "list") {
-      if (!key) listCacheRef.current.clear();
-      else listCacheRef.current.delete(key);
-      return;
+    const target = caches[scope];
+    if (Array.isArray(target)) {
+      target.forEach((ref) =>
+        key ? ref.current.delete(key) : ref.current.clear(),
+      );
+    } else {
+      key ? target.current.delete(key) : target.current.clear();
     }
-
-    if (scope === "product") {
-      if (!key) productCacheRef.current.clear();
-      else productCacheRef.current.delete(key);
-      return;
-    }
-
-    if (scope === "engagement") {
-      if (!key) engagementCacheRef.current.clear();
-      else engagementCacheRef.current.delete(key);
-      return;
-    }
-
-    if (scope === "stat") {
-      if (!key) {statCacheRef.current.clear();mystatCacheRef.current.clear();}
-      else {statCacheRef.current.delete(key);mystatCacheRef.current.delete(key);}
-      return;
-    }
-
-    if (scope === "comments") {
-      if (!key) commentsCacheRef.current.clear();
-      else commentsCacheRef.current.delete(key);
-    }
-  }, []);
-
-  const setParams = useCallback((next: Partial<GetProductsParams>) => {
-    setState((s) => ({
-      ...s,
-      params: { ...s.params, ...next },
-    }));
-
-    void fetchProducts({ ...state.params, ...next });
   }, []);
 
   const fetchProducts = useCallback(
     async (p?: GetProductsParams) => {
       const params = p ?? state.params;
       const key = stableKey(params);
-
       const cached = listCacheRef.current.get(key);
-      if (cached) {
+
+      if (!isExpired(cached)) {
         setState((s) => ({
           ...s,
-          items: cached.data ?? [],
-          pagination: cached.pagination ?? null,
+          items: cached!.data.data ?? [],
+          pagination: cached!.data.pagination ?? null,
           loading: false,
           error: null,
-          params,
         }));
         return;
       }
 
-      // abort previous list request
       if (listAbortRef.current) listAbortRef.current.abort();
       const controller = new AbortController();
       listAbortRef.current = controller;
 
-      setState((s) => ({ ...s, loading: true, error: null, params }));
+      setState((s) => ({ ...s, loading: true, error: null }));
 
       try {
         const qs = buildSearchParams(params);
@@ -226,24 +211,20 @@ export function ProductsProvider({
           method: "GET",
           signal: controller.signal,
         });
-
         if (!res.ok) throw new Error("خطا در دریافت محصولات");
 
         const json: ProductsResponse<Product> = await res.json();
-        listCacheRef.current.set(key, json);
-
+        listCacheRef.current.set(key, { data: json, timestamp: Date.now() });
+        enforceCacheLimit(listCacheRef.current, 100);
         setState((s) => ({
           ...s,
           items: json.data ?? [],
           pagination: json.pagination ?? null,
           loading: false,
           error: null,
-          params,
         }));
       } catch (e: any) {
-        // اگر abort شد، خطا نشون نده
         if (e?.name === "AbortError") return;
-
         setState((s) => ({
           ...s,
           loading: false,
@@ -252,70 +233,82 @@ export function ProductsProvider({
         }));
       }
     },
-    [state.params],
+    [],
+  );
+
+  const setParams = useCallback(
+    (next: Partial<GetProductsParams>) => {
+      setState((s) => {
+        const newParams = { ...s.params, ...next };
+        void fetchProducts(newParams);
+        return { ...s, params: newParams };
+      });
+    },
+    [fetchProducts],
   );
 
   const refresh = useCallback(async () => {
-    const key = stableKey(state.params);
-    listCacheRef.current.delete(key);
+    invalidate("list", stableKey(state.params));
     await fetchProducts(state.params);
-  }, [fetchProducts, state.params]);
+  }, [fetchProducts, state.params, invalidate]);
 
   const getProductByIdCached = useCallback(async (id: string) => {
     const cached = productCacheRef.current.get(id);
-    if (cached) return cached;
+    if (!isExpired(cached)) return cached!.data;
 
     const res = await apiFetch(`/products/${id}`, { method: "GET" });
     if (!res.ok) throw new Error("خطا در یافتن محصول");
     const json = await res.json();
-
     const data = json?.data ?? json;
-    productCacheRef.current.set(id, data);
+
+    productCacheRef.current.set(id, { data, timestamp: Date.now() });
+    enforceCacheLimit(productCacheRef.current, 50);
     return data;
   }, []);
 
   const getMyEngagementCached = useCallback(async (id: string) => {
     const cached = engagementCacheRef.current.get(id);
-    if (cached) return cached;
+    if (!isExpired(cached)) return cached!.data;
 
     const res = await apiFetch(`/products/${id}/engagement/me`, {
       method: "GET",
     });
     if (!res.ok) throw new Error("خطا در دریافت تعاملات");
     const json = await res.json();
-
     const data = json?.data ?? json;
-    engagementCacheRef.current.set(id, data);
+
+    engagementCacheRef.current.set(id, { data, timestamp: Date.now() });
+    enforceCacheLimit(engagementCacheRef.current, 50);
     return data;
   }, []);
 
   const getStatCached = useCallback(async (id: string) => {
     const cached = statCacheRef.current.get(id);
-    if (cached) return cached;
+    if (!isExpired(cached)) return cached!.data;
 
     const res = await apiFetch(`/products/${id}/rating/summary`, {
       method: "GET",
     });
     if (!res.ok) throw new Error("خطا در دریافت امتیازات");
     const json = await res.json();
-
     const data = json?.data ?? json;
-    statCacheRef.current.set(id, data);
+
+    statCacheRef.current.set(id, { data, timestamp: Date.now() });
+    enforceCacheLimit(statCacheRef.current, 50);
     return data;
   }, []);
 
   const getMystatCached = useCallback(async (id: string) => {
     const cached = mystatCacheRef.current.get(id);
-    if (cached) return cached;
+    if (!isExpired(cached)) return cached!.data;
 
-    const res = await apiFetch(`/products/${id}/rating/me`, {
-      method: "GET",
-    });
+    const res = await apiFetch(`/products/${id}/rating/me`, { method: "GET" });
     if (!res.ok) throw new Error("خطا در دریافت امتیازات");
     const json = await res.json();
-
     const data = json?.data ?? json.my_rating;
-    mystatCacheRef.current.set(id, data);
+
+    mystatCacheRef.current.set(id, { data, timestamp: Date.now() });
+    enforceCacheLimit(mystatCacheRef.current, 50);
     return data;
   }, []);
 
@@ -332,8 +325,8 @@ export function ProductsProvider({
 
   const fetchComments = useCallback(async (productId: string) => {
     if (!productId) return;
-
-    if (commentsCacheRef.current.has(productId)) return;
+    const cached = commentsCacheRef.current.get(productId);
+    if (!isExpired(cached)) return cached!.data;
 
     setCommentsLoadingById((s) => ({ ...s, [productId]: true }));
     try {
@@ -341,10 +334,14 @@ export function ProductsProvider({
         method: "GET",
       });
       if (!res.ok) throw new Error("خطا در دریافت کامنت‌ها");
-
       const json = await res.json();
       const list = Array.isArray(json) ? json : (json.data ?? []);
-      commentsCacheRef.current.set(productId, list);
+
+      commentsCacheRef.current.set(productId, {
+        data: list,
+        timestamp: Date.now(),
+      });
+      enforceCacheLimit(commentsCacheRef.current, 25);
       return list;
     } catch (e: any) {
       toast.error(e?.message ?? "خطا در دریافت کامنت‌ها");
@@ -361,16 +358,11 @@ export function ProductsProvider({
           const data = await res.json().catch(() => null);
           throw new Error(data?.error || "خطا در حذف محصول");
         }
-
         toast.success("محصول با موفقیت حذف شد");
-
-        // invalidate caches related
-        productCacheRef.current.delete(id);
-        engagementCacheRef.current.delete(id);
-        commentsCacheRef.current.delete(id);
-        statCacheRef.current.delete(id);
-        mystatCacheRef.current.delete(id);
-
+        invalidate("product", id);
+        invalidate("engagement", id);
+        invalidate("comments", id);
+        invalidate("stat", id);
         await refresh();
         return true;
       } catch (e: any) {
@@ -378,7 +370,7 @@ export function ProductsProvider({
         return false;
       }
     },
-    [refresh],
+    [refresh, invalidate],
   );
 
   const value: ProductsContextValue = useMemo(

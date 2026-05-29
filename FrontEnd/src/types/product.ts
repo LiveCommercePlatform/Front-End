@@ -9,8 +9,9 @@ export type Product = {
   id: string;
   title: string;
   price: number;
+  stock: number;
+  media?: string;
   status: "active" | "inactive";
-  media?: {url:string;id: string;}[];
   category?:string;
 };
 
@@ -22,7 +23,7 @@ export type ProductCardProps = {
   price: number;
   stock: number;
   status: ProductCardStatus;
-  cover: string;
+  media?: string;
   showEdit?: boolean;
   showDelete?: boolean;
   showAddToCart?:boolean;

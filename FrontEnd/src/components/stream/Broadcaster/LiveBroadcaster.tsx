@@ -1,16 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, Video, Monitor, Play, Square } from "lucide-react";
-import { useBroadcasterWebRTC } from "@/hooks/useBroadcasterWebRTC";
+import { useBroadcaster } from "@/hooks/useBroadcasterWebRTC";
 
-export default function LiveBroadcaster({ roomId }: { roomId: string }) {
-  const WS_URL = `ws://localhost:8080/ws/live-rooms/${roomId}/events`;
+export default function LiveBroadcaster({
+  roomId,
+  status,
+}: {
+  roomId: string;
+  status: string;
+}) {
+  const WS_URL = `ws://localhost:8080/ws/live-rooms/${roomId}/signaling`;
 
-  const { videoRef, viewerCount, isStreaming, start, stop, toggleMute } =
-    useBroadcasterWebRTC(roomId, WS_URL);
+  const {
+    localStream,
+    isStreaming,
+    start,
+    stop,
+    toggleMic,
+    isMicOn,
+    isScreenSharing,
+    toggleScreenShare,
+  } = useBroadcaster({
+    signalingUrl: WS_URL,
+    roomId: roomId,
+    autoStart: false,
+    mediaConstraints: {
+      video: true,
+      audio: true,
+    },
+  });
 
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
-  const [muted, setMuted] = useState(false);
   const [bitrate, setBitrate] = useState<number>(0);
   const [connection, setConnection] = useState("new");
 
@@ -24,44 +45,6 @@ export default function LiveBroadcaster({ roomId }: { roomId: string }) {
 
     loadDevices();
   }, []);
-
-  // ---------------- connection state ----------------
-  // useEffect(() => {
-  //   if (!pc) return;
-
-  //   const update = () => {
-  //     setConnection(pc.connectionState);
-  //   };
-
-  //   pc.addEventListener("connectionstatechange", update);
-
-  //   return () => pc.removeEventListener("connectionstatechange", update);
-  // }, [pc]);
-
-  // ---------------- bitrate ----------------
-  // useEffect(() => {
-  //   if (!pc) return;
-
-  //   let lastBytes = 0;
-
-  //   const interval = setInterval(async () => {
-  //     const stats = await pc.getStats();
-
-  //     stats.forEach((report:any) => {
-  //       if (report.type === "outbound-rtp" && report.kind === "video") {
-  //         const bytes = report.bytesSent;
-
-  //         const diff = bytes - lastBytes;
-  //         lastBytes = bytes;
-
-  //         const kbps = (diff * 8) / 1000;
-  //         setBitrate(Math.round(kbps));
-  //       }
-  //     });
-  //   }, 1000);
-
-  //   return () => clearInterval(interval);
-  // }, [pc]);
 
   const shareScreen = async () => {
     const screen = await navigator.mediaDevices.getDisplayMedia({
@@ -77,18 +60,18 @@ export default function LiveBroadcaster({ roomId }: { roomId: string }) {
     // sender?.replaceTrack(screenTrack);
   };
 
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  useEffect(() => {
+    if (videoRef.current && localStream) {
+      videoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
   return (
     <div className="max-w-5xl mx-auto px-3 md:px-0 space-y-4">
-      {/* header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg md:text-xl font-semibold">پخش زنده</h2>
-
-        <div className="text-xs md:text-sm bg-black/5 px-3 py-1 rounded-full">
-          👁 {viewerCount} تماشاگر
-        </div>
       </div>
 
-      {/* video */}
       <div className="relative bg-black rounded-xl overflow-hidden aspect-video">
         <video
           ref={videoRef}
@@ -110,39 +93,44 @@ export default function LiveBroadcaster({ roomId }: { roomId: string }) {
         <div className="grid grid-cols-2 sm:flex gap-2 md:gap-3 order-1 md:order-2">
           {!isStreaming ? (
             <button
+              disabled={status == "ended"}
               onClick={start}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 rounded-xl border text-sm"
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-sm transition 
+             bg-emerald-500 text-white
+             disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Play size={16} />
-              شروع
             </button>
           ) : (
             <button
+              disabled={status == "ended"}
               onClick={stop}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-red-500 rounded-xl border text-sm"
             >
               <Square size={16} />
-              توقف
             </button>
           )}
 
           <button
-            onClick={toggleMute}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-sm"
+            disabled={status == "ended"}
+            onClick={toggleMic}
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-sm transition
+           disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {muted ? <MicOff size={16} /> : <Mic size={16} />}
-            {muted ? "با صدا" : "بی‌صدا"}
+            {isMicOn ? <MicOff size={16} /> : <Mic size={16} />}
           </button>
 
           <button
-            onClick={shareScreen}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-sm col-span-2 sm:col-span-1"
+            disabled={status === "ended" || !isStreaming}
+            onClick={toggleScreenShare}
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl border text-sm transition
+    ${isScreenSharing ? "bg-blue-100 border-blue-500 text-blue-600" : ""}
+    disabled:opacity-60 disabled:cursor-not-allowed`}
           >
             <Monitor size={16} />
-            اشتراک صفحه
           </button>
         </div>
-         {/* info */}
+        {/* info */}
         <div className="flex justify-center md:justify-start gap-3 text-[11px] md:text-xs text-slate-600 order-2 md:order-1">
           <div className="bg-black/5 px-3 py-2 rounded-lg">
             Bitrate: <b className="text-slate-900">{bitrate} kbps</b>

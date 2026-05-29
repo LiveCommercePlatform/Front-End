@@ -1,3 +1,4 @@
+"use client";
 import HeroSection from "@/components/Home/HeroSection";
 import AuthCTASection from "@/components/Home/AuthCTASection";
 import LiveStreamsSection from "@/components/Home/LiveStreamsSection";
@@ -8,7 +9,7 @@ import MobileStickyCTA from "@/components/Home/MobileAuthCTA";
 import { tokenStore } from "@/lib/token";
 
 export default function Home() {
-  const isLoggedIn = !tokenStore.getAccess;
+  const isLoggedIn = !tokenStore.getAccess();
 
   return (
     <main className="space-y-0">
@@ -18,7 +19,7 @@ export default function Home() {
         <StatsSection />
       </div>
 
-      {!isLoggedIn && (
+      {isLoggedIn  && (
         <div className="hidden md:block">
           <AuthCTASection page="home" usersCount={1240} />
         </div>
@@ -27,7 +28,7 @@ export default function Home() {
       <HowItWorksSection />
       <FAQSection />
 
-      {!isLoggedIn && (
+      {isLoggedIn  && (
         <div className="md:hidden">
           <MobileStickyCTA />
         </div>

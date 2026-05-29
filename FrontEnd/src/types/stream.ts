@@ -27,10 +27,8 @@ export type Stream = {
 };
 
 export type LiveRoomStats = {
-  total_dislikes: number;
-  total_likes: number;
-  total_views: number;
-  viewer_count: number;
+  dislikes: number;
+  likes: number;
 };
 
 export type ReactionType = "like" | "dislike" | null;

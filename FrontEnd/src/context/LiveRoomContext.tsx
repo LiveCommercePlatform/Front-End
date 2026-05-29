@@ -11,11 +11,13 @@ import React, {
 import toast from "react-hot-toast";
 import { apiFetch } from "@/lib/api";
 import type { Stream, LiveRoomStats, ReactionType } from "@/types";
+import { stat } from "fs";
 
 /* ================= Types ================= */
 
 export type GetLiveRoomsParams = {
   status?: string;
+  host_id?: string;
 };
 
 export interface StreamData {
@@ -76,12 +78,16 @@ type LiveRoomContextValue = LiveRoomState & {
 function buildSearchParams(params?: GetLiveRoomsParams) {
   const sp = new URLSearchParams();
   if (params?.status) sp.append("status", params.status);
+  if (params?.host_id) sp.append("host_id", params.host_id);
   return sp.toString();
 }
 
 function stableKey(params?: GetLiveRoomsParams) {
-  return params?.status ? `status=${params.status}` : "all";
+  const status = params?.status ?? "all";
+  const hostId = params?.host_id ?? "all";
+  return `status=${status}_host=${hostId}`;
 }
+
 
 /* ================= Context ================= */
 
@@ -102,13 +108,10 @@ export function LiveRoomProvider({
       ...(initialParams ?? {}),
     },
   });
-
+  const CACHE_TTL = 20_000; // بیست ثانیه به میلی‌ثانیه
   const listAbortRef = useRef<AbortController | null>(null);
-
-  const listCacheRef = useRef<Map<string, LiveRoomsResponse<Stream>>>(
-    new Map(),
-  );
-  const singleCacheRef = useRef<Map<string, Stream>>(new Map());
+  const listCacheRef = useRef<Map<string, { data: any, timestamp: number }>>(new Map());
+  const singleCacheRef = useRef<Map<string, { data: Stream, timestamp: number }>>(new Map());
 
   /* ================= invalidate ================= */
 
@@ -130,8 +133,6 @@ export function LiveRoomProvider({
     }
   }, []);
 
-  /* ================= Params ================= */
-
   const setParams = useCallback((next: Partial<GetLiveRoomsParams>) => {
     setState((s) => {
       const newParams = { ...s.params, ...next };
@@ -140,64 +141,64 @@ export function LiveRoomProvider({
     });
   }, []);
 
-  /* ================= Fetch List ================= */
-
   const fetchLiveRooms = useCallback(
-    async (p?: GetLiveRoomsParams) => {
-      const params = p ?? state.params;
-      const key = stableKey(params);
+  async (p?: GetLiveRoomsParams) => {
+    const params = p ?? state.params;
+    const key = stableKey(params);
 
-      const cached = listCacheRef.current.get(key);
-      if (cached) {
-        setState((s) => ({
-          ...s,
-          lives: cached ?? [],
-          loading: false,
-          error: null,
-          params,
-        }));
-        return;
-      }
+    const cachedEntry = listCacheRef.current.get(key);
+    const now = Date.now();
+    if (cachedEntry && (now - cachedEntry.timestamp < CACHE_TTL)) {
+      setState((s) => ({
+        ...s,
+        lives: cachedEntry.data ?? [],
+        loading: false,
+        error: null,
+        params, 
+      }));
+      return;
+    }
 
-      if (listAbortRef.current) listAbortRef.current.abort();
-      const controller = new AbortController();
-      listAbortRef.current = controller;
+    if (listAbortRef.current) listAbortRef.current.abort();
+    const controller = new AbortController();
+    listAbortRef.current = controller;
 
-      setState((s) => ({ ...s, loading: true, error: null, params }));
+    setState((s) => ({ ...s, loading: true, error: null, params }));
 
-      try {
-        const qs = buildSearchParams(params);
-        const res = await apiFetch(`/live-rooms?${qs}`, {
-          method: "GET",
-          signal: controller.signal,
-        });
+    try {
+      const qs = buildSearchParams(params);
+      const res = await apiFetch(`/live-rooms?${qs}`, {
+        method: "GET",
+        signal: controller.signal,
+      });
 
-        if (!res.ok) throw new Error("خطا در دریافت لیست لایوروم‌ها");
+      if (!res.ok) throw new Error("خطا در دریافت لیست لایوروم‌ها");
+      
+      const json: LiveRoomsResponse<Stream> = await res.json();
 
-        const json: LiveRoomsResponse<Stream> = await res.json();
-        listCacheRef.current.set(key, json);
-        setState((s) => ({
-          ...s,
-          lives: json ?? [],
-          loading: false,
-          error: null,
-          params,
-        }));
-      } catch (e: any) {
-        if (e?.name === "AbortError") return;
+      listCacheRef.current.set(key, {
+        data: json,
+        timestamp: Date.now()
+      });
 
-        setState((s) => ({
-          ...s,
-          loading: false,
-          error: e?.message ?? "خطا",
-          params,
-        }));
-      }
-    },
-    [state.params],
-  );
+      setState((s) => ({
+        ...s,
+        lives: json ?? [],
+        loading: false,
+        error: null,
+        params,
+      }));
+    } catch (e: any) {
+      if (e?.name === "AbortError") return;
+      setState((s) => ({ ...s, loading: false, error: e?.message ?? "خطا", params }));
+    }
+  },
+  [state.params] 
+);
+
 
   const refresh = useCallback(async () => {
+    console.log(state.params)
     const key = stableKey(state.params);
     listCacheRef.current.delete(key);
     await fetchLiveRooms(state.params);
@@ -205,15 +206,18 @@ export function LiveRoomProvider({
 
   const getLiveRoomByIdCached = useCallback(async (id: string) => {
     const cached = singleCacheRef.current.get(id);
-    if (cached) return cached;
+    const now = Date.now();
+    if (cached && (now - cached.timestamp < CACHE_TTL)) return cached;
 
     const res = await apiFetch(`/live-rooms/${id}`, { method: "GET" });
     if (!res.ok) throw new Error("خطا در دریافت لایوروم");
 
     const json = await res.json();
     const data = json?.data ?? json;
-
-    singleCacheRef.current.set(id, data);
+    singleCacheRef.current.set(id,  {
+        data: data,
+        timestamp: Date.now()
+      });
     return data;
   }, []);
 
@@ -225,6 +229,7 @@ export function LiveRoomProvider({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "خطا در ساخت لایو روم");
+      await refresh();
       return json.ID;
     } catch (err: any) {
       toast.error(err.message || "خطا در درخواست");
@@ -459,11 +464,11 @@ const removeReaction = useCallback(
 
   const getLiveRoomStats = useCallback(async (streamId: string) => {
     try {
-      const res = await apiFetch(`/live-rooms/${streamId}/stats`);
+      const res = await apiFetch(`/live-rooms/${streamId}/reactions/summary`);
 
       if (!res.ok) throw new Error("خطا در گرفتن آمار لایو");
 
-      return await res.json(); // { total_likes, total_dislikes, total_views, viewer_count }
+      return await res.json();
     } catch (e: any) {
       toast.error(e?.message ?? "خطا در گرفتن آمار");
       return null;

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Guard from "@/components/auth/Guard";
 import { useDashboard } from "@/context/DashboardContext";
 import Loading from "@/components/ui/Loading";
-import { useEffect } from "react";
+
 const tabs = [
   { key: "products", label: "محصولات من" },
   { key: "lives", label: "استریم‌ها" },
@@ -18,14 +18,12 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const currentTab = pathname.split("/").at(-1);
   
  
-  const { profile, loading , refreshProfile } = useDashboard();
-  // useEffect(() => {
-  //   refreshProfile();
-  // }, []);
-
-  if (loading) {
+  const { profile, isLoading} = useDashboard();
+if (isLoading) {
     return (
-      <Loading text="لطفاً کمی صبر کنید، داشبورد در حال بارگذاری است..." />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading /> {/* یا هر کامپوننت لودینگ دیگری که دارید */}
+      </div>
     );
   }
 

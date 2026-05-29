@@ -56,7 +56,7 @@ export default function ProductDetailsPage() {
     getStatCached,
     deleteProduct,
     fetchComments,
-    getMystatCached
+    getMystatCached,
   } = useProducts();
   const [loading_, setLoading] = useState(true);
   const [product, setProduct] = useState<ProductDetails | null>(null);
@@ -105,7 +105,7 @@ async function handleSumbitRating(val:number) {
       });
       if (!res.ok) throw new Error("خطا در ثبت ریتینگ");
     } catch (e: any) {
-      toast.error(e?.message || "خطا");
+      // toast.error(e?.message || "خطا");
     }
   }
 
@@ -116,7 +116,7 @@ async function handleSumbitRating(val:number) {
       });
       if (!res.ok) throw new Error("خطا در ریتینگ ");
     } catch (e: any) {
-      toast.error(e?.message || "خطا");
+      // toast.error(e?.message || "خطا");
     }
   }
 

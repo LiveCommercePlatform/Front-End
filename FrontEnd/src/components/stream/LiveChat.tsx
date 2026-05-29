@@ -12,13 +12,7 @@ function getInitial(name?: string) {
   return name?.trim()?.[0] ?? "?";
 }
 
-export function LiveChat({
-  id,
-  UserId,
-}: {
-  id: string;
-  UserId?: string;
-}) {
+export function LiveChat({ id, UserId, Livestatus }: { id: string; UserId?: string, Livestatus:string; }) {
   const [text, setText] = useState("");
 
   const messagesRef = useRef<HTMLDivElement | null>(null);
@@ -32,7 +26,7 @@ export function LiveChat({
     connectionError,
     authRequired,
     canSend,
-  } = useLiveChat(id, UserId);
+  } = useLiveChat(id, UserId,Livestatus=="live"? true : false);
 
   const submitEnabled = canSend && text.trim().length > 0;
 
@@ -83,18 +77,18 @@ export function LiveChat({
     status === "connecting"
       ? "در حال اتصال..."
       : status === "open"
-      ? authRequired
-        ? "فقط خواندنی"
-        : "متصل"
-      : "قطع شده";
+        ? authRequired
+          ? "فقط خواندنی"
+          : "متصل"
+        : "قطع شده";
 
   const inputPlaceholder = authRequired
     ? "برای ارسال نظر ابتدا وارد شوید"
     : status === "open"
-    ? "پیامت رو بنویس..."
-    : status === "connecting"
-    ? "در حال اتصال به چت..."
-    : "چت در دسترس نیست";
+      ? "پیامت رو بنویس..."
+      : status === "connecting"
+        ? "در حال اتصال به چت..."
+        : "چت در دسترس نیست";
 
   return (
     <Card className="rounded-2xl shadow-lg flex flex-col h-[513px] bg-muted/30 overflow-hidden">
@@ -108,8 +102,8 @@ export function LiveChat({
               status === "open"
                 ? "text-green-600"
                 : status === "connecting"
-                ? "text-amber-600"
-                : "text-muted-foreground"
+                  ? "text-amber-600"
+                  : "text-muted-foreground",
             )}
           >
             {statusLabel}
@@ -129,8 +123,12 @@ export function LiveChat({
         >
           <div className="flex flex-col space-y-3">
             {renderedMessages.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground py-6">
-                هنوز پیامی ارسال نشده است.
+              <div className="flex min-h-[200px] flex-1 items-center justify-center">
+                <div className="text-center text-sm text-muted-foreground">
+                  {status !== "open"
+                    ? "چت تمام شده و پیامی موجود نیست."
+                    : "هنوز پیامی ارسال نشده است."}
+                </div>
               </div>
             )}
 
@@ -139,7 +137,7 @@ export function LiveChat({
                 key={msg.id}
                 className={cn(
                   "flex gap-3 items-start max-w-full",
-                  msg.isMe ? "flex-row-reverse text-right" : "text-left"
+                  msg.isMe ? "flex-row-reverse text-right" : "text-left",
                 )}
               >
                 {!msg.isMe ? (
@@ -155,13 +153,13 @@ export function LiveChat({
                 <div
                   className={cn(
                     "max-w-[80%] min-w-0 flex flex-col",
-                    msg.isMe ? "items-end" : "items-start"
+                    msg.isMe ? "items-end" : "items-start",
                   )}
                 >
                   <p
                     className={cn(
                       "text-sm font-medium flex items-center gap-2",
-                      msg.isMe ? "flex-row-reverse" : ""
+                      msg.isMe ? "flex-row-reverse" : "",
                     )}
                   >
                     {msg.name}
@@ -178,7 +176,7 @@ export function LiveChat({
                       "mt-1 rounded-xl px-3 py-2 text-xs leading-5 break-words whitespace-pre-wrap",
                       msg.isMe
                         ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-background/70 rounded-bl-md"
+                        : "bg-background/70 rounded-bl-md",
                     )}
                   >
                     {msg.text}

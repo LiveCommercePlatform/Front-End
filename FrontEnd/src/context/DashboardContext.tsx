@@ -6,24 +6,19 @@ import { Profile } from "@/types";
 
 type DashboardContextType = {
   profile: Profile | null;
-  loading: boolean;
+  isLoading: boolean;
   refreshProfile: () => Promise<void>;
 };
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
 
-export function DashboardProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchProfile = async () => {
+    setIsLoading(true); 
     try {
-      setLoading(true);
-
       const res = await apiFetch("/profile/get", {
         method: "GET",
         authMode: "optional",
@@ -31,21 +26,17 @@ export function DashboardProvider({
 
       if (res.status === 401) {
         setProfile(null);
-        return;
-      }
-
-      const data = await res.json();
-
-      if (!res.ok) {
+      } else if (!res.ok) {
         setProfile(null);
-        return;
+      } else {
+        const data = await res.json();
+        setProfile(data.user ?? null);
       }
-
-      setProfile(data.user ?? null);
-    } catch {
+    } catch (err) {
+      console.error("Fetch profile error:", err);
       setProfile(null);
     } finally {
-      setLoading(false);
+      setIsLoading(false); 
     }
   };
 
@@ -57,7 +48,7 @@ export function DashboardProvider({
     <DashboardContext.Provider
       value={{
         profile,
-        loading,
+        isLoading,
         refreshProfile: fetchProfile,
       }}
     >
@@ -68,10 +59,6 @@ export function DashboardProvider({
 
 export function useDashboard() {
   const ctx = useContext(DashboardContext);
-
-  if (!ctx) {
-    throw new Error("useDashboard باید داخل DashboardProvider استفاده شود");
-  }
-
+  if (!ctx) throw new Error("useDashboard باید داخل DashboardProvider استفاده شود");
   return ctx;
 }

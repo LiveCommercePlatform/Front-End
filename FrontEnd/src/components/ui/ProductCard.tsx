@@ -19,7 +19,7 @@ export default function ProductCard({
   title,
   price,
   status,
-  cover,
+  media,
   stock,
   showEdit = true,
   showDelete = true,
@@ -48,7 +48,7 @@ export default function ProductCard({
       id: id,
       title: title,
       price: price,
-      cover: cover || "",
+      cover: media || "",
     });
   };
   return (
@@ -65,11 +65,10 @@ export default function ProductCard({
           className,
         )}
       >
-        {/* Cover */}
         <div className="h-32 bg-muted overflow-hidden">
-          {cover ? (
+          {media ? (
             <img
-              src={cover}
+              src={`http://localhost:8080${media}`}
               alt={title}
               className="w-full h-full object-cover"
             />
@@ -130,7 +129,7 @@ export default function ProductCard({
                           e.stopPropagation();
                           increase(id);
                         }}
-                        disabled = {stock >= count}
+                        disabled = {stock >= count }
                       >
                         <Plus className="w-4 h-4" />
                       </Button>

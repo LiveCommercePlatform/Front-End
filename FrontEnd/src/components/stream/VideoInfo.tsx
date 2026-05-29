@@ -21,6 +21,7 @@ import NotFound from "../ui/NotFound";
 import { useCart } from "@/context/CartContext";
 import ProfileCompleteModal from "../ui/ProfileCompleteModal";
 import { Badge } from "../ui/badge";
+import { useViewerPing } from "@/hooks/useViewerPing";
 
 export function VideoInfo({
   stat,
@@ -45,6 +46,8 @@ export function VideoInfo({
   const [copied, setCopied] = useState(false);
   const [loadingReaction, setLoadingReaction] = useState(false);
 
+  const {viewCount} = useViewerPing(streamInfo.ID, 
+    streamInfo.Status == "live");
   const {
     handleAddToCart,
     getQty,
@@ -123,7 +126,7 @@ export function VideoInfo({
                   className={`w-5 h-5 ${myReaction === "like" ? "fill-primary" : ""}`}
                 />
                 <span className="text-sm font-bold">
-                  {formatPriceFa(stat.total_likes || 0)}
+                  {formatPriceFa(stat.likes || 0)}
                 </span>
               </button>
 
@@ -140,7 +143,7 @@ export function VideoInfo({
                   className={`w-5 h-5 ${myReaction === "dislike" ? "fill-destructive" : ""}`}
                 />
                 <span className="text-sm font-bold">
-                  {formatPriceFa(stat.total_dislikes || 0)}
+                  {formatPriceFa(stat.dislikes || 0)}
                 </span>
               </button>
             </div>
@@ -148,7 +151,7 @@ export function VideoInfo({
             <div className="flex items-center gap-4 text-muted-foreground border-r md:border-r-0 pr-4 md:pr-0 border-border">
               <div className="flex items-center gap-1.5 text-xs md:text-sm">
                 <Eye className="w-4 h-4 opacity-70" />
-                {formatPriceFa(stat.total_views || 0)}
+                {formatPriceFa(viewCount || 0)}
               </div>
             </div>
           </div>
@@ -293,8 +296,8 @@ export function VideoInfo({
             </div>
           ) : (
             <NotFound
-              title="محصولی یافت نشد"
-              message="در حال حاضر محصولی برای نمایش وجود ندارد."
+              title="محصولی برای این لایو روم انتخاب نشده."
+              message=""
             />
           )}
         </div>

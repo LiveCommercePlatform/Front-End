@@ -6,19 +6,10 @@ import { useRouter } from "next/navigation"
 type GuardProps = {
   children: React.ReactNode;
 
-  /** نیاز به لاگین */
   requireAuth?: boolean;
-
-  /** فقط مهمان‌ها (مثلاً صفحه login / register) */
   guestOnly?: boolean;
-
-  /** ثبت‌نام کامل شده باشد */
   requireRegistered?: boolean;
-
-  /** نقش‌های مجاز */
   roles?: string[];
-
-  /** مسیر ریدایرکت دلخواه */
   redirectTo?: string;
 };
 
