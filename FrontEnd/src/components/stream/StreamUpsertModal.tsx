@@ -35,6 +35,7 @@ import type { Stream } from "@/types/stream";
 import type { Product } from "@/types/product";
 import { useProducts } from "@/context/ProductContext";
 import { useLiveRooms } from "@/context/LiveRoomContext";
+import { tokenStore } from "@/lib/token";
 
 
 const schema = z.object({
@@ -64,7 +65,7 @@ export default function StreamUpsertModal({
   const [search, setSearch] = useState("");
   const { createLiveRoom, updateLiveRoom } = useLiveRooms();
   const [loadingProducts, setLoadingProducts] = useState(false);
-
+  const user_id = tokenStore.getUserId();
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -127,7 +128,7 @@ const handleStep1 = async (values: Values) => {
     setLoadingProducts(true);
     
     try {
-      const requests: [Promise<any>, Promise<any>?] = [fetchProducts()];
+      const requests: [Promise<any>, Promise<any>?] = [fetchProducts({owner_id:user_id ? user_id : undefined})];
       
       if (mode === "edit") {
         requests.push(apiFetch(`/live-rooms/${streamId}/products`).then(res => {

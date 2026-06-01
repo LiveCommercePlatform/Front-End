@@ -11,7 +11,6 @@ import StreamUpsertModal from "@/components/stream/StreamUpsertModal";
 import type { Stream, StreamStatus } from "@/types";
 import { Plus } from "lucide-react";
 import { useLiveRooms } from "@/context/LiveRoomContext";
-import toast from "react-hot-toast";
 import NotFound from "@/components/ui/NotFound";
 import { tokenStore } from "@/lib/token";
 

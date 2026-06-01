@@ -59,7 +59,7 @@ function getViewLink(
   if (report.type === "user") {
     if (!report.target_user_id) return null;
     return {
-      href: `/users/${report.target_user_id}`,
+      href: `/profile/${report.target_user_id}`,
       label: "مشاهده مستقیم کاربر",
     };
   } else if (report.type === "product") {
@@ -140,14 +140,12 @@ export default function ReportDetailsModal({
                   </span>
                 </div>
               </div>
-              {/* دلیل */}
               <div className="space-y-1">
                 <span className="text-xs opacity-60">علت گزارش:</span>
                 <div className="rounded-lg border border-orange-100 bg-orange-50/30 p-3 text-sm leading-relaxed text-foreground">
                   {report.reason}
                 </div>
               </div>
-              {/* مشاهده محتوا */}
               {viewLink && (
                 <Button
                   variant="outline"
@@ -167,7 +165,6 @@ export default function ReportDetailsModal({
 
         <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-6">
           <div className="flex flex-wrap gap-2 flex-1">
-            {/* حذف محتوا */}
             {deleteTarget && (
               <Button
                 variant="destructive"
@@ -183,7 +180,6 @@ export default function ReportDetailsModal({
               </Button>
             )}
 
-            {/* بن کاربر (فقط برای گزارش user) */}
             {report.type === "user" && report.target_user_id && (
               <Button
                 variant="outline"
@@ -196,7 +192,6 @@ export default function ReportDetailsModal({
               </Button>
             )}
 
-            {/* بستن گزارش */}
             {report.status !== "closed" && (
               <Button
                 variant="default"

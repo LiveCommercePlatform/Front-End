@@ -44,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 function applyLocalRatingUpdate(
   prev: RatingData,
@@ -284,9 +285,19 @@ export default function ProductDetailsPage() {
       <div className="flex items-center justify-between">
         <div className="text-right">
           <h1 className="text-lg md:text-2xl font-semibold">{product.title}</h1>
-          <div className="text-xs opacity-60">
-            {product.owner?.name ? `مالک: ${product.owner.name}` : ""}
-          </div>
+          {product.owner?.name && product.owner?.id ? (
+  <Link
+    href={`/profile/${product.owner.id}`}
+    className="text-xs opacity-60 hover:opacity-100 hover:underline transition"
+  >
+    {`مالک: ${product.owner.name}`}
+  </Link>
+) : (
+  <div className="text-xs opacity-60">
+    {product.owner?.name ? `مالک: ${product.owner.name}` : ""}
+  </div>
+)}
+
         </div>
 
         <Button
