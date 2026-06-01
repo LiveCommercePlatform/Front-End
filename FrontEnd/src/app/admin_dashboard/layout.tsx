@@ -6,7 +6,6 @@ import Guard from "@/components/auth/Guard";
 
 const tabs = [
   { key: "reports", label: "گزارشات" },
-  { key: "lives", label: "استریم‌ها" },
   { key: "users", label: "کاربران" },
   { key: "orders", label: "سفارشات" },
 ];

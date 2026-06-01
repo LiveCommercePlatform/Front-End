@@ -1,32 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ListToolbar from "@/components/ui/ListToolbar";
 import NotFound from "@/components/ui/NotFound";
 import OrderCard from "@/components/order/OrderCard";
 import { useOrders } from "@/hooks/useOrders";
-import { Order, OrderStatus } from "@/types";
+import type { Order, OrderStatus } from "@/types";
+import Loading from "@/components/ui/Loading";
 import { tokenStore } from "@/lib/token";
 
 export default function OrdersTab() {
-  const User_id = tokenStore.getUserId();
-  const { myOrders, loadingMyList, cancelOrder, mutating } = useOrders({
+  const currentUserId = tokenStore.getUserId();
+
+  const {
+    adminOrders,
+    loadingAdminList,
+    cancelOrder,
+    adminUpdateOrderStatus,
+    mutating,
+  } = useOrders({
     autoStart: true,
-    initialMyParams: {
-      page: 1,
-      pageSize: 10,
-    },
+    initialAdminParams: { page: 1, pageSize: 10 },
   });
 
   const [status, setStatus] = useState<OrderStatus | "all">("all");
 
-  const visibleOrders =
-    status === "all"
-      ? myOrders
-      : myOrders.filter((o) => o.status === status);
+  const myProductOrders = useMemo(() => {
+    if (!currentUserId) return [];
+    return adminOrders.filter((order) =>
+      order.items?.some(
+        (item) => String(item.product?.owner_id) == String(currentUserId),
+      ),
+    );
+  }, [adminOrders, currentUserId]);
+
+  const visibleOrders = useMemo(() => {
+    return status === "all"
+      ? myProductOrders
+      : myProductOrders.filter((o) => o.status === status);
+  }, [myProductOrders, status]);
 
   const handleCancel = async (order: Order) => {
     await cancelOrder(order.id);
+  };
+
+  const handleChangeStatus = async (id: string, status: OrderStatus) => {
+    await adminUpdateOrderStatus(id, status);
   };
 
   return (
@@ -50,21 +69,20 @@ export default function OrdersTab() {
       />
 
       <div className="space-y-3">
-        {loadingMyList ? (
-          <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-            در حال دریافت سفارش‌ها...
-          </div>
+        {loadingAdminList ? (
+          <Loading />
         ) : visibleOrders.length === 0 ? (
-          <NotFound message="هنوز سفارشی ثبت نشده است." />
+          <NotFound message="هنوز سفارشی برای محصولات شما ثبت نشده است." />
         ) : (
           visibleOrders.map((order) => (
-            <div key={order.id} className="relative">
-              <OrderCard
-                order={order}
-                onCancel={handleCancel}
-                loading={mutating}
-              />
-            </div>
+            <OrderCard
+              key={order.id}
+              order={order}
+              ownerId={currentUserId ? currentUserId : undefined} 
+              onCancel={handleCancel} 
+              onChangeStatus={handleChangeStatus}
+              loading={mutating}
+            />
           ))
         )}
       </div>

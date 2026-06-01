@@ -20,7 +20,7 @@ const streams: Stream[] = [
     title: "فروش زنده آیفون 15",
     streamer: "Ali Store",
     viewers: 128,
-    cover: "https://picsum.photos/600/400?1",
+    cover:"/images/live1.png",
     isLive: true,
   },
   {
@@ -28,7 +28,7 @@ const streams: Stream[] = [
     title: "بررسی کفش نایک",
     streamer: "Sport Land",
     viewers: 76,
-    cover: "https://picsum.photos/600/400?2",
+    cover: "/images/live2.png",
     isLive: true,
   },
   {
@@ -36,7 +36,7 @@ const streams: Stream[] = [
     title: "گجت‌های هوشمند",
     streamer: "Tech World",
     viewers: 0,
-    cover: "https://picsum.photos/600/400?3",
+    cover: "/images/live3.png",
     isLive: false,
   },
 ];

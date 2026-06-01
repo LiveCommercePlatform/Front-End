@@ -55,13 +55,6 @@ const sidebarItems = [
     exact: true,
   },
   {
-    href: "/seller",
-    icon: Users,
-    label: "فروشندگان",
-    roles: "all",
-    exact: false,
-  },
-  {
     href: "/orders",
     icon: Users,
     label: "سفارشات من",

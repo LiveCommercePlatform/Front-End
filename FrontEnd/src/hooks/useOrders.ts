@@ -201,7 +201,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
           status: p.status || undefined,
         });
 
-        const res = await apiFetch(`/admin/orders?${query}`, {
+        const res = await apiFetch(`/orders/all?${query}`, {
           method: "GET",
           signal: controller.signal,
         });

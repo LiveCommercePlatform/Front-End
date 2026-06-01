@@ -201,7 +201,7 @@ export default function OrderDetailsModal({
                 {/* Items */}
                 <section className="space-y-3 text-right">
                   <h3 className="text-sm font-semibold text-right">
-                    آیتم‌های سفارش
+                   {ownerId ? "محصولات شما در این سفارش" :" آیتم‌های سفارش"}
                   </h3>
 
                   <div dir="rtl"  className="overflow-hidden rounded-lg border">
@@ -222,9 +222,7 @@ export default function OrderDetailsModal({
                             <div className="truncate font-medium">
                               {it.product?.title ?? "—"}
                             </div>
-                            <div className="truncate text-xs text-muted-foreground">
-                              محصول #{it.product_id}
-                            </div>
+                            
                           </div>
 
                           <div className="col-span-2 text-center tabular-nums">

@@ -46,14 +46,36 @@ const orderStatuses: OrderStatus[] = [
   "cancelled",
 ];
 
-const statusMap: Record<OrderStatus, { label: string; color: string; dot: string }> =
-  {
-    pending: { label: "در انتظار", color: "bg-orange-100 text-orange-700", dot: "bg-orange-500" },
-    paid: { label: "پرداخت‌شده", color: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" },
-    shipped: { label: "ارسال‌شده", color: "bg-blue-100 text-blue-700", dot: "bg-blue-500" },
-    delivered: { label: "تحویل‌شده", color: "bg-green-100 text-green-700", dot: "bg-green-500" },
-    cancelled: { label: "لغوشده", color: "bg-red-100 text-red-700", dot: "bg-red-500" },
-  };
+const statusMap: Record<
+  OrderStatus,
+  { label: string; color: string; dot: string }
+> = {
+  pending: {
+    label: "در انتظار",
+    color: "bg-orange-100 text-orange-700",
+    dot: "bg-orange-500",
+  },
+  paid: {
+    label: "پرداخت‌شده",
+    color: "bg-emerald-100 text-emerald-700",
+    dot: "bg-emerald-500",
+  },
+  shipped: {
+    label: "ارسال‌شده",
+    color: "bg-blue-100 text-blue-700",
+    dot: "bg-blue-500",
+  },
+  delivered: {
+    label: "تحویل‌شده",
+    color: "bg-green-100 text-green-700",
+    dot: "bg-green-500",
+  },
+  cancelled: {
+    label: "لغوشده",
+    color: "bg-red-100 text-red-700",
+    dot: "bg-red-500",
+  },
+};
 
 export default function OrderCard({
   order,
@@ -123,10 +145,9 @@ export default function OrderCard({
           </div>
 
           {order.address ? (
-            
-            <p className="inline-flex text-xs text-muted-foreground truncate max-w-[700px]">
-              <MapPin className="w-3.5 h-3.5" />
-              آدرس: {order.address}
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground max-w-full">
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span className="min-w-0 truncate">آدرس: {order.address}</span>
             </p>
           ) : null}
         </div>
@@ -169,7 +190,9 @@ export default function OrderCard({
                     onClick={() => onChangeStatus(order.id, itemStatus)}
                     className="flex items-center justify-end gap-3"
                   >
-                    {isCurrent ? <Check className="w-4 h-4 text-green-600" /> : null}
+                    {isCurrent ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : null}
 
                     <div className="flex items-center gap-2">
                       <span>{statusMap[itemStatus].label}</span>
