@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn, formatPriceFa } from "@/lib/utils";
@@ -17,7 +23,7 @@ type ReportCreateModalProps = {
   type: ReportType;
   targetId: string | number;
   title?: string;
-  pro_id?:string;
+  pro_id?: string;
   onSubmitted?: () => void;
 };
 
@@ -36,59 +42,58 @@ export default function ReportCreateModal({
   const canSubmit = reason.trim().length >= 3 && !loading;
 
   async function handleSubmit() {
-  try {
-    const access = tokenStore.getAccess?.();
-    if (!access) {
-      toast("برای ثبت گزارش، اول وارد شوید.");
-      return;
+    try {
+      const access = tokenStore.getAccess?.();
+      if (!access) {
+        toast("برای ثبت گزارش، اول وارد شوید.");
+        return;
+      }
+      setLoading(true);
+
+      const basePayload: any = {
+        type,
+        reason: reason.trim(),
+        description: details.trim() || undefined,
+        product_id: null,
+        target_user_id: null,
+        comment_id: null,
+      };
+
+      if (type === "product") {
+        basePayload.product_id = targetId;
+      } else if (type === "comment") {
+        basePayload.comment_id =
+          typeof targetId === "string" ? Number(targetId) : targetId;
+        basePayload.product_id = pro_id ? pro_id : null;
+      } else if (type === "user") {
+        basePayload.target_user_id = targetId;
+      }
+
+      const res = await apiFetch("/reports", {
+        method: "POST",
+        body: JSON.stringify(basePayload),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || "خطا در ثبت گزارش");
+      }
+
+      toast.success("گزارش ثبت شد");
+      setReason("");
+      setDetails("");
+      onOpenChange(false);
+      onSubmitted?.();
+    } catch (e: any) {
+      toast.error(e?.message || "خطا");
+    } finally {
+      setLoading(false);
     }
-    setLoading(true);
-
-    const basePayload: any = {
-      type,
-      reason: reason.trim(),
-      description: details.trim() || undefined,
-      product_id: null,
-      target_user_id: null,
-      comment_id: null,
-    };
-
-    if (type === "product") {
-      basePayload.product_id = targetId; 
-    } else if (type === "comment") {
-      basePayload.comment_id =
-        typeof targetId === "string" ? Number(targetId) : targetId;
-      basePayload.product_id = pro_id ? pro_id : null; 
-    } else if (type === "user") {
-      basePayload.target_user_id = targetId;
-    }
-
-    const res = await apiFetch("/reports", {
-      method: "POST",
-      body: JSON.stringify(basePayload),
-    });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(txt || "خطا در ثبت گزارش");
-    }
-
-    toast.success("گزارش ثبت شد");
-    setReason("");
-    setDetails("");
-    onOpenChange(false);
-    onSubmitted?.();
-  } catch (e: any) {
-    toast.error(e?.message || "خطا");
-  } finally {
-    setLoading(false);
   }
-}
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="w-[95vw] max-w-[520px] overflow-x-hidden break-words">
         <DialogHeader className="text-right">
           <DialogTitle className="text-right">{title}</DialogTitle>
         </DialogHeader>
@@ -110,15 +115,19 @@ export default function ReportCreateModal({
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium text-right">توضیحات (اختیاری)</div>
+            <div className="text-sm font-medium text-right">
+              توضیحات (اختیاری)
+            </div>
             <Textarea
+              dir="rtl"
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               rows={4}
               maxLength={1000}
               placeholder="اگر لازم می‌دونی توضیح بیشتری بده..."
-              className="text-right"
+              className="w-full max-w-full min-w-0 resize-none text-right whitespace-pre-wrap break-words [overflow-wrap:anywhere] overflow-x-hidden box-border"
             />
+
             <div className="text-xs text-muted-foreground text-left">
               {formatPriceFa(details.trim().length)}/۱۰۰۰
             </div>
