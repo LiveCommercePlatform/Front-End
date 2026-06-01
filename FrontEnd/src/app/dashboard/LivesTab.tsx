@@ -11,30 +11,25 @@ import StreamUpsertModal from "@/components/stream/StreamUpsertModal";
 import type { Stream, StreamStatus } from "@/types";
 import { Plus } from "lucide-react";
 import { useLiveRooms } from "@/context/LiveRoomContext";
-import toast from "react-hot-toast";
 import NotFound from "@/components/ui/NotFound";
 import { tokenStore } from "@/lib/token";
 
 export default function LivesTab() {
   const router = useRouter();
-  const { lives, fetchLiveRooms, deleteLiveRoom, startStream, endStream } =
+  const { lives, setParams, deleteLiveRoom, startStream, endStream } =
     useLiveRooms();
   const [status, setStatus] = useState<StreamStatus | "all">("all");
   const [openUpsert, setOpenUpsert] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<Stream | undefined>(undefined);
   const currentUserId = tokenStore.getUserId();
+  
   useEffect(() => {
-    fetchLiveRooms({
+    setParams({
       status: status == "all" ? undefined : status,
       host_id: currentUserId ? currentUserId : ""
     });
-  }, [status]);
-
-  // const filteredLives = useMemo(() => {
-  //   if (!hostId) return [];
-  //   return lives.filter((s) => s.HostID === hostId);
-  // }, [lives, hostId]);
+  }, [status,currentUserId,setParams]);
 
   const openCreate = () => {
     setMode("create");

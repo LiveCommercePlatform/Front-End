@@ -5,14 +5,28 @@ import { useRouter } from "next/navigation";
 import { formatPriceFa } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  ShoppingCart,
+  Plus,
+  Minus,
+  MoreVertical,
+} from "lucide-react";
 import clsx from "clsx";
 import { ProductCardProps } from "@/types";
 import { useCart } from "@/context/CartContext";
 import DeleteDialog from "@/components/ui/DeleteDialog";
 
-import ProfileCompleteModal from "./ProfileCompleteModal";
+import ProfileCompleteModal from "../ui/ProfileCompleteModal";
 import { useProducts } from "@/context/ProductContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import ReportCreateModal from "../reports/ReportCreateModal";
 
 export default function ProductCard({
   id,
@@ -40,10 +54,11 @@ export default function ProductCard({
   const count = getQty(id);
   const { deleteProduct } = useProducts();
   const [pendingAdd, setPendingAdd] = useState(false);
+  const [reportModal, setReportModal] = useState(false);
   const goToProduct = () => router.push(`/products/${id}`);
 
   const onAdd = async (e?: React.MouseEvent) => {
-    if(e) e.stopPropagation();
+    if (e) e.stopPropagation();
     await handleAddToCart({
       id: id,
       title: title,
@@ -85,17 +100,46 @@ export default function ProductCard({
               <h4 className="font-semibold text-sm leading-snug line-clamp-2">
                 {title}
               </h4>
+              <div className="flex items-center gap-2 shrink-0">
+                {showState && (
+                  <Badge
+                    variant="secondary"
+                    className={
+                      status === "active"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : ""
+                    }
+                  >
+                    {status === "active" ? "فعال" : "غیرفعال"}
+                  </Badge>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="rounded-md p-1 hover:bg-muted transition"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
 
-              {showState && (
-                <Badge
-                  variant="secondary"
-                  className={
-                    status === "active" ? "bg-emerald-100 text-emerald-700" : ""
-                  }
-                >
-                  {status === "active" ? "فعال" : "غیرفعال"}
-                </Badge>
-              )}
+                  <DropdownMenuContent
+                    align="start"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DropdownMenuItem
+                      className="cursor-pointer justify-end gap-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setReportModal(true);
+                      }}
+                    >
+                      گزارش محصول
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
@@ -109,7 +153,7 @@ export default function ProductCard({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1 text-blue-600 border-blue-400"
+                      className="gap-1 text-blue-600 border-blue-400 hover:bg-blue-600"
                       onClick={onAdd}
                       disabled={stock == 0}
                     >
@@ -124,12 +168,12 @@ export default function ProductCard({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-blue-400 text-blue-600"
+                        className="border-blue-400 text-blue-600 hover:bg-blue-600"
                         onClick={(e) => {
                           e.stopPropagation();
                           increase(id);
                         }}
-                        disabled = {stock >= count }
+                        disabled={stock >= count}
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
@@ -141,7 +185,7 @@ export default function ProductCard({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-blue-400 text-blue-600"
+                        className="border-blue-400 text-blue-600 hover:bg-blue-600"
                         onClick={(e) => {
                           e.stopPropagation();
                           decrease(id);
@@ -218,6 +262,13 @@ export default function ProductCard({
             setPendingAdd(false);
           }
         }}
+      />
+      <ReportCreateModal
+        open={reportModal}
+        onOpenChange={setReportModal}
+        type="product"
+        targetId={id}
+        title="گزارش محصول"
       />
     </>
   );

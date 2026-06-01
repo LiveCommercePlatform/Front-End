@@ -11,7 +11,6 @@ import {
   Heart,
   Eye,
   ThumbsDown,
-  Star,
   ArrowRight,
   ShoppingCart,
   Minus,
@@ -19,6 +18,7 @@ import {
   Pencil,
   Coins,
   Boxes,
+  MoreVertical,
 } from "lucide-react";
 import { cn, formatPriceFa } from "@/lib/utils";
 import { tokenStore } from "@/lib/token";
@@ -36,10 +36,63 @@ import InfoCard from "@/components/products/InfoCard";
 import Loading from "@/components/ui/Loading";
 import NotFound from "@/components/ui/NotFound";
 import RatingCard from "@/components/products/RatingCard";
+import ReportCreateModal from "@/components/reports/ReportCreateModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+
+function applyLocalRatingUpdate(
+  prev: RatingData,
+  oldRating: number,
+  newRating: number,
+): RatingData {
+  const hadOldRating = oldRating >= 1 && oldRating <= 5;
+  const currentCount = prev.rating_count ?? 0;
+  const currentSum = (prev.rating_avg ?? 0) * currentCount;
+  const newBreakdown: Record<string, number> = {
+    "1": prev.breakdown?.["1"] ?? 0,
+    "2": prev.breakdown?.["2"] ?? 0,
+    "3": prev.breakdown?.["3"] ?? 0,
+    "4": prev.breakdown?.["4"] ?? 0,
+    "5": prev.breakdown?.["5"] ?? 0,
+  };
+  let nextCount = currentCount;
+  let nextSum = currentSum;
+  if (hadOldRating) {
+    console.log(Math.max(
+      0,
+      (newBreakdown[String(oldRating)] ?? 0) - 1,
+    ))
+    newBreakdown[String(oldRating)] = Math.max(
+      0,
+      (newBreakdown[String(oldRating)] ?? 0) - 1,
+    );
+    nextSum -= oldRating;
+  } else {
+    nextCount += 1;
+  }
+  newBreakdown[String(newRating)] = (newBreakdown[String(newRating)] ?? 0) + 1;
+  nextSum += newRating;
+  const nextAvg = nextCount > 0 ? nextSum / nextCount : 0;
+  return {
+    rating_avg: nextAvg,
+    rating_count: nextCount,
+    breakdown: newBreakdown,
+    user_rating: newRating,
+  };
+}
 
 export default function ProductDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const commentIdParam = searchParams.get("commentId");
+  const commentId = commentIdParam ? Number(commentIdParam) : null;
   const id = Array.isArray(params.id) ? params.id[0] : (params.id as string);
   const {
     handleAddToCart,
@@ -65,6 +118,37 @@ export default function ProductDetailsPage() {
   const [comments, setComments] = useState<any[]>([]);
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
+  const [highlightCommentId, setHighlightCommentId] = useState<number | null>(
+    null,
+  );
+  const [reportState, setReportState] = useState<{
+    open: boolean;
+    type: "product" | "comment" | "user";
+    targetId: string | number;
+    title: string;
+    pro_id?: string;
+  }>({
+    open: false,
+    type: "product",
+    targetId: "",
+    title: "ثبت گزارش",
+  });
+  useEffect(() => {
+    if (!commentId) return;
+    if (!comments?.length) return;
+    const exists = comments.some((c: any) => Number(c.id) === commentId);
+    if (!exists) return;
+    const t = setTimeout(() => {
+      const el = document.getElementById(`comment-${commentId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setHighlightCommentId(commentId);
+        setTimeout(() => setHighlightCommentId(null), 2500);
+      }
+    }, 50);
+
+    return () => clearTimeout(t);
+  }, [commentId, comments]);
 
   async function handleCommentSubmit() {
     try {
@@ -92,21 +176,30 @@ export default function ProductDetailsPage() {
       setCommentLoading(false);
     }
   }
-async function handleSumbitRating(val:number) {
+  async function handleSubmitRating(val: number) {
+    if (!tokenStore.getAccess()) {
+      toast("برای ثبت امتیاز، اول وارد شوید.");
+      return;
+    }
+    const prevStats = stats;
+    if (stats) {
+      setStats(applyLocalRatingUpdate(stats,my_rating, val));
+    }
     try {
-      if (!tokenStore.getAccess()) {
-        toast("برای ثبت کامنت، اول وارد شوید.");
-        router.push("/login");
-        return;
-      }
       const res = await apiFetch(`/products/${id}/rating`, {
         method: "POST",
         body: JSON.stringify({ rating: val }),
       });
-      if (!res.ok) throw new Error("خطا در ثبت ریتینگ");
+
+      if (!res.ok) {
+        throw new Error("خطا در ثبت امتیاز");
+      }
+
+      toast("امتیاز ثبت شد.");
     } catch (e: any) {
-      // toast.error(e?.message || "خطا");
-    }
+      // if (prevStats) setStats(prevStats);
+      toast(e?.message || "خطا در ثبت امتیاز");
+    } finally {setMyRating(val)};
   }
 
   async function handleDeleteRating() {
@@ -115,46 +208,38 @@ async function handleSumbitRating(val:number) {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("خطا در ریتینگ ");
-    } catch (e: any) {
-      // toast.error(e?.message || "خطا");
-    }
+    } catch (e: any) {}
   }
 
   useEffect(() => {
-  if (!id) return;
+    if (!id) return;
 
-  async function load() {
-    try {
-      setLoading(true);
+    async function load() {
+      try {
+        setLoading(true);
 
-      const [
-        product_,
-        engagement,
-        stat_,
-        comments_,
-        myrating,
-      ] = await Promise.all([
-        getProductByIdCached(id),
-        getMyEngagementCached(id),
-        getStatCached(id),
-        fetchComments(id),
-        getMystatCached(id),
-      ]);
+        const [product_, engagement, stat_, comments_, myrating] =
+          await Promise.all([
+            getProductByIdCached(id),
+            getMyEngagementCached(id),
+            getStatCached(id),
+            fetchComments(id),
+            getMystatCached(id),
+          ]);
 
-      setProduct({ ...product_, ...engagement });
-      setComments(comments_ ?? []);
-      setStats(stat_);
-      setMyRating(myrating);
-    } catch (e: any) {
-      toast.error(e?.message || "خطا در دریافت محصول");
-    } finally {
-      setLoading(false);
+        setProduct({ ...product_, ...engagement });
+        setComments(comments_ ?? []);
+        setStats(stat_);
+        setMyRating(myrating);
+      } catch (e: any) {
+        toast.error(e?.message || "خطا در دریافت محصول");
+      } finally {
+        setLoading(false);
+      }
     }
-  }
 
-  load();
-}, [id]);
-
+    load();
+  }, [id]);
 
   const handleDeleteMedia = async (mediaId: string) => {
     try {
@@ -200,9 +285,19 @@ async function handleSumbitRating(val:number) {
       <div className="flex items-center justify-between">
         <div className="text-right">
           <h1 className="text-lg md:text-2xl font-semibold">{product.title}</h1>
-          <div className="text-xs opacity-60">
-            {product.owner?.name ? `مالک: ${product.owner.name}` : ""}
-          </div>
+          {product.owner?.name && product.owner?.id ? (
+  <Link
+    href={`/profile/${product.owner.id}`}
+    className="text-xs opacity-60 hover:opacity-100 hover:underline transition"
+  >
+    {`مالک: ${product.owner.name}`}
+  </Link>
+) : (
+  <div className="text-xs opacity-60">
+    {product.owner?.name ? `مالک: ${product.owner.name}` : ""}
+  </div>
+)}
+
         </div>
 
         <Button
@@ -350,11 +445,26 @@ async function handleSumbitRating(val:number) {
 
               {!isOwner && product.stock > 0 && (
                 <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-2 border-rose-300 text-rose-600 hover:bg-rose-600"
+                    onClick={() => {
+                      setReportState({
+                        open: true,
+                        type: "product",
+                        targetId: product.id,
+                        title: "گزارش محصول",
+                      });
+                    }}
+                  >
+                    گزارش
+                  </Button>
                   {count === 0 ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1 text-blue-600 border-blue-400"
+                      className="gap-1 text-blue-600 border-blue-400 hover:bg-blue-600"
                       onClick={onAdd}
                     >
                       <ShoppingCart className="w-4 h-4" />
@@ -365,7 +475,7 @@ async function handleSumbitRating(val:number) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-blue-400 text-blue-600"
+                        className="border-blue-400 text-blue-600 hover:bg-blue-600"
                         onClick={() => increase(product.id)}
                       >
                         <Plus className="w-4 h-4" />
@@ -378,7 +488,7 @@ async function handleSumbitRating(val:number) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-blue-400 text-blue-600"
+                        className="border-blue-400 text-blue-600 hover:bg-blue-600"
                         onClick={() => decrease(product.id)}
                       >
                         <Minus className="w-4 h-4" />
@@ -388,7 +498,11 @@ async function handleSumbitRating(val:number) {
                 </div>
               )}
             </div>
-            <RatingCard my_rating={my_rating} onDelete={handleDeleteRating} onRate={handleSumbitRating}/>
+            <RatingCard
+              my_rating={my_rating}
+              onDelete={handleDeleteRating}
+              onRate={handleSubmitRating}
+            />
           </CardContent>
         </Card>
         <Card className="md:col-span-3">
@@ -409,12 +523,6 @@ async function handleSumbitRating(val:number) {
                 },
                 user_rating: stats?.user_rating ?? null,
               }}
-              onRate={async (value) => {
-                console.log("submit rating:", value);
-
-                // اینجا API صدا می‌زنی
-                // await rateProduct(product.id, value);
-              }}
             />
             <Card className="border rounded-xl">
               <CardHeader className="text-right font-medium">نظرات</CardHeader>
@@ -425,10 +533,56 @@ async function handleSumbitRating(val:number) {
                     comments.map((c: any) => (
                       <div
                         key={c.id}
-                        className="rounded-xl border p-3 flex flex-col gap-2"
+                        id={`comment-${c.id}`}
+                        className={cn(
+                          "rounded-xl border p-3 flex flex-col gap-2 transition",
+                          highlightCommentId === c.id &&
+                            "border-teal-500 ring-2 ring-teal-400/40 bg-teal-50/30",
+                        )}
                       >
-                        <div className="text-xs opacity-60 text-left">
-                          {new Date(c.created_at).toLocaleDateString("fa-IR")}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="text-xs opacity-60 text-left">
+                            {new Date(c.created_at).toLocaleDateString("fa-IR")}
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="rounded-md p-1 hover:bg-muted transition"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem
+                                className="cursor-pointer justify-end gap-2"
+                                onClick={() =>
+                                  setReportState({
+                                    open: true,
+                                    type: "comment",
+                                    targetId: c.id,
+                                    pro_id: product.id,
+                                    title: "گزارش کامنت",
+                                  })
+                                }
+                              >
+                                گزارش کامنت
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer justify-end gap-2"
+                                onClick={() =>
+                                  setReportState({
+                                    open: true,
+                                    type: "user",
+                                    targetId: c.user_id,
+                                    title: "گزارش کاربر",
+                                  })
+                                }
+                              >
+                                گزارش کاربر
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                         <p className="text-sm opacity-80 leading-relaxed text-right">
                           {c.content}
@@ -458,7 +612,7 @@ async function handleSumbitRating(val:number) {
 
                   <div className="flex items-center justify-between">
                     <span className="text-xs opacity-60">
-                      {commentText.trim().length}/500
+                      {formatPriceFa(commentText.trim().length)}/۵۰۰
                     </span>
 
                     <Button
@@ -481,6 +635,19 @@ async function handleSumbitRating(val:number) {
         onCompleted={() => {
           onAdd();
         }}
+      />
+      <ReportCreateModal
+        open={reportState.open}
+        onOpenChange={(open) =>
+          setReportState((prev) => ({
+            ...prev,
+            open,
+          }))
+        }
+        type={reportState.type}
+        targetId={reportState.targetId}
+        title={reportState.title}
+        pro_id={reportState.pro_id}
       />
     </div>
   );

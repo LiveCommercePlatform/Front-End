@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -11,7 +12,7 @@ import React, {
 import toast from "react-hot-toast";
 import { apiFetch } from "@/lib/api";
 import type { Stream, LiveRoomStats, ReactionType } from "@/types";
-import { stat } from "fs";
+import { usePathname } from "next/navigation";
 
 /* ================= Types ================= */
 
@@ -108,6 +109,7 @@ export function LiveRoomProvider({
       ...(initialParams ?? {}),
     },
   });
+  const pathname = usePathname();
   const CACHE_TTL = 20_000; // بیست ثانیه به میلی‌ثانیه
   const listAbortRef = useRef<AbortController | null>(null);
   const listCacheRef = useRef<Map<string, { data: any, timestamp: number }>>(new Map());
@@ -133,68 +135,77 @@ export function LiveRoomProvider({
     }
   }, []);
 
-  const setParams = useCallback((next: Partial<GetLiveRoomsParams>) => {
-    setState((s) => {
-      const newParams = { ...s.params, ...next };
-      void fetchLiveRooms(newParams);
-      return { ...s, params: newParams };
+const fetchLiveRooms = useCallback(async (params: GetLiveRoomsParams) => {
+  const key = stableKey(params);
+
+  const cachedEntry = listCacheRef.current.get(key);
+  const now = Date.now();
+
+  if (cachedEntry && now - cachedEntry.timestamp < CACHE_TTL) {
+    setState((s) => ({
+      ...s,
+      lives: cachedEntry.data ?? [],
+      loading: false,
+      error: null,
+    }));
+    return;
+  }
+
+  if (listAbortRef.current) listAbortRef.current.abort();
+  const controller = new AbortController();
+  listAbortRef.current = controller;
+
+  setState((s) => ({ ...s, loading: true, error: null }));
+
+  try {
+    const qs = buildSearchParams(params);
+    const res = await apiFetch(`/live-rooms?${qs}`, {
+      method: "GET",
+      signal: controller.signal,
     });
-  }, []);
 
-  const fetchLiveRooms = useCallback(
-  async (p?: GetLiveRoomsParams) => {
-    const params = p ?? state.params;
-    const key = stableKey(params);
+    if (!res.ok) throw new Error("خطا در دریافت لیست لایوروم‌ها");
 
-    const cachedEntry = listCacheRef.current.get(key);
-    const now = Date.now();
-    if (cachedEntry && (now - cachedEntry.timestamp < CACHE_TTL)) {
-      setState((s) => ({
-        ...s,
-        lives: cachedEntry.data ?? [],
-        loading: false,
-        error: null,
-        params, 
-      }));
-      return;
-    }
+    const json: LiveRoomsResponse<Stream> = await res.json();
 
-    if (listAbortRef.current) listAbortRef.current.abort();
-    const controller = new AbortController();
-    listAbortRef.current = controller;
+    listCacheRef.current.set(key, { data: json, timestamp: Date.now() });
 
-    setState((s) => ({ ...s, loading: true, error: null, params }));
+    setState((s) => ({
+      ...s,
+      lives: json ?? [],
+      loading: false,
+      error: null,
+    }));
+  } catch (e: any) {
+    if (e?.name === "AbortError") return;
+    setState((s) => ({
+      ...s,
+      loading: false,
+      error: e?.message ?? "خطا",
+    }));
+  }
+}, [apiFetch]);
 
-    try {
-      const qs = buildSearchParams(params);
-      const res = await apiFetch(`/live-rooms?${qs}`, {
-        method: "GET",
-        signal: controller.signal,
-      });
+const shallowEqual = (a: Record<string, any>, b: Record<string, any>) => {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const k of aKeys) if (a[k] !== b[k]) return false;
+  return true;
+};
 
-      if (!res.ok) throw new Error("خطا در دریافت لیست لایوروم‌ها");
-      
-      const json: LiveRoomsResponse<Stream> = await res.json();
+const setParams = useCallback((next: Partial<GetLiveRoomsParams>) => {
+  setState((s) => {
+    const newParams = { ...s.params, ...next };
+    if (shallowEqual(newParams as any, s.params as any)) return s;
+    return { ...s, params: newParams };
+  });
+}, []);
 
-      listCacheRef.current.set(key, {
-        data: json,
-        timestamp: Date.now()
-      });
-
-      setState((s) => ({
-        ...s,
-        lives: json ?? [],
-        loading: false,
-        error: null,
-        params,
-      }));
-    } catch (e: any) {
-      if (e?.name === "AbortError") return;
-      setState((s) => ({ ...s, loading: false, error: e?.message ?? "خطا", params }));
-    }
-  },
-  [state.params] 
-);
+  useEffect(() => {
+    if (!pathname?.includes("Live_Rooms")) return;
+    void fetchLiveRooms(state.params);
+  }, [pathname, state.params, fetchLiveRooms]);
 
 
   const refresh = useCallback(async () => {

@@ -17,6 +17,7 @@ export async function apiFetch(
   options: ApiFetchOptions = {}
 ): Promise<Response> {
   const { authMode = "required", ...fetchOptions } = options;
+console.log(url)
 
   const token = tokenStore.getAccess();
   const headers: any = {
@@ -35,7 +36,6 @@ export async function apiFetch(
     ...fetchOptions,
     headers,
   });
-
   if (res.status !== 401) return res;
 
   // اگر auth اختیاری است اصلاً refresh نکن

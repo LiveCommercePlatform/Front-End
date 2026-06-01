@@ -13,7 +13,6 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { CartProvider } from "@/context/CartContext";
 import { ProductsProvider } from "@/context/ProductContext";
-import { DashboardProvider } from "@/context/DashboardContext";
 import { LiveRoomProvider } from "@/context/LiveRoomContext";
 
 export default function RootLayout({
@@ -46,9 +45,7 @@ export default function RootLayout({
             <SidebarProvider>
               <ProductsProvider>
               <LiveRoomProvider>
-                <DashboardProvider> 
                 <LayoutContent>{children}</LayoutContent>
-                </DashboardProvider> 
               </LiveRoomProvider>
               </ProductsProvider>
             </SidebarProvider>

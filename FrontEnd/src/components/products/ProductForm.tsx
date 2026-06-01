@@ -632,7 +632,7 @@ export default function ProductForm({
                       variant="outline"
                       disabled={!customTag.trim()}
                       onClick={addCustomTag}
-                      className="shrink-0"
+                      className="shrink-0 text-blue-600 border-blue-400 hover:bg-blue-600"
                     >
                       افزودن
                     </Button>

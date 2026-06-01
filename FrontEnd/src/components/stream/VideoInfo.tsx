@@ -235,7 +235,7 @@ export function VideoInfo({
                           variant="ghost"
                           size="sm"
                           onClick={() => onPin(lp.ProductID, !lp.IsPinned)}
-                          className="h-9 rounded-lg gap-1.5"
+                          className="h-9 rounded-lg gap-1.5 hover:bg-amber-600"
                         >
                           <Pin className="h-4 w-4" />
                           <span className="text-xs">
@@ -247,7 +247,7 @@ export function VideoInfo({
                           variant="ghost"
                           size="sm"
                           onClick={() => onDelete(lp.ProductID)}
-                          className="h-9 rounded-lg gap-1.5 text-destructive"
+                          className="h-9 rounded-lg gap-1.5 text-destructive hover:bg-rose-600"
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="text-xs">حذف</span>
@@ -258,8 +258,9 @@ export function VideoInfo({
                     <div className="col-span-2 sm:w-32">
                       {getQty(lp.ProductID) === 0 ? (
                         <Button
+                          variant="outline"
                           onClick={() => onAdd(lp)}
-                          className="w-full h-9 rounded-lg gap-2"
+                          className="w-full h-9 rounded-lg gap-2 text-blue-600 border-blue-400 hover:bg-blue-600"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           افزودن به سبد
@@ -268,8 +269,8 @@ export function VideoInfo({
                         <div className="flex items-center justify-between bg-muted rounded-lg h-9 px-1">
                           <Button
                             size="icon"
-                            variant="ghost"
-                            className="h-7 w-7"
+                          variant="outline"
+                            className="h-7 w-7 text-blue-600 border-blue-400 hover:bg-blue-600"
                             onClick={() => increase(lp.ProductID)}
                           >
                             <Plus className="w-4 h-4" />
@@ -281,8 +282,8 @@ export function VideoInfo({
 
                           <Button
                             size="icon"
-                            variant="ghost"
-                            className="h-7 w-7"
+                          variant="outline"
+                            className="h-7 w-7 text-blue-600 border-blue-400 hover:bg-blue-600"
                             onClick={() => decrease(lp.ProductID)}
                           >
                             <Minus className="w-4 h-4" />

@@ -47,7 +47,6 @@ export default function Guard({
       return;
     }
 
-    /* 4️⃣ نقش */
     if (roles && roles.length > 0) {
       if (!role || !roles.includes(role)) {
         router.replace(redirectTo || "/403");

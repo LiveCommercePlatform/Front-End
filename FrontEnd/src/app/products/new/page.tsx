@@ -1,5 +1,6 @@
 "use client";
 
+import Guard from "@/components/auth/Guard";
 import ProductForm, {
   ProductFormValues,
 } from "@/components/products/ProductForm";
@@ -60,5 +61,9 @@ export default function CreateProductPage() {
     }
   };
 
-  return <ProductForm mode="create" onSubmit={handleCreate} />;
+  return (
+    <Guard requireAuth>
+      <ProductForm mode="create" onSubmit={handleCreate} />
+    </Guard>
+  );
 }
