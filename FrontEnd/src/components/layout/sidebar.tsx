@@ -18,20 +18,86 @@ import {
   Package,
   Radio,
   Settings,
+  Shield,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { tokenStore } from "@/lib/token";
 
 const sidebarItems = [
-  { href: "/", icon: Home, label: "صفحه اصلی" },
-  { href: "/dashboard", icon: LayoutDashboard, label: "داشبورد" },
-  { href: "/products", icon: Package, label: "محصولات" },
-  { href: "/Live_Rooms", icon: Radio, label: "لایو استریم ها" },
-  { href: "/products/new", icon: Plus, label: "افزودن محصول" },
-  { href: "/seller", icon: Users, label: "فروشندگان" },
-  { href: "/dashboard/settings", icon: Settings, label: "تنظیمات" },
-];
+  { href: "/", icon: Home, label: "صفحه اصلی", roles: "all", exact: false },
+  {
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    label: "داشبورد",
+    roles: "all",
+    exact: false,
+  },
+  {
+    href: "/products",
+    icon: Package,
+    label: "محصولات",
+    roles: "all",
+    exact: false,
+  },
+  {
+    href: "/Live_Rooms",
+    icon: Radio,
+    label: "لایو استریم ها",
+    roles: "all",
+    exact: false,
+  },
+  {
+    href: "/products/new",
+    icon: Plus,
+    label: "افزودن محصول",
+    roles: "all",
+    exact: true,
+  },
+  {
+    href: "/seller",
+    icon: Users,
+    label: "فروشندگان",
+    roles: "all",
+    exact: false,
+  },
+  {
+    href: "/orders",
+    icon: Users,
+    label: "سفارشات من",
+    roles: "all",
+    exact: false,
+  },
+  {
+    href: "/dashboard/settings",
+    icon: Settings,
+    label: "تنظیمات",
+    roles: "all",
+    exact: true,
+  },
+  {
+    href: "/admin_dashboard",
+    icon: Shield,
+    label: "ادمین پنل",
+    roles: "admin",
+    exact: false,
+  },
+] as const;
+
+const normalizePath = (path: string) => {
+  if (!path) return "/";
+  return path === "/" ? "/" : path.replace(/\/+$/, "");
+};
+
+const isPathMatch = (pathname: string, href: string, exact?: boolean) => {
+  const current = normalizePath(pathname);
+  const target = normalizePath(href);
+
+  if (exact) return current === target;
+  if (target === "/") return current === "/";
+
+  return current === target || current.startsWith(target + "/");
+};
 
 export function Sidebar() {
   const { collapsed, mobileOpen, closeMobileSidebar } = useSidebar();
@@ -52,10 +118,10 @@ export function Sidebar() {
       <div
         onClick={closeMobileSidebar}
         className={clsx(
-          "fixed inset-0 z-40  transition-opacity bg-background w-40 md:hidden",
+          "fixed inset-0 z-40 transition-opacity bg-background/80 md:hidden",
           mobileOpen
             ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+            : "opacity-0 pointer-events-none",
         )}
       />
 
@@ -65,7 +131,9 @@ export function Sidebar() {
           "h-[calc(100vh-3rem)] md:h-[calc(100vh-3.5rem)]",
           "border-s bg-muted px-2 transition-all duration-300",
           "md:translate-x-0",
-          mobileOpen ? "translate-x-0 w-40" : "translate-x-full md:translate-x-0"
+          mobileOpen
+            ? "translate-x-0 w-40"
+            : "translate-x-full md:translate-x-0",
         )}
         style={{
           width: collapsed ? "4rem" : mobileOpen ? "" : "14rem",
@@ -97,7 +165,7 @@ function SidebarButton({
       className={clsx(
         "w-full flex items-center gap-3 justify-start px-3 h-10",
         collapsed && "justify-center px-0",
-        isActive && "ring-2 ring-primary"
+        isActive && "ring-2 ring-primary",
       )}
     >
       <Icon className="w-5 h-5 shrink-0" />
@@ -114,13 +182,32 @@ function SidebarContent({
   onItemClick?: () => void;
 }) {
   const pathname = usePathname();
+  const userRole = tokenStore.getRole();
+
+  const visibleItems = useMemo(() => {
+    return sidebarItems.filter(
+      (item) => item.roles === "all" || item.roles === userRole,
+    );
+  }, [userRole]);
+
+  const activeHref = useMemo(() => {
+    const matchedItems = visibleItems.filter((item) =>
+      isPathMatch(pathname, item.href, item.exact),
+    );
+
+    if (matchedItems.length === 0) return null;
+
+    return matchedItems.sort(
+      (a, b) => normalizePath(b.href).length - normalizePath(a.href).length,
+    )[0].href;
+  }, [pathname, visibleItems]);
 
   return (
     <TooltipProvider delayDuration={100}>
       <div className="flex flex-col gap-2 py-4 w-full">
-        {sidebarItems.map((item) => {
+        {visibleItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive = item.href === activeHref;
 
           return (
             <div key={item.href}>

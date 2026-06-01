@@ -20,6 +20,7 @@ import {
 import type { Stream, StreamStatus } from "@/types/stream";
 import DeleteDialog from "../ui/DeleteDialog";
 import { tokenStore } from "@/lib/token";
+import { PerDate } from "@/lib/utils";
 
 function statusLabel(s: StreamStatus) {
   switch (s) {
@@ -71,17 +72,7 @@ export default function StreamCard({
 
  const meta = useMemo(() => {
   const when = stream.Status === "live" ? stream.StartedAt : stream.EndedAt;
-  
-  if (!when) return "نامشخص";
-
-  return new Date(when).toLocaleString("fa-IR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  return PerDate(when);
 }, [stream]);
 
 

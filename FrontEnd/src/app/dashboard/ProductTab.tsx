@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import ListToolbar from "@/components/ui/ListToolbar";
 import { Button } from "@/components/ui/button";
-import ProductCard from "@/components/ui/ProductCard";
+import ProductCard from "@/components/products/ProductCard";
 import { ProductStatus, Product } from "@/types";
 import Pagination from "@/components/ui/Pagination";
 import { tokenStore } from "@/lib/token";
@@ -23,6 +23,7 @@ export default function ProductsTab() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ProductStatus>("all");
   const [page, setPage] = useState(1);
+
   useEffect(() => {
     setParams({
       page,
@@ -33,6 +34,17 @@ export default function ProductsTab() {
         status === "active" ? true : status === "inactive" ? false : undefined,
     });
   }, [page, search, status, setParams]);
+
+  // useEffect(() => {
+  //   void fetchProducts({
+  //     page,
+  //     limit: PAGE_SIZE,
+  //     q: search || undefined,
+  //     owner_id: tokenStore.getUserId() ?? "",
+  //     in_stock:
+  //       status === "active" ? true : status === "inactive" ? false : undefined,
+  //   });
+  // }, [page, search, status]);
 
   const products = useMemo<Product[]>(
     () =>

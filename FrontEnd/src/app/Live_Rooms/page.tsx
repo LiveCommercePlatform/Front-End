@@ -11,14 +11,14 @@ import { Calendar, Eye, PlayCircle, Radio, ShoppingBag } from "lucide-react";
 import NotFound from "@/components/ui/NotFound";
 
 export default function LivesPage() {
-  const { lives, fetchLiveRooms, loading, refresh } = useLiveRooms();
+  const { lives, setParams, loading } = useLiveRooms();
   const [status, setStatus] = useState<StreamStatus | "all">("all");
 
   useEffect(() => {
-    fetchLiveRooms({
+    void setParams({
       status: status === "all" ? undefined : status,
     });
-  }, [status]);
+  }, [status, setParams]);
 
   if (loading) {
     return <Loading text="کمی صبر کنید، در حال بارگذاری لایو ها . . ." />;

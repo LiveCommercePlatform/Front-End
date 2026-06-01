@@ -2,13 +2,13 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Guard from "@/components/auth/Guard";
-import { useDashboard } from "@/context/DashboardContext";
+import { useDashboard} from "@/hooks/useDashboard";
 import Loading from "@/components/ui/Loading";
 
 const tabs = [
   { key: "products", label: "محصولات من" },
-  { key: "lives", label: "استریم‌ها" },
-  { key: "users", label: "مدیریت کاربران" },
+  { key: "Live_Rooms", label: "استریم‌ها" },
+  { key: "orders", label: "سفارشات" },
   { key: "settings", label: "پروفایل کاربری" },
 ];
 

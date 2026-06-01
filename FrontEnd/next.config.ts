@@ -9,6 +9,12 @@ images: {
         port: '', // معمولا خالیه
         pathname: '/**', // همه مسیرها
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "8080",
+        pathname: "/**", // اگر فقط uploads نیست و جاهای دیگه هم داری
+      },
     ],
   },};
 

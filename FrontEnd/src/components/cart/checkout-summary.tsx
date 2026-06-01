@@ -1,129 +1,124 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { formatPriceFa } from "@/lib/utils";
 import { CartItemType } from "@/types";
 import { Button } from "@/components/ui/button";
+import {
+  ShoppingBag,
+  Truck,
+  WalletCards,
+  ArrowRight,
+} from "lucide-react";
 
 type Props = {
   items: CartItemType[];
+  currentStep: number;
   onPlaceOrder?: () => void;
+
+  // اضافه شد
+  onBack?: () => void;
 };
 
-export function CheckoutSummary({ items, onPlaceOrder }: Props) {
-  const subTotal: number = items.reduce(
-    (s: number, it: CartItemType) => s + it.price * it.qty,
-    0
-  );
-  const [coupon, setCoupon] = useState<string>("");
-  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
-  const [giftWrap, setGiftWrap] = useState<boolean>(false);
+export function CheckoutSummary({
+  items,
+  currentStep,
+  onPlaceOrder,
+  onBack,
+}: Props) {
+  const itemCount = items.reduce((s, it) => s + it.qty, 0);
+  const subTotal = items.reduce((s, it) => s + it.price * it.qty, 0);
+  const shipping = subTotal > 0 ? 0 : 0;
+  const total = subTotal + shipping;
 
-  const discount: number = appliedCoupon === "MAX500" ? 50000 : 0;
-  const shipping: number = subTotal > 0 ? 0 : 0;
-  const total: number = subTotal - discount + shipping + (giftWrap ? 20000 : 0);
+  const buttonLabel =
+    currentStep === 0
+      ? "ادامه به مرحله بعد"
+      : currentStep === 1
+        ? "ادامه به پرداخت"
+        : "ثبت سفارش";
 
-  const applyCoupon = () => {
-    if (coupon.trim().toUpperCase() === "MAX500") setAppliedCoupon("MAX500");
-    else setAppliedCoupon(null);
-  };
+  const showBack = currentStep === 1 || currentStep === 2;
 
   return (
-<aside className="sticky top-4 md:top-6 space-y-4 w-full md:w-full lg:w-96">
-      <div className="border rounded-lg p-4 bg-background shadow-sm">
-        <div className="flex justify-between items-center">
-          <strong className="text-base sm:text-lg md:text-xl">کوپن</strong>
-          <span className="text-sm sm:text-base md:text-lg text-muted-foreground">
-            {appliedCoupon ?? "هیچ"}
-          </span>
-        </div>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            applyCoupon();
-          }}
-          className="mt-3 flex flex-col sm:flex-row gap-2"
-        >
-          <input
-            value={coupon}
-            onChange={(e) => setCoupon(e.target.value)}
-            placeholder="کد کوپن را وارد کنید"
-            className="flex-1 border rounded px-3 py-2 text-sm sm:text-base md:text-lg focus:ring-2 focus:ring-blue-400 outline-none"
-          />
-          <Button
-            type="submit"
-            className="px-3 py-2 rounded text-sm sm:text-base md:text-lg w-full sm:w-auto"
-          >
-            اعمال
-          </Button>
-        </form>
-
-        {appliedCoupon && (
-          <div className="mt-2 text-sm sm:text-base md:text-lg text-green-600">
-            کوپن {appliedCoupon} اعمال شد
+    <aside className="sticky top-4 md:top-6 w-full lg:w-96">
+      <div className="overflow-hidden rounded-2xl border border-border/60 bg-background shadow-sm">
+        <div className="border-b bg-muted/30 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <WalletCards className="h-5 w-5 text-primary" />
+            <h3 className="text-sm sm:text-base font-semibold">خلاصه سفارش</h3>
           </div>
-        )}
-      </div>
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+            بررسی نهایی مبلغ قبل از ثبت سفارش
+          </p>
+        </div>
 
-      {/* Gifting */}
-      <div className="border rounded-lg p-4 bg-background shadow-sm">
-        <div className="flex items-center justify-between">
-          <span className="font-medium text-base sm:text-lg md:text-xl">
-            بسته‌بندی هدیه
-          </span>
-          <label className="inline-flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={giftWrap}
-              onChange={() => setGiftWrap((s) => !s)}
-              className="w-4 h-4 sm:w-5 sm:h-5 accent-blue-500"
-            />
-          </label>
-        </div>
-        <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1">
-          ارسال پیام سفارشی یا بسته‌بندی هدیه (+۲۰۰۰۰)
-        </p>
-      </div>
-
-      {/* Price Details */}
-      <div className="border rounded-lg bg-background p-4 shadow-sm space-y-2">
-        <div className="flex justify-between text-sm sm:text-base md:text-lg">
-          <span>مبلغ سفارش</span>
-          <span>{formatPriceFa(subTotal)} تومان</span>
-        </div>
-        <div className="flex justify-between text-sm sm:text-base md:text-lg">
-          <span>تخفیف کوپن</span>
-          <span className="text-green-600">
-            - {formatPriceFa(discount)} تومان
-          </span>
-        </div>
-        <div className="flex justify-between text-sm sm:text-base md:text-lg">
-          <span>هزینه ارسال</span>
-          <span className="text-green-600">
-            {shipping === 0
-              ? "رایگان"
-              : formatPriceFa(shipping)}
-          </span>
-        </div>
-        {giftWrap && (
-          <div className="flex justify-between text-sm sm:text-base md:text-lg">
-            <span>بسته‌بندی هدیه</span>
-            <span>{formatPriceFa((20000))} تومان</span>
+        <div className="p-4 space-y-4">
+          <div className="flex items-center justify-between text-sm sm:text-base">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <ShoppingBag className="h-4 w-4" />
+              <span>تعداد کالا</span>
+            </div>
+            <span className="font-medium">{formatPriceFa(itemCount)} عدد</span>
           </div>
-        )}
-        <div className="border-t pt-3 mt-2 flex justify-between font-bold text-base sm:text-lg md:text-xl">
-          <span>مبلغ قابل پرداخت</span>
-          <span>{formatPriceFa(total)} تومان</span>
-        </div>
 
-        <div className="mt-4">
-          <Button
-            className="w-full text-sm sm:text-base md:text-lg py-2"
-            onClick={() => onPlaceOrder?.()}
-          >
-            ثبت سفارش
-          </Button>
+          <div className="flex items-center justify-between text-sm sm:text-base">
+            <span className="text-muted-foreground">مبلغ سفارش</span>
+            <span className="font-medium">{formatPriceFa(subTotal)} تومان</span>
+          </div>
+
+          <div className="flex items-center justify-between text-sm sm:text-base">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Truck className="h-4 w-4" />
+              <span>هزینه ارسال</span>
+            </div>
+            <span className="font-medium text-green-600">
+              {shipping === 0 ? "رایگان" : `${formatPriceFa(shipping)} تومان`}
+            </span>
+          </div>
+
+          {shipping === 0 && subTotal > 0 && (
+            <div className="rounded-xl bg-green-500/10 border border-green-500/20 px-3 py-2 text-xs sm:text-sm text-green-700">
+              هزینه ارسال سفارش شما رایگان محاسبه شد.
+            </div>
+          )}
+
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-base sm:text-lg font-semibold">
+                مبلغ قابل پرداخت
+              </span>
+              <span className="text-lg sm:text-xl font-extrabold text-primary">
+                {formatPriceFa(total)} تومان
+              </span>
+            </div>
+          </div>
+
+          {/* actions */}
+          <div className="space-y-2">
+            <Button
+              className="w-full h-11 sm:h-12 rounded-xl text-sm sm:text-base font-semibold"
+              onClick={() => onPlaceOrder?.()}
+            >
+              {buttonLabel}
+            </Button>
+
+            {showBack && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 sm:h-12 rounded-xl text-sm sm:text-base"
+                onClick={() => onBack?.()}
+              >
+                <ArrowRight className="h-4 w-4 ms-2" />
+                برگشت به مرحله قبل
+              </Button>
+            )}
+          </div>
+
+          <p className="text-[11px] sm:text-xs text-center text-muted-foreground leading-5">
+            با ادامه فرایند، شما شرایط و قوانین خرید را می‌پذیرید.
+          </p>
         </div>
       </div>
     </aside>

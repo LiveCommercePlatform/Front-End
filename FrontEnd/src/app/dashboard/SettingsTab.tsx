@@ -7,21 +7,18 @@ import { Eye, EyeOff } from "lucide-react";
 import { ProfileFormValues, PasswordFormValues } from "@/types";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 import { apiFetch } from "@/lib/api";
-import { useDashboard } from "@/context/DashboardContext";
+import { useDashboard } from "@/hooks/useDashboard";
 
-/* ================= MAIN ================= */
 
 export default function SettingsTab() {
   const { profile, refreshProfile } = useDashboard();
 
-  /* ================= PROFILE FORM ================= */
   const {
     register: registerProfile,
     handleSubmit: submitProfile,
     reset,
   } = useForm<ProfileFormValues>();
 
-  /* ================= PASSWORD FORM ================= */
   const {
     register: registerPassword,
     handleSubmit: submitPassword,
@@ -34,7 +31,6 @@ export default function SettingsTab() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  /* ================= PREFILL ================= */
   useEffect(() => {
     if (!profile) return;
 
@@ -49,11 +45,9 @@ export default function SettingsTab() {
 
   if (!profile) return null;
 
-  /* ================= VALIDATORS ================= */
   const isValidPhone = (phone: string) => /^09\d{9}$/.test(phone);
   const isValidPostalCode = (postal: string) => /^\d{10}$/.test(postal);
 
-  /* ================= UPDATE PROFILE ================= */
   const handleUpdateProfile = async (data: ProfileFormValues) => {
     if (data.phone && !isValidPhone(data.phone)) {
       toast.error("شماره تلفن باید ۱۱ رقم و با 09 شروع شود!");
@@ -82,7 +76,6 @@ export default function SettingsTab() {
     }
   };
 
-  /* ================= CHANGE PASSWORD ================= */
   const handleChangePassword = async (data: PasswordFormValues) => {
     if (data.newPassword.length < 6) {
       toast.error("رمز عبور باید حداقل ۶ کاراکتر باشد");
@@ -116,7 +109,6 @@ export default function SettingsTab() {
 
   return (
     <div className="w-full space-y-10">
-      {/* ===== Profile Form ===== */}
       <form onSubmit={submitProfile(handleUpdateProfile)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input label="نام" {...registerProfile("name")} />
@@ -148,8 +140,6 @@ export default function SettingsTab() {
       </form>
 
       <div className="h-1 bg-gray-200 rounded-xl" />
-
-      {/* ===== Password Form ===== */}
       <form onSubmit={submitPassword(handleChangePassword)} className="space-y-4">
         <PasswordInput
           label="پسورد فعلی"
@@ -182,7 +172,6 @@ export default function SettingsTab() {
   );
 }
 
-/* ================= SMALL COMPONENTS ================= */
 
 function Input({ label, ...props }: any) {
   return (

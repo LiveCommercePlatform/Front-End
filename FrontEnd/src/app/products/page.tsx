@@ -1,7 +1,7 @@
 "use client";
 // کتگوری هنوز درست نشده
 import { useEffect, useState } from "react";
-import ProductCard from "@/components/ui/ProductCard";
+import ProductCard from "@/components/products/ProductCard";
 import ListToolbar from "@/components/ui/ListToolbar";
 import { Product } from "@/types";
 import { categoryOptions } from "@/constant/category-data";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useProducts } from "@/context/ProductContext";
 import Loading from "@/components/ui/Loading";
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 9;
 
 export default function AllProductsPage() {
   const { items, pagination, loading, setParams } = useProducts();

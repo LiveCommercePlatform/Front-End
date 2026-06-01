@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -17,8 +18,9 @@ import type {
   RatingData,
   ProductComment,
 } from "@/types";
+import { usePathname } from "next/navigation";
 
-const CACHE_TTL = 20_000; 
+const CACHE_TTL = 20_000;
 
 type CachedItem<T> = {
   data: T;
@@ -69,7 +71,7 @@ type InvalidateKey = "list" | "product" | "engagement" | "comments" | "stat";
 
 type ProductsContextValue = ProductsState & {
   setParams: (next: Partial<GetProductsParams>) => void;
-  fetchProducts: (p?: GetProductsParams) => Promise<void>;
+  fetchProducts: (p: GetProductsParams) => Promise<void>;
   refresh: () => Promise<void>;
   getProductByIdCached: (id: string) => Promise<ProductDetails>;
   getMyEngagementCached: (id: string) => Promise<Engagement>;
@@ -133,10 +135,7 @@ export function ProductsProvider({
     error: null,
     params: { page: 1, limit: 20, ...(initialParams ?? {}) },
   });
-
   const listAbortRef = useRef<AbortController | null>(null);
-
-  // تغییر ساختار تمام کش‌ها برای نگهداری تایم‌استمپ
   const listCacheRef = useRef<
     Map<string, CachedItem<ProductsResponse<Product>>>
   >(new Map());
@@ -155,6 +154,7 @@ export function ProductsProvider({
   const [commentsLoadingById, setCommentsLoadingById] = useState<
     Record<string, boolean>
   >({});
+  const pathname = usePathname();
 
   const invalidate = useCallback((scope?: InvalidateKey, key?: string) => {
     const caches = {
@@ -183,16 +183,15 @@ export function ProductsProvider({
   }, []);
 
   const fetchProducts = useCallback(
-    async (p?: GetProductsParams) => {
-      const params = p ?? state.params;
+    async (params: GetProductsParams) => {
       const key = stableKey(params);
       const cached = listCacheRef.current.get(key);
 
-      if (!isExpired(cached)) {
+      if (cached && !isExpired(cached)) {
         setState((s) => ({
           ...s,
-          items: cached!.data.data ?? [],
-          pagination: cached!.data.pagination ?? null,
+          items: cached.data.data ?? [],
+          pagination: cached.data.pagination ?? null,
           loading: false,
           error: null,
         }));
@@ -211,11 +210,14 @@ export function ProductsProvider({
           method: "GET",
           signal: controller.signal,
         });
+
         if (!res.ok) throw new Error("خطا در دریافت محصولات");
 
         const json: ProductsResponse<Product> = await res.json();
+
         listCacheRef.current.set(key, { data: json, timestamp: Date.now() });
         enforceCacheLimit(listCacheRef.current, 100);
+
         setState((s) => ({
           ...s,
           items: json.data ?? [],
@@ -225,27 +227,25 @@ export function ProductsProvider({
         }));
       } catch (e: any) {
         if (e?.name === "AbortError") return;
+
         setState((s) => ({
           ...s,
           loading: false,
           error: e?.message ?? "خطا",
-          params,
         }));
       }
     },
-    [],
+    [apiFetch],
   );
 
-  const setParams = useCallback(
-    (next: Partial<GetProductsParams>) => {
-      setState((s) => {
-        const newParams = { ...s.params, ...next };
-        void fetchProducts(newParams);
-        return { ...s, params: newParams };
-      });
-    },
-    [fetchProducts],
-  );
+  const setParams = useCallback((next: Partial<GetProductsParams>) => {
+    setState((s) => ({ ...s, params: { ...s.params, ...next } }));
+  }, []);
+
+  useEffect(() => {
+    if (!pathname?.includes("products")) return;
+    void fetchProducts(state.params);
+  }, [pathname, state.params, fetchProducts]);
 
   const refresh = useCallback(async () => {
     invalidate("list", stableKey(state.params));

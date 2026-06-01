@@ -1,4 +1,3 @@
-// src/app/not-found.tsx
 "use client";
 
 import Link from "next/link";
@@ -7,25 +6,42 @@ import { Ghost } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center space-y-6">
-      <div className="flex items-center justify-center w-20 h-20 rounded-full bg-muted shadow-inner">
-        <Ghost className="w-10 h-10 text-muted-foreground" />
+    <main className="min-h-screen bg-background px-4 py-8 sm:py-12">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-2xl items-center justify-center">
+        <section className="w-full text-center">
+          {/* Icon */}
+          <div className="mx-auto mb-6 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Ghost className="h-10 w-10 text-muted-foreground" />
+          </div>
+
+          <p className="mb-2 text-xs sm:text-sm font-semibold tracking-[0.3em]">
+          ERROR 404
+          </p>
+
+          <h1 className="mb-3 text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl md:text-4xl">
+          صفحه ناموجود
+          </h1>
+
+          <p className="mx-auto mb-8 max-w-md text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8">
+            متأسفیم، صفحه‌ای که دنبالش بودید پیدا نشد. ممکنه حذف شده باشه یا آدرس
+          اشتباهی وارد کرده باشید.
+          </p>
+
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link href="/">
+            <Button size="lg">بازگشت به صفحه اصلی</Button>
+          </Link>
+
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => window.history.back()}
+          >
+            صفحه قبل
+          </Button>
+        </div>
+        </section>
       </div>
-
-      <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-        404 - صفحه پیدا نشد
-      </h1>
-
-      <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-md">
-        متأسفیم، صفحه‌ای که دنبالش بودید پیدا نشد. ممکنه حذف شده باشه یا آدرس
-        اشتباهی وارد کرده باشید.
-      </p>
-
-      <Link href="/">
-        <Button variant="default" size="lg">
-          بازگشت به صفحه اصلی
-        </Button>
-      </Link>
-    </div>
+    </main>
   );
 }
