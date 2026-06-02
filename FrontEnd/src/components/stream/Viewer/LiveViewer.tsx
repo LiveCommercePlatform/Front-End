@@ -61,14 +61,14 @@ export default function LiveViewer({ roomId , status}: { roomId: string; status:
         <h2 className="text-lg md:text-xl font-semibold">تماشای پخش زنده</h2>
       </div>
 
-      <div className="relative group">
+      <div className="relative bg-black rounded-xl overflow-hidden w-full aspect-video">
         <VideoPlayer
           ref={videoRef}
           muted={muted}
           controls={false}
-          className="w-full h-full object-contain"
+          className="absolute inset-0 w-full h-full object-cover"
           isStreaming={isStreaming}
-          isLiveEnded={status =="ended" ? true : false}
+          isLiveEnded={status == "ended" ? true : false}
         />
 
         <div

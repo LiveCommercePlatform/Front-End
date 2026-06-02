@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, MicOff, Video, Monitor, Play, Square } from "lucide-react";
 import { useBroadcaster } from "@/hooks/useBroadcasterWebRTC";
+import { apiFetch } from "@/lib/api";
+import toast from "react-hot-toast";
 
 export default function LiveBroadcaster({
   roomId,
@@ -29,7 +31,6 @@ export default function LiveBroadcaster({
       audio: true,
     },
   });
-
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
 
@@ -43,7 +44,35 @@ export default function LiveBroadcaster({
 
     loadDevices();
   }, []);
+  const endStream = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      const res = await apiFetch(`/live-rooms/${id}/end`, {
+        method: "POST",
+      });
 
+      if (!res.ok) {
+        let errorMsg = "خطا در پایان استریم";
+        try {
+          const data = await res.json();
+          errorMsg = data?.error || errorMsg;
+        } catch {}
+        throw new Error(errorMsg);
+      }
+
+      toast.success("استریم پایان یافت");
+      return true;
+    } catch (e: any) {
+      toast.error(e?.message ?? "خطا در برقراری ارتباط");
+      return false;
+    }
+  }, []);
+
+  const handleStopStream = async () => {
+    const isEndedOnBackend = await endStream(roomId);
+    if (isEndedOnBackend) {
+      stop();
+    }
+  };
   const videoRef = useRef<HTMLVideoElement | null>(null);
   useEffect(() => {
     if (videoRef.current && localStream) {
@@ -56,13 +85,13 @@ export default function LiveBroadcaster({
         <h2 className="text-lg md:text-xl font-semibold">پخش زنده</h2>
       </div>
 
-      <div className="relative bg-black rounded-xl overflow-hidden aspect-video">
+      <div className="relative bg-black rounded-xl overflow-hidden w-full aspect-video">
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-contain"
+          className="absolute inset-0 w-full h-full object-cover"
         />
 
         {isStreaming && (
@@ -88,7 +117,7 @@ export default function LiveBroadcaster({
           ) : (
             <button
               disabled={status == "ended"}
-              onClick={stop}
+              onClick={handleStopStream}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-red-500 rounded-xl border text-sm"
             >
               <Square size={16} />

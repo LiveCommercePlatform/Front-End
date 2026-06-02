@@ -108,6 +108,7 @@ export const useLiveRoomEvents = (
           }
 
           if (parsed.type === "live_room.products.updated") {
+            console.log(parsed)
             setProductsEvent(parsed.data);
             setProducts(parsed.data?.products ?? []);
             return;

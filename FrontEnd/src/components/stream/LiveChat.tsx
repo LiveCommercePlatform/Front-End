@@ -42,7 +42,6 @@ export function LiveChat({ id, UserId, Livestatus }: { id: string; UserId?: stri
   const renderedMessages = useMemo(() => {
     return messages.map((msg) => {
       const isMe = msg.userId === currentUserId;
-
       return {
         ...msg,
         isMe,
@@ -91,7 +90,7 @@ export function LiveChat({ id, UserId, Livestatus }: { id: string; UserId?: stri
         : "چت در دسترس نیست";
 
   return (
-    <Card className="rounded-2xl shadow-lg flex flex-col h-[513px] bg-muted/30 overflow-hidden">
+    <Card className="rounded-2xl shadow-lg flex flex-col h-[600px] bg-muted/30 overflow-hidden mt-10">
       <CardContent className="flex flex-col flex-1 p-4 py-1 min-h-0">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-lg">چت زنده</h3>
