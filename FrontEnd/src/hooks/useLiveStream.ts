@@ -68,6 +68,7 @@ export function useLiveStream(id?: string): UseLiveStreamReturn {
     const ok = await endStream(id);
     return ok;
   }, [id, endStream]);
+
   const like = useCallback(async () => {
     if (!id) return false;
 
@@ -82,7 +83,6 @@ export function useLiveStream(id?: string): UseLiveStreamReturn {
     } else {
       ok = await likeStream(id);
     }
-
     if (!ok) return false;
 
     const [statsData, reactionData] = await Promise.all([

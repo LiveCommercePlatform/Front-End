@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { apiFetch } from "@/lib/api";
 import type { Stream, LiveRoomStats, ReactionType } from "@/types";
 import { usePathname } from "next/navigation";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 
 /* ================= Types ================= */
 
@@ -89,7 +90,6 @@ function stableKey(params?: GetLiveRoomsParams) {
   return `status=${status}_host=${hostId}`;
 }
 
-
 /* ================= Context ================= */
 
 const LiveRoomContext = createContext<LiveRoomContextValue | null>(null);
@@ -112,8 +112,12 @@ export function LiveRoomProvider({
   const pathname = usePathname();
   const CACHE_TTL = 20_000; // بیست ثانیه به میلی‌ثانیه
   const listAbortRef = useRef<AbortController | null>(null);
-  const listCacheRef = useRef<Map<string, { data: any, timestamp: number }>>(new Map());
-  const singleCacheRef = useRef<Map<string, { data: Stream, timestamp: number }>>(new Map());
+  const listCacheRef = useRef<Map<string, { data: any; timestamp: number }>>(
+    new Map(),
+  );
+  const singleCacheRef = useRef<
+    Map<string, { data: Stream; timestamp: number }>
+  >(new Map());
 
   /* ================= invalidate ================= */
 
@@ -135,81 +139,83 @@ export function LiveRoomProvider({
     }
   }, []);
 
-const fetchLiveRooms = useCallback(async (params: GetLiveRoomsParams) => {
-  const key = stableKey(params);
+  const fetchLiveRooms = useCallback(
+    async (params: GetLiveRoomsParams) => {
+      const key = stableKey(params);
 
-  const cachedEntry = listCacheRef.current.get(key);
-  const now = Date.now();
+      const cachedEntry = listCacheRef.current.get(key);
+      const now = Date.now();
 
-  if (cachedEntry && now - cachedEntry.timestamp < CACHE_TTL) {
-    setState((s) => ({
-      ...s,
-      lives: cachedEntry.data ?? [],
-      loading: false,
-      error: null,
-    }));
-    return;
-  }
+      if (cachedEntry && now - cachedEntry.timestamp < CACHE_TTL) {
+        setState((s) => ({
+          ...s,
+          lives: cachedEntry.data ?? [],
+          loading: false,
+          error: null,
+        }));
+        return;
+      }
 
-  if (listAbortRef.current) listAbortRef.current.abort();
-  const controller = new AbortController();
-  listAbortRef.current = controller;
+      if (listAbortRef.current) listAbortRef.current.abort();
+      const controller = new AbortController();
+      listAbortRef.current = controller;
 
-  setState((s) => ({ ...s, loading: true, error: null }));
+      setState((s) => ({ ...s, loading: true, error: null }));
 
-  try {
-    const qs = buildSearchParams(params);
-    const res = await apiFetch(`/live-rooms?${qs}`, {
-      method: "GET",
-      signal: controller.signal,
+      try {
+        const qs = buildSearchParams(params);
+        const res = await apiFetch(`/live-rooms?${qs}`, {
+          method: "GET",
+          signal: controller.signal,
+        });
+
+        if (!res.ok) throw new Error("خطا در دریافت لیست لایوروم‌ها");
+
+        const json: LiveRoomsResponse<Stream> = await res.json();
+
+        listCacheRef.current.set(key, { data: json, timestamp: Date.now() });
+
+        setState((s) => ({
+          ...s,
+          lives: json ?? [],
+          loading: false,
+          error: null,
+        }));
+      } catch (e: any) {
+        if (e?.name === "AbortError") return;
+        setState((s) => ({
+          ...s,
+          loading: false,
+          error: e?.message ?? "خطا",
+        }));
+      }
+    },
+    [apiFetch],
+  );
+
+  const shallowEqual = (a: Record<string, any>, b: Record<string, any>) => {
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+    if (aKeys.length !== bKeys.length) return false;
+    for (const k of aKeys) if (a[k] !== b[k]) return false;
+    return true;
+  };
+
+  const setParams = useCallback((next: Partial<GetLiveRoomsParams>) => {
+    setState((s) => {
+      const newParams = { ...s.params, ...next };
+      if (shallowEqual(newParams as any, s.params as any)) return s;
+      return { ...s, params: newParams };
     });
-
-    if (!res.ok) throw new Error("خطا در دریافت لیست لایوروم‌ها");
-
-    const json: LiveRoomsResponse<Stream> = await res.json();
-
-    listCacheRef.current.set(key, { data: json, timestamp: Date.now() });
-
-    setState((s) => ({
-      ...s,
-      lives: json ?? [],
-      loading: false,
-      error: null,
-    }));
-  } catch (e: any) {
-    if (e?.name === "AbortError") return;
-    setState((s) => ({
-      ...s,
-      loading: false,
-      error: e?.message ?? "خطا",
-    }));
-  }
-}, [apiFetch]);
-
-const shallowEqual = (a: Record<string, any>, b: Record<string, any>) => {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
-  if (aKeys.length !== bKeys.length) return false;
-  for (const k of aKeys) if (a[k] !== b[k]) return false;
-  return true;
-};
-
-const setParams = useCallback((next: Partial<GetLiveRoomsParams>) => {
-  setState((s) => {
-    const newParams = { ...s.params, ...next };
-    if (shallowEqual(newParams as any, s.params as any)) return s;
-    return { ...s, params: newParams };
-  });
-}, []);
+  }, []);
 
   useEffect(() => {
     if (!pathname?.includes("Live_Rooms")) return;
     void fetchLiveRooms(state.params);
   }, [pathname, state.params, fetchLiveRooms]);
 
-
   const refresh = useCallback(async () => {
-    console.log(state.params)
+    console.log(state.params);
     const key = stableKey(state.params);
     listCacheRef.current.delete(key);
     await fetchLiveRooms(state.params);
@@ -218,17 +224,17 @@ const setParams = useCallback((next: Partial<GetLiveRoomsParams>) => {
   const getLiveRoomByIdCached = useCallback(async (id: string) => {
     const cached = singleCacheRef.current.get(id);
     const now = Date.now();
-    if (cached && (now - cached.timestamp < CACHE_TTL)) return cached;
+    if (cached && now - cached.timestamp < CACHE_TTL) return cached;
 
     const res = await apiFetch(`/live-rooms/${id}`, { method: "GET" });
     if (!res.ok) throw new Error("خطا در دریافت لایوروم");
 
     const json = await res.json();
     const data = json?.data ?? json;
-    singleCacheRef.current.set(id,  {
-        data: data,
-        timestamp: Date.now()
-      });
+    singleCacheRef.current.set(id, {
+      data: data,
+      timestamp: Date.now(),
+    });
     return data;
   }, []);
 
@@ -400,19 +406,24 @@ const setParams = useCallback((next: Partial<GetLiveRoomsParams>) => {
     [invalidate],
   );
 
-
   const likeStream = useCallback(
     async (streamId: string) => {
       try {
         const res = await apiFetch(`/live-rooms/${streamId}/reactions/like`, {
           method: "POST",
         });
-
-        if (!res.ok) throw new Error("خطا در ارسال لایک");
-
+        const data = await res.json();
+        if (!res.ok) {
+          const msg =
+            getErrorMessage(data?.error) ||
+            data?.message ||
+            "خطا در ارسال لایک";
+          throw new Error(msg);
+        }
         invalidate("single", streamId);
         return true;
-      } catch {
+      } catch (e: any) {
+        toast.error(e?.message ?? "خطا در ارسال لایک");
         return false;
       }
     },
@@ -429,7 +440,32 @@ const setParams = useCallback((next: Partial<GetLiveRoomsParams>) => {
           },
         );
 
-        if (!res.ok) throw new Error("خطا در ارسال دیسلایک");
+        const data = await res.json();
+        if (!res.ok) {
+          const msg =
+            getErrorMessage(data?.error) ||
+            data?.message ||
+            "خطا در ارسال لایک";
+          throw new Error(msg);
+        }
+        invalidate("single", streamId);
+        return true;
+      } catch (e: any) {
+        toast.error(e?.message ?? "خطا در ارسال لایک");
+
+        return false;
+      }
+    },
+    [invalidate],
+  );
+  const removeReaction = useCallback(
+    async (streamId: string) => {
+      try {
+        const res = await apiFetch(`/live-rooms/${streamId}/reactions`, {
+          method: "DELETE",
+        });
+
+        if (!res.ok) throw new Error("خطا در حذف واکنش");
 
         invalidate("single", streamId);
         return true;
@@ -439,26 +475,6 @@ const setParams = useCallback((next: Partial<GetLiveRoomsParams>) => {
     },
     [invalidate],
   );
-const removeReaction = useCallback(
-  async (streamId: string) => {
-    try {
-      const res = await apiFetch(
-        `/live-rooms/${streamId}/reactions`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      if (!res.ok) throw new Error("خطا در حذف واکنش");
-
-      invalidate("single", streamId);
-      return true;
-    } catch {
-      return false;
-    }
-  },
-  [invalidate],
-);
 
   const getMyReaction = useCallback(async (streamId: string) => {
     try {
@@ -476,7 +492,6 @@ const removeReaction = useCallback(
   const getLiveRoomStats = useCallback(async (streamId: string) => {
     try {
       const res = await apiFetch(`/live-rooms/${streamId}/reactions/summary`);
-
       if (!res.ok) throw new Error("خطا در گرفتن آمار لایو");
 
       return await res.json();

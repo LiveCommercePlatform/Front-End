@@ -14,9 +14,6 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ClipboardList,
-  User,
-  Phone,
-  Mail,
   MapPin,
   Calendar,
   Wallet,
@@ -24,6 +21,9 @@ import {
 } from "lucide-react";
 import { PerDate, cn, enToFaDigits, formatPriceFa } from "@/lib/utils";
 import type { Order, OrderStatus } from "@/types";
+import { redirect } from "next/navigation";
+import router from "next/router";
+import Link from "next/link";
 
 type Props = {
   open: boolean;
@@ -125,7 +125,6 @@ export default function OrderDetailsModal({
               </div>
             ) : (
               <>
-                {/* Summary */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="rounded-lg border p-3 text-right">
                     <div className="text-xs text-muted-foreground">وضعیت</div>
@@ -154,7 +153,6 @@ export default function OrderDetailsModal({
                   </div>
                 </div>
 
-                {/* Meta line */}
                 <div className="flex flex-wrap justify-end gap-x-5 gap-y-2 text-xs text-muted-foreground">
                   <span className="inline-flex flex-row-reverse items-center gap-1">
                     <Calendar className="h-4 w-4" />
@@ -198,7 +196,6 @@ export default function OrderDetailsModal({
 
                 <Separator />
 
-                {/* Items */}
                 <section className="space-y-3 text-right">
                   <h3 className="text-sm font-semibold text-right">
                    {ownerId ? "محصولات شما در این سفارش" :" آیتم‌های سفارش"}
@@ -214,7 +211,8 @@ export default function OrderDetailsModal({
 
                     <div className="divide-y">
                       {items.map((it: any) => (
-                        <div
+                        <Link href={`/products/${it.product.id}`}>
+                        <div 
                           key={it.id}
                           className="grid grid-cols-12 px-3 py-3 text-sm text-right"
                         >
@@ -237,6 +235,7 @@ export default function OrderDetailsModal({
                             {formatPriceFa(it.total_price)}
                           </div>
                         </div>
+                        </Link>
                       ))}
 
                       {items.length === 0 ? (

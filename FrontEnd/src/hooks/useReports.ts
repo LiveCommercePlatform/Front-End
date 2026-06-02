@@ -206,7 +206,7 @@ export function useReports(options?: {
       setError(null);
 
       try {
-        const res = await apiFetch(`/admin/reports/${id}/ban-user`, {
+        const res = await apiFetch(`/admin/users/${id}/ban`, {
           method: "POST",
         });
 

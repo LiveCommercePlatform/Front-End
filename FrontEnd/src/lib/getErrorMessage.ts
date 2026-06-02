@@ -10,6 +10,7 @@ const errorMap: Record<string, string> = {
   "You are the owner, you cannot dislike your own product":"مالک نمیتواند محصول خود را دیسلایک کند! ",
   "You are the owner, you cannot like your own product":"مالک نمیتواند محصول خود رالایک کند! ",
   "Email already exists":"ایمیل وارد شده در سیستم موجود است.",
+  "live_room_not_live":"لایو در حال پخش نیست.",
 }
 
 export function getErrorMessage(

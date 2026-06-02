@@ -117,13 +117,14 @@ export function useViewer({
   }, [sendSignal]);
 
   const connectWS = useCallback(() => {
-    if (
+    if ( 
       wsRef.current &&
       (wsRef.current.readyState === WebSocket.OPEN ||
         wsRef.current.readyState === WebSocket.CONNECTING)
     ) {
       return;
     }
+    if(isStreaming) return;
 
     isManualClose.current = false;
     const socket = new WebSocket(signalingUrl);
@@ -161,7 +162,7 @@ export function useViewer({
             break;
 
           case "ice_candidate":
-            if (!pcRef.current) createPeerConnection();
+            if (!pcRef.current) {console.log("QQ");createPeerConnection()};
             if (pcRef.current?.remoteDescription) {
               try {
                 await pcRef.current.addIceCandidate(

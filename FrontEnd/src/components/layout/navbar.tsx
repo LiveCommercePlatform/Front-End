@@ -94,26 +94,6 @@ export function Navbar() {
           <h1 className="text-[15px] md:text-lg font-bold">📦 سایت من</h1>
         </div>
 
-        {/* Search */}
-        <div className="flex-1 mx-3 max-w-xs md:max-w-md hidden sm:block">
-          <div className="relative">
-            <Input
-              placeholder="جستجو..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pr-9 md:pr-10 rounded-full text-xs md:text-sm"
-            />
-            <Button
-              onClick={handleSearch}
-              size="icon"
-              variant="ghost"
-              className="absolute top-1/2 -translate-y-1/2 right-1 rounded-full"
-            >
-              <Search className="h-4 w-4 md:h-5 md:w-5" />
-            </Button>
-          </div>
-        </div>
-
         {/* Left section */}
         <div className="flex items-center gap-2">
           <ModeToggle />

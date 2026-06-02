@@ -57,12 +57,10 @@ export default function LiveViewer({ roomId , status}: { roomId: string; status:
 
   return (
     <div className="max-w-5xl mx-auto px-3 md:px-0 space-y-4">
-      {/* header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg md:text-xl font-semibold">تماشای پخش زنده</h2>
       </div>
 
-      {/* video player */}
       <div className="relative group">
         <VideoPlayer
           ref={videoRef}
@@ -70,10 +68,9 @@ export default function LiveViewer({ roomId , status}: { roomId: string; status:
           controls={false}
           className="w-full h-full object-contain"
           isStreaming={isStreaming}
-          isLiveEnded={status =="ended" ? true : false} // فعلاً چون از hook نمی‌آید
+          isLiveEnded={status =="ended" ? true : false}
         />
 
-        {/* status badge */}
         <div
           className={`absolute top-3 left-3 flex items-center gap-2 text-white text-xs px-3 py-1 rounded-full z-20 ${
             isStreaming ? "bg-red-600" : "bg-gray-600"
@@ -87,7 +84,6 @@ export default function LiveViewer({ roomId , status}: { roomId: string; status:
           {isStreaming ? "زنده" : "قطع شده"}
         </div>
 
-        {/* controls */}
         <div
           className="absolute bottom-0 left-0 right-0 z-20
           bg-gradient-to-t from-black/70 to-transparent

@@ -17,9 +17,9 @@ export type Stream = {
   EndedAt?: string;
   IsRecorded?: boolean;
   TotalViews?: number;
-  CreatedAt?: string; 
-  Duration?: number;
-  HostID?: string;
+  CreatedAt: string; 
+  Duration: number;
+  HostID: string;
   SFURoomID?: string;
   Host: { id: String; name: string };
   TotalDislikes: number;

@@ -8,6 +8,7 @@ const tabs = [
   { key: "reports", label: "گزارشات" },
   { key: "users", label: "کاربران" },
   { key: "orders", label: "سفارشات" },
+  { key: "messages", label: "تیکت ها" },
 ];
 
 function AdminDashboardShell({ children }: { children: React.ReactNode }) {

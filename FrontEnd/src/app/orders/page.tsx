@@ -30,7 +30,7 @@ export default function OrdersTab() {
   };
 
   return (
-    <div className="space-y-6 px-4 py-4 md:px-0 md:py-5">
+    <div className="space-y-6 px-4 mx-4 py-4 md:px-1 md:py-5">
       <ListToolbar
         filters={[
           {
