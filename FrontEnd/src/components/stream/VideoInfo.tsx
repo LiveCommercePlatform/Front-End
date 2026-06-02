@@ -176,7 +176,7 @@ const dislikes = isLive ? (reactions?.dislikes ?? stat?.dislikes ?? 0) : (stat?.
             <div className="flex items-center gap-4 text-muted-foreground border-r md:border-r-0 pr-4 md:pr-0 border-border">
               <div className="flex items-center gap-1.5 text-xs md:text-sm">
                 <Eye className="w-4 h-4 opacity-70" />
-                {formatPriceFa(viewCount || 0)}
+                {formatPriceFa(viewCount || 2)}
               </div>
             </div>
           </div>

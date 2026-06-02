@@ -25,7 +25,7 @@ export default function StreamPage() {
     pinLiveProduct,
     end,
     removeProductFromLive,
-  } = useLiveStream(id);
+  } = useLiveStream(id,false);
   const UserID = tokenStore.getUserId();
   const IsHost = stream?.HostID == UserID;
   if (loading) return <Loading />;

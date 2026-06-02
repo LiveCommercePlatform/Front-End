@@ -18,7 +18,7 @@ type UseLiveStreamReturn = {
   removeProductFromLive: (productId: string) => Promise<boolean>;
 };
 
-export function useLiveStream(id?: string): UseLiveStreamReturn {
+export function useLiveStream(id?: string,autoStart?:boolean): UseLiveStreamReturn {
   const {
     getLiveRoomByIdCached,
     getLiveRoomStats,

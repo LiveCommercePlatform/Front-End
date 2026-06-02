@@ -59,14 +59,12 @@ export function useOrders(options: UseOrdersOptions = {}) {
   const accessToken = mounted ? tokenStore.getAccess() : null;
   const canFetch = mounted && !!accessToken;
 
-  // ----- My orders state -----
   const [myOrders, setMyOrders] = useState<Order[]>([]);
   const [myTotal, setMyTotal] = useState(0);
   const [myParams, _setMyParams] = useState<MyOrderParams>(() =>
     normalizeMyParams(initialMyParams ?? {}),
   );
 
-  // ----- Admin orders state -----
   const [adminOrders, setAdminOrders] = useState<Order[]>([]);
   const [adminTotal, setAdminTotal] = useState(0);
   const [adminParams, _setAdminParams] = useState<AdminOrderParams>(() =>

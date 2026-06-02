@@ -44,7 +44,7 @@ type InvalidateKey = "list" | "single";
 type LiveRoomContextValue = LiveRoomState & {
   setParams: (next: Partial<GetLiveRoomsParams>) => void;
 
-  fetchLiveRooms: (p?: GetLiveRoomsParams) => Promise<void>;
+  fetchLiveRooms: (params: GetLiveRoomsParams) => Promise<void>;
   refresh: () => Promise<void>;
 
   getLiveRoomByIdCached: (id: string) => Promise<Stream>;
