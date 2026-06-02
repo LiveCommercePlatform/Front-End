@@ -22,7 +22,7 @@ const WS_BASE_URL = "ws://localhost:8080";
 export const useLiveChat = (
   roomId: string,
   currentUserId?: string,
-  autoStart: boolean = true
+  autoStart: boolean = true,
 ) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<Status>("idle");
@@ -41,28 +41,30 @@ export const useLiveChat = (
 
   const loadHistory = useCallback(async () => {
     try {
-      const res = await apiFetch(`/live-rooms/${roomId}/chat/history?limit=50`, {
-        method: "GET",
-      });
+      const res = await apiFetch(
+        `/live-rooms/${roomId}/chat/history?limit=50`,
+        {
+          method: "GET",
+        },
+      );
 
       const data = await res.json();
 
       if (!res.ok || !Array.isArray(data?.items)) {
         return;
       }
-
       const normalized: ChatMessage[] = data.items
         .map((ev: any) => ({
-          id: ev.data.id,
-          userId: ev.data.user_id,
-          userName: ev.data.user_name,
-          text: ev.data.text,
-          ts: ev.data.ts,
+          id: ev.id,
+          userId: ev.user_id,
+          userName: ev.user_name,
+          text: ev.text,
+          ts: ev.ts,
         }))
         .reverse();
 
       normalized.forEach((m) => messageIds.current.add(m.id));
-      setMessages(normalized.slice(-200));
+      setMessages(normalized);
     } catch (err) {
       console.error("load history error", err);
     }
@@ -178,7 +180,7 @@ export const useLiveChat = (
                 m.pending &&
                 m.userId === currentUserId &&
                 userId === currentUserId &&
-                m.text === text
+                m.text === text,
             );
 
             if (pendingIndex !== -1) {
@@ -356,11 +358,12 @@ export const useLiveChat = (
         sendQueue.current.push(payload);
       }
     },
-    [authRequired, currentUserId, autoStart]
+    [authRequired, currentUserId, autoStart],
   );
 
   const sendPending = messages.filter((m) => m.pending).length;
-  const canSend = autoStart && !!currentUserId && !authRequired && status === "open";
+  const canSend =
+    autoStart && !!currentUserId && !authRequired && status === "open";
 
   return {
     messages,

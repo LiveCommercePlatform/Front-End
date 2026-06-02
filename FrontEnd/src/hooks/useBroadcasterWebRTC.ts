@@ -55,7 +55,6 @@ export function useBroadcaster(
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
 
-  // ---- کمک: ارسال پیام سیگنالینگ ----
   const sendSignal = useCallback((type: string, payload: any) => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -64,7 +63,6 @@ export function useBroadcaster(
     ws.send(JSON.stringify(msg));
   }, []);
 
-  // ---- ساخت PeerConnection ----
   const createPeerConnection = useCallback(() => {
     if (pcRef.current) {
       return pcRef.current;
@@ -72,7 +70,6 @@ export function useBroadcaster(
 
     const pc = new RTCPeerConnection({
       iceServers: [
-        // اگر STUN/TURN خاصی داری اینجا تعریف کن
         { urls: "stun:stun.l.google.com:19302" },
       ],
     });
@@ -93,8 +90,7 @@ export function useBroadcaster(
         state === "disconnected" ||
         state === "closed"
       ) {
-        // در بک‌اند هم برای host، endLiveRoomFromSFU صدا می‌شود.
-        // در فرانت می‌توانیم UI را آپدیت کنیم.
+ 
       }
     };
 
@@ -159,10 +155,6 @@ export function useBroadcaster(
             case "answer": {
               const answer = msg.payload;
               const desc = new RTCSessionDescription(answer);
-
-              if (isSettingRemoteAnswerPendingRef.current) {
-                // در الگوی perfect negotiation معمولاً چنین فلگی داریم
-              }
 
               await pc.setRemoteDescription(desc);
               break;
@@ -390,17 +382,12 @@ export function useBroadcaster(
 
     try {
       if (!isScreenSharing) {
-        // شروع اشتراک صفحه
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
-          audio: false, // معمولاً برای اسکرین شِیر صدا لازم نیست یا جدا هندل می‌شود
+          audio: false, 
         });
         const screenTrack = screenStream.getVideoTracks()[0];
-
-        // ذخیره ترک فعلی دوربین برای بازگشت
         cameraTrackRef.current = stream.getVideoTracks()[0];
-
-        // جایگزینی در PeerConnection
         const senders = pc
           .getSenders()
           .filter((s) => s.track?.kind === "video");
@@ -408,18 +395,14 @@ export function useBroadcaster(
           await senders[0].replaceTrack(screenTrack);
         }
 
-        // آپدیت کردن استریم محلی برای نمایش در Preview
         stream.removeTrack(cameraTrackRef.current);
         stream.addTrack(screenTrack);
 
         setIsScreenSharing(true);
-
-        // هندل کردن زمانی که کاربر از طریق نوار ابزار خودِ مرورگر (Stop Sharing) را می‌زند
         screenTrack.onended = () => {
           stopScreenSharing(screenTrack);
         };
       } else {
-        // توقف دستی اشتراک صفحه و بازگشت به دوربین
         const screenTrack = stream.getVideoTracks()[0];
         await stopScreenSharing(screenTrack);
       }
@@ -428,7 +411,6 @@ export function useBroadcaster(
     }
   }, [isScreenSharing]);
 
-  // تابع کمکی برای بازگشت به دوربین
   const stopScreenSharing = useCallback(
     async (screenTrack: MediaStreamTrack) => {
       const pc = pcRef.current;
@@ -445,7 +427,7 @@ export function useBroadcaster(
 
         stream.removeTrack(screenTrack);
         stream.addTrack(camTrack);
-        screenTrack.stop(); // آزاد کردن منابع اسکرین شِیر
+        screenTrack.stop();
 
         setIsScreenSharing(false);
         cameraTrackRef.current = null;

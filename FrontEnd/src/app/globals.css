@@ -178,7 +178,9 @@
   --toast-bg: #1e232e;
   --toast-text: #ffffff;
 }
-
+nextjs-portal {
+  display: none !important;
+}
 /* =========================================================
    Base Tailwind Layers
 ========================================================= */

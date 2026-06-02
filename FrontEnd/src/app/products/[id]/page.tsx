@@ -198,7 +198,7 @@ export default function ProductDetailsPage() {
       toast("امتیاز ثبت شد.");
     } catch (e: any) {
       // if (prevStats) setStats(prevStats);
-      toast(e?.message || "خطا در ثبت امتیاز");
+      // toast(e?.message || "خطا در ثبت امتیاز");
     } finally {setMyRating(val)};
   }
 
@@ -574,7 +574,7 @@ export default function ProductDetailsPage() {
                                   setReportState({
                                     open: true,
                                     type: "user",
-                                    targetId: c.user_id,
+                                    targetId: c.user.id,
                                     title: "گزارش کاربر",
                                   })
                                 }

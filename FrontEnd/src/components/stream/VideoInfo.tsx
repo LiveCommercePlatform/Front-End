@@ -13,7 +13,7 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatPriceFa } from "@/lib/utils";
 import { LiveRoomStats, Stream, ReactionType } from "@/types";
 import NotFound from "../ui/NotFound";
@@ -51,9 +51,7 @@ export function VideoInfo({
 
   const {
     reactions,
-    products,
-    // status: eventsStatus,
-    // connectionError: eventsError,
+    productsEvent
   } = useLiveRoomEvents(streamInfo.ID, isLive);
 
   const {
@@ -67,20 +65,44 @@ export function VideoInfo({
 
 const likes = isLive ? (reactions?.likes ?? stat?.likes ?? 0) : (stat?.likes ?? 0);
 const dislikes = isLive ? (reactions?.dislikes ?? stat?.dislikes ?? 0) : (stat?.dislikes ?? 0);
+const [liveProducts, setLiveProducts] = useState<any[]>(streamInfo.Products || []);
 
+ useEffect(() => {
+  setLiveProducts(streamInfo.Products || []);
+}, [streamInfo.Products]);
 
-  const displayProducts = useMemo(() => {
-    if (isLive) {
-      return products?.length ? products : streamInfo.Products || [];
+useEffect(() => {
+  if (!isLive || !productsEvent) return;
+
+  const { action, products: incomingProducts } = productsEvent;
+  if (!Array.isArray(incomingProducts)) return;
+
+  setLiveProducts((prev) => {
+    switch (action) {
+      case "pinned": {
+        const updatesMap = new Map(incomingProducts.map((p: any) => [p.product_id, p]));
+        return prev.map((lp) => {
+          const update = updatesMap.get(lp.ProductID);
+          if (!update) return lp;
+          return { ...lp, IsPinned: update.is_pinned, SortOrder: update.sort_order };
+        });
+      }
+      case "detached": {
+        const keepIds = new Set(incomingProducts.map((p: any) => p.product_id));
+        return prev.filter((lp:any) => keepIds.has(lp.ProductID));
+      }
+      default:
+        return prev;
     }
-    return streamInfo.Products || [];
-  }, [isLive, products, streamInfo.Products]);
+  });
+}, [isLive, productsEvent]);
+
 
   const sortedProducts = useMemo(() => {
-    return [...displayProducts].sort(
+    return [...liveProducts].sort(
       (a, b) => Number(b.IsPinned) - Number(a.IsPinned),
     );
-  }, [displayProducts]);
+  }, [liveProducts]);
 
   const onAdd = async (product: any) => {
     if (!product) return;
