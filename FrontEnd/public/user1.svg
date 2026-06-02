@@ -1,0 +1,40 @@
+<svg width="160" height="160" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F5FF"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+
+    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- outer ring -->
+  <circle cx="60" cy="60" r="50"
+          fill="none"
+          stroke="url(#neonGrad)"
+          stroke-width="3"
+          opacity="0.9"
+          filter="url(#neonGlow)"/>
+
+  <!-- head -->
+  <circle cx="60" cy="45" r="14"
+          fill="none"
+          stroke="url(#neonGrad)"
+          stroke-width="3"
+          filter="url(#neonGlow)"/>
+
+  <!-- shoulders -->
+  <path d="M32 88c6-14 20-20 28-20s22 6 28 20"
+        fill="none"
+        stroke="url(#neonGrad)"
+        stroke-width="3"
+        stroke-linecap="round"
+        filter="url(#neonGlow)"/>
+</svg>
+
