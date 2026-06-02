@@ -32,8 +32,6 @@ export default function LiveBroadcaster({
 
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
-  const [bitrate, setBitrate] = useState<number>(0);
-  const [connection, setConnection] = useState("new");
 
   useEffect(() => {
     async function loadDevices() {
@@ -45,20 +43,6 @@ export default function LiveBroadcaster({
 
     loadDevices();
   }, []);
-
-  const shareScreen = async () => {
-    const screen = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-    });
-
-    const screenTrack = screen.getVideoTracks()[0];
-
-    // const sender = pc
-    //   ?.getSenders()
-    //   .find((s:any) => s.track?.kind === "video");
-
-    // sender?.replaceTrack(screenTrack);
-  };
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   useEffect(() => {
@@ -129,16 +113,6 @@ export default function LiveBroadcaster({
           >
             <Monitor size={16} />
           </button>
-        </div>
-        {/* info */}
-        <div className="flex justify-center md:justify-start gap-3 text-[11px] md:text-xs text-slate-600 order-2 md:order-1">
-          <div className="bg-black/5 px-3 py-2 rounded-lg">
-            Bitrate: <b className="text-slate-900">{bitrate} kbps</b>
-          </div>
-
-          <div className="bg-black/5 px-3 py-2 rounded-lg">
-            Connection: <b className="text-slate-900">{connection}</b>
-          </div>
         </div>
       </div>
 
