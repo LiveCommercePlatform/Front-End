@@ -48,7 +48,6 @@ export function useBroadcaster(
   const localStreamRef = useRef<MediaStream | null>(null);
   const makingOfferRef = useRef(false);
   const ignoreOfferRef = useRef(false);
-  const isSettingRemoteAnswerPendingRef = useRef(false);
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -69,9 +68,7 @@ export function useBroadcaster(
     }
 
     const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-      ],
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
     pc.onicecandidate = (event) => {
@@ -90,7 +87,6 @@ export function useBroadcaster(
         state === "disconnected" ||
         state === "closed"
       ) {
- 
       }
     };
 
@@ -164,9 +160,7 @@ export function useBroadcaster(
               const desc = new RTCSessionDescription(offer);
 
               const readyForOffer =
-                !makingOfferRef.current &&
-                (pc.signalingState === "stable" ||
-                  isSettingRemoteAnswerPendingRef.current);
+                !makingOfferRef.current && pc.signalingState === "stable";
 
               ignoreOfferRef.current = !readyForOffer;
               if (ignoreOfferRef.current) {
@@ -221,6 +215,10 @@ export function useBroadcaster(
       stream.getTracks().forEach((track) => {
         pc.addTrack(track, stream);
       });
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      sendSignal("offer", offer);
       setIsStreaming(true);
     } catch (err) {
       setIsStreaming(false);
@@ -384,7 +382,7 @@ export function useBroadcaster(
       if (!isScreenSharing) {
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
-          audio: false, 
+          audio: false,
         });
         const screenTrack = screenStream.getVideoTracks()[0];
         cameraTrackRef.current = stream.getVideoTracks()[0];
